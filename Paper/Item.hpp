@@ -1,0 +1,225 @@
+#ifndef PAPER_ITEM_HPP
+#define PAPER_ITEM_HPP
+
+#include <Paper/Constants.hpp>
+
+namespace paper
+{
+    class Document;
+
+    class Item : public brick::Entity
+    {
+    public:
+
+        enum class BoundsType
+        {
+            Fill,
+            Stroke,
+            Handle
+        };
+
+
+        Item();
+
+        Item(const brick::Entity & _e);
+
+
+        void addChild(brick::Entity _e);
+
+        void insertAbove(brick::Entity _e);
+
+        void insertBelow(brick::Entity _e);
+
+        void sendToFront();
+
+        void sendToBack();
+
+        void remove();
+
+        void removeChildren();
+
+        const EntityArray & children() const;
+
+        const stick::String & name() const;
+
+        brick::Entity parent() const;
+
+
+        void setPosition(const Vec2f & _position);
+
+        void setPivot(const Vec2f & _pivot);
+        
+        void setVisible(bool _b);
+
+        void setName(const stick::String & _name);
+
+
+        //transformation things
+
+        void setTransform(const Mat3f & _transform);
+
+        void translateTransform(Float _x, Float _y);
+
+        void translateTransform(const Vec2f & _translation);
+
+        void scaleTransform(Float _scale);
+
+        void scaleTransform(Float _scaleX, Float _scaleY);
+
+        void scaleTransform(const Vec2f & _scale);
+
+        void scaleTransform(const Vec2f & _scale, const Vec2f & _center);
+
+        void rotateTransform(Float _radians);
+
+        void rotateTransform(Float _radians, const Vec2f & _point);
+
+        void transform(const Mat3f & _transform);
+
+
+        void translate(Float _x, Float _y);
+
+        void translate(const Vec2f & _translation);
+
+        void scale(Float _scale);
+
+        void scale(Float _scaleX, Float _scaleY);
+
+        void scale(const Vec2f & _scale);
+
+        void scale(const Vec2f & _scale, const Vec2f & _center);
+
+        void rotate(Float _radians);
+
+        void rotate(Float _radians, const Vec2f & _point);
+
+        void applyTransform(const Mat3f & _transform, bool _bNotifyParent = true);
+
+
+        const Mat3f & transform() const;
+
+        const Mat3f & absoluteTransform() const;
+
+        const Rect & bounds() const;
+
+        const Rect & localBounds() const;
+
+        /*Rect localHandleBounds() const;*/
+
+        const Rect & handleBounds() const;
+
+        const Rect & strokeBounds() const;
+
+        Vec2f position() const;
+
+        Vec2f pivot() const;
+
+        bool isVisible() const;
+
+
+        void setStrokeJoin(StrokeJoin _join);
+
+        void setStrokeCap(StrokeCap _cap);
+
+        void setMiterLimit(Float _limit);
+
+        void setStrokeWidth(Float _width);
+
+        void setStroke(const ColorRGBA & _color);
+
+        void setDashArray(const DashArray & _arr);
+
+        void setDashOffset(Float _f);
+
+        void setStrokeScaling(bool _b);
+
+        void removeStroke();
+
+        void setFill(const ColorRGBA & _color);
+
+        void removeFill();
+
+        void setWindingRule(WindingRule _rule);
+
+        StrokeJoin strokeJoin() const;
+
+        StrokeCap strokeCap() const;
+
+        Float miterLimit() const;
+
+        Float strokeWidth() const;
+
+        const DashArray & dashArray() const;
+
+        Float dashOffset() const;
+
+        WindingRule windingRule() const;
+
+        bool isScalingStroke() const;
+
+        const ColorRGBA & fill() const;
+
+        const ColorRGBA & stroke() const;
+
+        bool hasStroke() const;
+
+        bool hasFill() const;
+
+        //clones this item and adds it ontop of it
+        //in the DOM.
+        Item clone() const;
+
+        //returns the root of the DOM, which is the Document
+        Document document() const;
+
+
+        void markAbsoluteTransformDirty();
+
+        void markFillGeometryDirty();
+
+        void markStrokeGeometryDirty();
+
+        void markGeometryDirty();
+
+        void markBoundsDirty(bool _bNotifyParent);
+
+        void markStrokeBoundsDirty(bool _bNotifyParent);
+
+        void markFillBoundsDirty(bool _bNotifyParent);
+
+
+        static Mat3f strokeTransform(const Mat3f * _transform, Float _strokeWidth, bool _bIsScalingStroke);
+
+    protected:
+
+        void removeFromParent();
+
+        void removeImpl(bool _bRemoveFromParent);
+
+        Vec2f strokePadding(Float _strokeWidth, const Mat3f & _strokeMat) const;
+
+        struct BoundsResult
+        {
+            bool bEmpty;
+            Rect rect;
+        };
+        BoundsResult computeBounds(const Mat3f * _transform, BoundsType _type, bool _bAbsolute) const;
+
+
+        template<class C>
+        stick::Maybe<typename C::ValueType &> findComponent() const
+        {
+            Item i(*this);
+            while(i.isValid())
+            {   
+                auto maybe = i.maybe<C>();
+                if(maybe)
+                    return maybe;
+                i = i.parent();
+            }
+            return stick::Maybe<typename C::ValueType &>();
+        }
+    };
+}
+
+#endif //PAPER_ITEM_HPP
