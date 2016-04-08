@@ -83,7 +83,7 @@ namespace paper
         {
             if(!_group.children().count())
                 return;
-            Shrub & groupNode = _parentTreeNode.append("g");
+            Shrub groupNode("g");
             auto it = _group.children().begin();
             if (_group.isClipped())
             {
@@ -102,6 +102,7 @@ namespace paper
                 exportItem(*it, groupNode, false);
             }
             setTransform(_group, groupNode);
+            _parentTreeNode.append(groupNode);
         }
 
         void SVGExport::addCurveToPathData(const Curve & _curve, String & _currentData, bool _bApplyTransform)
@@ -201,7 +202,6 @@ namespace paper
             }
             else
             {
-                printf("DA PATH\n");
                 Shrub pathNode("path");
                 String curveString;
                 addPathToPathData(_path, curveString, false);
@@ -225,9 +225,9 @@ namespace paper
                         pathsString.append(" ");
                     addPathToPathData(Path(*it), pathsString, true);
                 }
-                Shrub & pathNode = _parentTreeNode.append("path");
+                Shrub pathNode("path");
                 pathNode.set("d", pathsString, ValueHint::XMLAttribute);
-                pn = &pathNode;
+                pn = &_parentTreeNode.append(pathNode);
             }
             else
             {
@@ -276,7 +276,6 @@ namespace paper
                     }
                     else
                     {
-                        printf("CURVE DATA\n");
                         exportCurveData(_path, _parentTreeNode, pn);
                     }
                 }

@@ -38,16 +38,20 @@ int main(int _argc, const char * _args[])
         circle.setStroke(ColorRGBA(1.0, 0.0, 1.0, 1.0));
         circle.setStrokeJoin(StrokeJoin::Round);
 
-        /*Path c2 = doc.createCircle(Vec2f(460, 300.0), 30.0);
+        Path c2 = doc.createCircle(Vec2f(460, 300.0), 30.0);
         //c2.translateTransform(Vec2f(60, 0));
-        circle.addChild(c2);*/
+        circle.addChild(c2);
 
         circle.setStrokeScaling(false);
         circle.scale(0.5);
 
         Group grp = doc.createGroup();
         grp.addChild(circle);
+        Path cl = circle.clone();
+        cl.translate(100, 100);
+        grp.addChild(cl);
 
+        doc.saveSVG("test.svg");
         //circle.reverse();
         //circle.reverse();
         //circle.scaleTransform(2.0, 1.0);
@@ -123,7 +127,7 @@ int main(int _argc, const char * _args[])
 
         grp.addChild(grpa);*/
 
-        printf("%s\n", doc.exportSVG().ensure().cString());
+        //printf("%s\n", doc.exportSVG().ensure().cString());
 
         // the main loop
         while (!glfwWindowShouldClose(window))
@@ -148,7 +152,6 @@ int main(int _argc, const char * _args[])
             //star.setDashOffset(off);
             //star.rotateTransform(0.01);
 
-            printf("FUCK\n");
             auto bb = grp.bounds();
             Path bbp = doc.createRectangle(bb.min(), bb.max());
             bbp.setFill(ColorRGBA(1.0, 1.0, 1.0, 0.25));
