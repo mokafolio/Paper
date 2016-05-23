@@ -12,7 +12,8 @@ Supported Platforms
 
 Installation
 ----------
-**OS X:**
+
+###OS X
 
 The easiest way to install *Paper* on *OS X* is to use [Homebrew](http://brew.sh/).
 If you installed *Homebrew*, hook into [this](https://github.com/mokafolio/homebrew-mokatap) custom tap via:
