@@ -1,0 +1,25 @@
+Paper TODO:
+
+- make scaling stroke work x
+- add dashOffset to StrokeTriangulator x
+- make cloning of items work. x
+- add pivot point support x
+- add transformation functions that transform an item in place (i.e. apply the transform to the path data directly) x
+- add / remove child functions -> should update cache/bounds flags etc. x
+- add smooth function to path x
+- fix dirty stuff in segment/curve interaction x
+- fix bezier bounds with padding in strokeBounds and crunch::Bezier x (sorta)
+- add simplify function to path
+- add name setter and getter to Item x
+- add allocator stuff
+- add path intersections
+- add path/curve splitting
+- cache absolute transform / remove transform components from untransformed items to save memory x
+- make clipping paths work x
+- make compound paths work x
+- SVG export x
+- SVG import
+- add boolean operations
+- gradients
+- different blend modes
+- shadows

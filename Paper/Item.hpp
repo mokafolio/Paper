@@ -172,6 +172,8 @@ namespace paper
         //returns the root of the DOM, which is the Document
         Document document() const;
 
+        EntityType itemType() const;
+
 
         void markAbsoluteTransformDirty();
 
@@ -203,6 +205,7 @@ namespace paper
             bool bEmpty;
             Rect rect;
         };
+        
         BoundsResult computeBounds(const Mat3f * _transform, BoundsType _type, bool _bAbsolute) const;
 
 

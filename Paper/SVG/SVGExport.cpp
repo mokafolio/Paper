@@ -195,7 +195,11 @@ namespace paper
                     if (_path.segments().count() == 2)
                     {
                         Shrub pathNode("line");
-                        pathNode.set("points", String::concat(toSVGPoint(_path.segments()[0].position()), " ", toSVGPoint(_path.segments()[1].position())), ValueHint::XMLAttribute);
+                        //pathNode.set("x1", String::concat(toSVGPoint(_path.segments()[0].position()), " ", toSVGPoint(_path.segments()[1].position())), ValueHint::XMLAttribute);
+                        pathNode.set("x1", toString(_path.segments()[0].position().x), ValueHint::XMLAttribute);
+                        pathNode.set("y1", toString(_path.segments()[0].position().y), ValueHint::XMLAttribute);
+                        pathNode.set("x2", toString(_path.segments()[1].position().x), ValueHint::XMLAttribute);
+                        pathNode.set("y2", toString(_path.segments()[1].position().y), ValueHint::XMLAttribute);
                         _pn = &_parentTreeNode.append(pathNode);
                     }
                 }

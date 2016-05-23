@@ -138,9 +138,15 @@ namespace paper
     stick::Error Document::saveSVG(const stick::URI & _uri) const
     {
         auto res = exportSVG();
-        if(res)
+        if (res)
             return saveTextFile(res.text(), _uri);
         return res.error();
+    }
+
+    brick::Hub & defaultHub()
+    {
+        static brick::Hub s_hub;
+        return s_hub;
     }
 
     Document createDocument(brick::Hub & _hub, const stick::String & _name)

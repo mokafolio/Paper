@@ -221,10 +221,9 @@ namespace paper
             }
 
             set<comps::ClosedFlag>(true);
+            markGeometryDirty();
+            markBoundsDirty(true);
         }
-
-        markGeometryDirty();
-        markBoundsDirty(true);
     }
 
     void Path::smooth(Smoothing _type)
@@ -367,8 +366,7 @@ namespace paper
             py[n] = (3 * knots[n].y - py[n1]) / 2;
 
             // Now update the segments
-            for (Int64 i = paddingLeft, max = n - paddingRight, j = _from;
-                    i <= max; i++, j++)
+            for (Int64 i = paddingLeft, max = n - paddingRight, j = _from; i <= max; i++, j++)
             {
                 Int64 index = j < 0 ? j + segs.count() : j;
                 Segment & segment = segs[index];
@@ -491,6 +489,14 @@ namespace paper
             segs.append(Segment(*this, pos, Vec2f(0.0f), Vec2f(0.0f), segs.count()));
         }
 
+        //make sure to possibly remove duplicate closing segments again
+        bool bClosed = isClosed();
+        if (bClosed)
+        {
+            set<comps::ClosedFlag>(false);
+            closePath();
+        }
+
         rebuildCurves();
         markBoundsDirty(true);
         markGeometryDirty();
@@ -504,23 +510,35 @@ namespace paper
         Size samples = 0;
         auto stepAndSampleCount = regularOffsetAndSampleCount(_maxDistance);
         Float step = stepAndSampleCount.offset;
-        while (currentOffset < len)
+        for(Int32 i = 0; i < stepAndSampleCount.sampleCount; ++i)
         {
-            tmp.append(positionAt(currentOffset));
+            tmp.append(positionAt(std::min(currentOffset, len)));
             currentOffset += step;
-            samples++;
         }
 
-        //due to floating point in accuracies, the last sample might overshoot the length of the path,
+        /*//due to floating point in accuracies, the last sample might overshoot the length of the path,
         //if that is the case, we just sample the end of the path
-        if (samples <= stepAndSampleCount.sampleCount)
+        if (samples < stepAndSampleCount.sampleCount)
+        {
+            printf("ADD LAST %f, %lu\n", len, curveArray().count());
             tmp.append(positionAt(len));
+        }*/
 
         auto & segs = get<comps::Segments>();
         segs.clear();
         for (const Vec2f & p : tmp)
         {
             segs.append(Segment(*this, p, Vec2f(0), Vec2f(0), segs.count()));
+        }
+
+        //printf("NUM NEW SEGS %lu\n", segs.count());
+
+        //make sure to possibly remove duplicate closing segments again
+        bool bClosed = isClosed();
+        if (bClosed)
+        {
+            set<comps::ClosedFlag>(false);
+            closePath();
         }
 
         rebuildCurves();
@@ -553,6 +571,12 @@ namespace paper
     }
 
     const CurveArray & Path::curves() const
+    {
+        STICK_ASSERT(hasComponent<comps::Curves>());
+        return get<comps::Curves>();
+    }
+
+    CurveArray & Path::curves()
     {
         STICK_ASSERT(hasComponent<comps::Curves>());
         return get<comps::Curves>();
@@ -786,7 +810,7 @@ namespace paper
     void Path::segmentChanged(const Segment & _seg)
     {
         //printf("SEGMENT CHANGED A %lu\n", curveArray().count());
-        if(curveArray().count() == 0)
+        if (curveArray().count() == 0)
             return;
 
         if (_seg.m_index == 0)
@@ -806,6 +830,7 @@ namespace paper
             curveArray()[_seg.m_index].markDirty();
         }
         markBoundsDirty(true);
+        markGeometryDirty();
         //printf("SEGMENT CHANGED E\n");
     }
 
@@ -828,39 +853,39 @@ namespace paper
             Vec2f pos = _bStart ? _a.position : _b.position;
             switch (_cap)
             {
-            case StrokeCap::Square:
-            {
-                Vec2f a, b, c, d;
-                detail::capSquare(pos, dir, a, b, c, d);
-                c = _strokeMat * c;
-                d = _strokeMat * d;
-                _rect = crunch::merge(_rect, _transform ? *_transform * c : c);
-                _rect = crunch::merge(_rect, _transform ? *_transform * d : d);
-                break;
-            }
-            case StrokeCap::Round:
-            {
-                Vec2f p = _strokeMat * pos;
-                if (_transform)
-                {
-                    p = *_transform * p;
-                }
-                Rect r(p - _strokePadding, p + _strokePadding);
-                _rect = crunch::merge(_rect, r);
-                break;
-            }
-            case StrokeCap::Butt:
-            {
-                Vec2f min, max;
-                detail::capOrJoinBevelMinMax(pos, dir, min, max);
-                min = _strokeMat * min;
-                max = _strokeMat * max;
-                _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
-                _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
-                break;
-            }
-            default:
-                break;
+                case StrokeCap::Square:
+                    {
+                        Vec2f a, b, c, d;
+                        detail::capSquare(pos, dir, a, b, c, d);
+                        c = _strokeMat * c;
+                        d = _strokeMat * d;
+                        _rect = crunch::merge(_rect, _transform ? *_transform * c : c);
+                        _rect = crunch::merge(_rect, _transform ? *_transform * d : d);
+                        break;
+                    }
+                case StrokeCap::Round:
+                    {
+                        Vec2f p = _strokeMat * pos;
+                        if (_transform)
+                        {
+                            p = *_transform * p;
+                        }
+                        Rect r(p - _strokePadding, p + _strokePadding);
+                        _rect = crunch::merge(_rect, r);
+                        break;
+                    }
+                case StrokeCap::Butt:
+                    {
+                        Vec2f min, max;
+                        detail::capOrJoinBevelMinMax(pos, dir, min, max);
+                        min = _strokeMat * min;
+                        max = _strokeMat * max;
+                        _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
+                        _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
+                        break;
+                    }
+                default:
+                    break;
             }
         }
 
@@ -870,78 +895,78 @@ namespace paper
         {
             switch (_join)
             {
-            case StrokeJoin::Round:
-            {
-                Vec2f p = _strokeMat * _current.position;
-                if (_transform)
-                {
-                    p = *_transform * p;
-                }
-                Rect r(p - _strokePadding, p + _strokePadding);
-                _rect = crunch::merge(_rect, r);
-                break;
-            }
-            case StrokeJoin::Miter:
-            {
-                /*const Curve & curveIn = *_segment.curveIn();
-                const Curve & curveOut = *_segment.curveOut();*/
+                case StrokeJoin::Round:
+                    {
+                        Vec2f p = _strokeMat * _current.position;
+                        if (_transform)
+                        {
+                            p = *_transform * p;
+                        }
+                        Rect r(p - _strokePadding, p + _strokePadding);
+                        _rect = crunch::merge(_rect, r);
+                        break;
+                    }
+                case StrokeJoin::Miter:
+                    {
+                        /*const Curve & curveIn = *_segment.curveIn();
+                        const Curve & curveOut = *_segment.curveOut();*/
 
-                Bezier curveIn(_prev.position, _prev.handleOut, _current.handleIn, _current.position);
-                Bezier curveOut(_current.position, _current.handleOut, _next.handleIn, _next.position);
+                        Bezier curveIn(_prev.position, _prev.handleOut, _current.handleIn, _current.position);
+                        Bezier curveOut(_current.position, _current.handleOut, _next.handleIn, _next.position);
 
-                //to know which side of the stroke is outside
-                Vec2f lastDir = curveIn.tangentAt(1);
-                Vec2f nextDir = curveOut.tangentAt(0);
-                Vec2f lastPerp(lastDir.y, -lastDir.x);
-                Vec2f perp(nextDir.y, -nextDir.x);
-                Float cross = lastDir.x * nextDir.y - nextDir.x * lastDir.y;
+                        //to know which side of the stroke is outside
+                        Vec2f lastDir = curveIn.tangentAt(1);
+                        Vec2f nextDir = curveOut.tangentAt(0);
+                        Vec2f lastPerp(lastDir.y, -lastDir.x);
+                        Vec2f perp(nextDir.y, -nextDir.x);
+                        Float cross = lastDir.x * nextDir.y - nextDir.x * lastDir.y;
 
-                Vec2f miter;
-                Float miterLen;
-                Vec2f pos = _current.position;
+                        Vec2f miter;
+                        Float miterLen;
+                        Vec2f pos = _current.position;
 
-                if (cross >= 0.0)
-                {
-                    miter = detail::joinMiter(pos, pos + lastPerp, lastDir,
-                                              pos + perp, nextDir, miterLen);
-                }
-                else
-                {
-                    miter = detail::joinMiter(pos, pos - lastPerp, lastDir,
-                                              pos - perp, nextDir, miterLen);
-                }
+                        if (cross >= 0.0)
+                        {
+                            miter = detail::joinMiter(pos, pos + lastPerp, lastDir,
+                                                      pos + perp, nextDir, miterLen);
+                        }
+                        else
+                        {
+                            miter = detail::joinMiter(pos, pos - lastPerp, lastDir,
+                                                      pos - perp, nextDir, miterLen);
+                        }
 
-                if (miterLen <= _miterLimit)
-                {
-                    miter = _strokeMat * miter;
-                    _rect = crunch::merge(_rect, _transform ? *_transform * miter : miter);
+                        if (miterLen <= _miterLimit)
+                        {
+                            miter = _strokeMat * miter;
+                            _rect = crunch::merge(_rect, _transform ? *_transform * miter : miter);
+                            break;
+                        }
+                        //else fall back to Bevel
+                    }
+                case StrokeJoin::Bevel:
+                    {
+                        Bezier curveIn(_prev.position, _prev.handleOut, _current.handleIn, _current.position);
+                        Bezier curveOut(_current.position, _current.handleOut, _next.handleIn, _next.position);
+
+                        Vec2f min, max;
+                        Vec2f dirA = curveIn.tangentAt(1);
+                        Vec2f dirB = curveOut.tangentAt(0);
+                        detail::capOrJoinBevelMinMax(_current.position, dirA, min, max);
+                        min = _strokeMat * min;
+                        max = _strokeMat * max;
+
+                        _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
+                        _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
+                        detail::capOrJoinBevelMinMax(_current.position, dirB, min, max);
+                        min = _strokeMat * min;
+                        max = _strokeMat * max;
+                        _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
+                        _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
+                        break;
+                    }
+                default:
                     break;
-                }
-                //else fall back to Bevel
-            }
-            case StrokeJoin::Bevel:
-            {
-                Bezier curveIn(_prev.position, _prev.handleOut, _current.handleIn, _current.position);
-                Bezier curveOut(_current.position, _current.handleOut, _next.handleIn, _next.position);
-
-                Vec2f min, max;
-                Vec2f dirA = curveIn.tangentAt(1);
-                Vec2f dirB = curveOut.tangentAt(0);
-                detail::capOrJoinBevelMinMax(_current.position, dirA, min, max);
-                min = _strokeMat * min;
-                max = _strokeMat * max;
-
-                _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
-                _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
-                detail::capOrJoinBevelMinMax(_current.position, dirB, min, max);
-                min = _strokeMat * min;
-                max = _strokeMat * max;
-                _rect = crunch::merge(_rect, _transform ? *_transform * min : min);
-                _rect = crunch::merge(_rect, _transform ? *_transform * max : max);
-                break;
-            }
-            default:
-                break;
             }
         }
     }
@@ -951,7 +976,7 @@ namespace paper
         if (!segmentArray().count())
             return {true, Rect(0, 0, 0, 0)};
 
-        if(segmentArray().count() == 1)
+        if (segmentArray().count() == 1)
         {
             Vec2f p = _transform ? *_transform * segmentArray()[0].position() : segmentArray()[0].position();
             return {false, Rect(p, p)};
@@ -1094,7 +1119,7 @@ namespace paper
     {
         auto ret = computeStrokeBounds(_transform);
 
-        if(ret.bEmpty)
+        if (ret.bEmpty)
             return ret;
 
         if (_transform)

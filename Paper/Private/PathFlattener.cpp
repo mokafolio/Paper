@@ -3,6 +3,8 @@
 #include <Paper/Components.hpp>
 #include <Paper/Private/PathFlattener.hpp>
 
+#include <Crunch/StringConversion.hpp>
+
 namespace paper
 {
     namespace detail
@@ -17,7 +19,9 @@ namespace paper
             // http://hcklbrrfnn.files.wordpress.com/2012/08/bez.pdf
             Vec2f u = _curve.handleOne() * 3.0 - _curve.positionOne() * 2.0 - _curve.positionTwo();
             Vec2f v = _curve.handleTwo() * 3.0 - _curve.positionTwo() * 2.0 - _curve.positionOne();
-            return std::max(u.x * u.x, v.x * v.x) + std::max(u.y * u.y, v.y * v.y) < 10.0 * _tolerance * _tolerance;
+            auto val = std::max(u.x * u.x, v.x * v.x) + std::max(u.y * u.y, v.y * v.y);
+            //STICK_ASSERT(!std::isnan(val));
+            return val < 10.0 * _tolerance * _tolerance;
         }
 
         void PathFlattener::flatten(const Path & _path, PositionArray & _outPositions, JoinArray * _outJoins,
@@ -37,7 +41,6 @@ namespace paper
             if (_recursionDepth < _maxRecursionDepth && !isFlatEnough(_curve, _angleTolerance))
             {
                 Bezier::Pair curves = _curve.subdivide(0.5);
-
                 flattenCurve(curves.first, _initialCurve, _outPositions, _outJoins, _angleTolerance, _minDistance, _recursionDepth + 1, _maxRecursionDepth, _bIsClosed, _bLastCurve);
                 flattenCurve(curves.second, _initialCurve, _outPositions, _outJoins, _angleTolerance, _minDistance, _recursionDepth + 1, _maxRecursionDepth, _bIsClosed, _bLastCurve);
             }
@@ -51,7 +54,7 @@ namespace paper
                         _outPositions.append(_curve.positionTwo());
                         if (_outJoins)
                         {
-                            if(_bIsClosed)
+                            if (_bIsClosed)
                                 _outJoins->append(_curve.positionTwo() == _initialCurve.positionTwo());
                             else
                                 _outJoins->append(_curve.positionTwo() == _initialCurve.positionTwo() && !_bLastCurve);

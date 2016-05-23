@@ -17,8 +17,6 @@ namespace paper
 {
     class STICK_API Document : public Item
     {
-        friend class Layer;
-
     public:
 
         Document();
@@ -52,7 +50,9 @@ namespace paper
         stick::Error saveSVG(const stick::URI & _uri) const;
     };
 
-    STICK_API Document createDocument(brick::Hub & _hub, const stick::String & _name = "");
+    STICK_API brick::Hub & defaultHub();
+
+    STICK_API Document createDocument(brick::Hub & _hub = defaultHub(), const stick::String & _name = "");
 }
 
 #endif //PAPER_DOCUMENT_HPP

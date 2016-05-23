@@ -78,6 +78,8 @@ namespace paper
 
         const CurveArray & curves() const;
 
+        CurveArray & curves();
+
 
         Vec2f positionAt(Float _offset) const;
 

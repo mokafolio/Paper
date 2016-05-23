@@ -395,72 +395,6 @@ namespace paper
         return crunch::abs(Vec2f(hlen * std::cos(tx) * c + vlen * std::sin(tx) * s,
                                  vlen * std::sin(ty) * c + hlen * std::cos(ty) * s));
     }
-    /*
-    void Item::updateBounds(bool _bIgnoreTransform) const
-    {
-        STICK_ASSERT(hasComponent<comps::ItemType>());
-        auto type = get<comps::ItemType>();
-        auto & bounds = !_bIgnoreTransform ? const_cast<Item *>(this)->get<comps::Bounds>() : const_cast<Item *>(this)->get<comps::LocalBounds>();
-        STICK_ASSERT(bounds.bDirty);
-        auto & children = get<comps::Children>();
-        Rect newBounds(0, 0, 0, 0);
-        if (type == EntityType::Group)
-        {
-            Group g(*this);
-            newBounds = g.computeBounds(_bIgnoreTransform);
-        }
-        else if (type == EntityType::Path)
-        {
-            Path p(*this);
-            if(_bIgnoreTransform)
-                newBounds = p.computeBounds(nullptr);
-            else
-            {
-                Mat4f transform = p.absoluteTransform();
-
-            }
-        }
-        bounds.bDirty = false;
-    }
-
-    void Item::updateStrokeBounds(bool _bIgnoreTransform) const
-    {
-        STICK_ASSERT(hasComponent<comps::ItemType>());
-        auto type = get<comps::ItemType>();
-        auto & bounds = const_cast<Item *>(this)->get<comps::StrokeBounds>();
-        STICK_ASSERT(bounds.bDirty);
-        if (type == EntityType::Group)
-        {
-            Group g(*this);
-            bounds.bounds = g.computeStrokeBounds(_bIgnoreTransform);
-        }
-        else if (type == EntityType::Path)
-        {
-            Path p(*this);
-            bounds.bounds = p.computeStrokeBounds(_bIgnoreTransform);
-        }
-
-        bounds.bDirty = false;
-    }
-
-    void Item::updateHandleBounds(bool _bIgnoreTransform) const
-    {
-        STICK_ASSERT(hasComponent<comps::ItemType>());
-        auto type = get<comps::ItemType>();
-        auto & bounds = const_cast<Item *>(this)->get<comps::HandleBounds>();
-        STICK_ASSERT(bounds.bDirty);
-        if (type == EntityType::Group)
-        {
-            /*Group g(*this);
-            bounds.bounds = g.computeStrokeBounds();
-        }
-        else if (type == EntityType::Path)
-        {
-            Path p(*this);
-            bounds.bounds = p.computeHandleBounds(_bIgnoreTransform);
-        }
-        bounds.bDirty = false;
-    }*/
 
     Mat3f Item::strokeTransform(const Mat3f * _transform, Float _strokeWidth, bool _bIsScalingStroke)
     {
@@ -971,5 +905,10 @@ namespace paper
         }
         STICK_ASSERT(item.get<comps::ItemType>() == EntityType::Document);
         return Document(item);
+    }
+
+    EntityType Item::itemType() const
+    {
+        return get<comps::ItemType>();
     }
 }

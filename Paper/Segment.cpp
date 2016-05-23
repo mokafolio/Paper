@@ -119,17 +119,51 @@ namespace paper
 
     void Segment::transform(const Mat3f & _transform)
     {
+        STICK_ASSERT(!std::isnan(m_handleIn.x));
+        STICK_ASSERT(!std::isnan(m_handleIn.y));
+        STICK_ASSERT(!std::isnan(m_handleOut.x));
+        STICK_ASSERT(!std::isnan(m_handleOut.y));
+        STICK_ASSERT(!std::isnan(m_position.x));
+        STICK_ASSERT(!std::isnan(m_position.y));
+
+        STICK_ASSERT(!std::isnan(_transform.element(0, 0)));
+        STICK_ASSERT(!std::isnan(_transform.element(0, 1)));
+        STICK_ASSERT(!std::isnan(_transform.element(0, 2)));
+
+        STICK_ASSERT(!std::isnan(_transform.element(1, 0)));
+        STICK_ASSERT(!std::isnan(_transform.element(1, 1)));
+        STICK_ASSERT(!std::isnan(_transform.element(1, 2)));
+
+        STICK_ASSERT(!std::isnan(_transform.element(2, 0)));
+        STICK_ASSERT(!std::isnan(_transform.element(2, 1)));
+        STICK_ASSERT(!std::isnan(_transform.element(2, 2)));
+
         m_handleIn = _transform * (m_position + m_handleIn);
         m_handleOut = _transform * (m_position + m_handleOut);
+
+        STICK_ASSERT(!std::isnan(m_handleIn.x));
+        STICK_ASSERT(!std::isnan(m_handleIn.y));
+        STICK_ASSERT(!std::isnan(m_handleOut.x));
+        STICK_ASSERT(!std::isnan(m_handleOut.y));
+        STICK_ASSERT(!std::isnan(m_position.x));
+        STICK_ASSERT(!std::isnan(m_position.y));
+
         m_position = _transform * m_position;
         m_handleIn -= m_position;
         m_handleOut -= m_position;
 
+        STICK_ASSERT(!std::isnan(m_handleIn.x));
+        STICK_ASSERT(!std::isnan(m_handleIn.y));
+        STICK_ASSERT(!std::isnan(m_handleOut.x));
+        STICK_ASSERT(!std::isnan(m_handleOut.y));
+        STICK_ASSERT(!std::isnan(m_position.x));
+        STICK_ASSERT(!std::isnan(m_position.y));
+
         Curve * cin = curveIn();
         Curve * cout = curveOut();
-        if(cin)
+        if (cin)
             cin->markDirty();
-        if(cout)
+        if (cout)
             cout->markDirty();
     }
 }
