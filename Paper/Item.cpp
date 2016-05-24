@@ -868,10 +868,11 @@ namespace paper
         }
 
         if (from.isClosed())
+        {
+            copy.set<comps::ClosedFlag>(false);
             copy.closePath();
+        }
 
-        copy.markGeometryDirty();
-        copy.markBoundsDirty(true);
         copy.insertAbove(_path);
 
         for (Item child : from.children())

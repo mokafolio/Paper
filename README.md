@@ -21,7 +21,6 @@ If you installed *Homebrew*, hook into [this](https://github.com/mokafolio/homeb
 Then run the following to install *Paper* and all its dependencies.
 `brew install paper`
 
-
 Dependencies
 ----------
 
@@ -29,6 +28,11 @@ Dependencies
 - [Crunch](https://github.com/mokafolio/Crunch) for math.
 - [Brick](https://github.com/mokafolio/Brick) for entity/component things that are used to represent the DOM.
 - [Scrub](https://github.com/mokafolio/Scrub) for xml/json parsing and composing.
+
+
+Examples
+---------
+Paper examples are located [here](https://github.com/mokafolio/PaperExamples). A lot more coming soonish.
 
 
 License
@@ -52,3 +56,4 @@ TODO
 - gradients
 - different blend modes
 - shadows
+- A lot more unit tests (specifically for numeric stability).

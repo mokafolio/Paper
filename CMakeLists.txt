@@ -4,7 +4,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions")
 
 find_package(OpenGL REQUIRED)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include)
-link_directories(/usr/local/lib)
+link_directories(/usr/local/lib ${CMAKE_INSTALL_PREFIX}/lib)
 
 set (PAPERDEPS Stick Brick Scrub ${OPENGL_LIBRARIES})
 
@@ -52,4 +52,3 @@ foreach ( file ${PAPERINC} )
     install( FILES ${file} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${dir} )
 endforeach()
 add_subdirectory (Tests)
-add_subdirectory (Examples)
