@@ -7,34 +7,34 @@
 
 namespace paper
 {
-    enum class STICK_API EntityType
+    STICK_API_ENUM_CLASS(EntityType)
     {
         Document,
         Group,
         Path
     };
 
-    enum class STICK_API StrokeCap
+    STICK_API_ENUM_CLASS(StrokeCap)
     {
         Round,
         Square,
         Butt
     };
 
-    enum class STICK_API StrokeJoin
+    STICK_API_ENUM_CLASS(StrokeJoin)
     {
         Miter,
         Round,
         Bevel
     };
 
-    enum class STICK_API WindingRule
+    STICK_API_ENUM_CLASS(WindingRule)
     {
         EvenOdd,
         NonZero
     };
 
-    enum class STICK_API Smoothing
+    STICK_API_ENUM_CLASS(Smoothing)
     {
         Continuous,
         Asymmetric,

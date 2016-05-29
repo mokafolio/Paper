@@ -9,7 +9,7 @@ namespace paper
 
     namespace detail
     {
-        enum class STICK_LOCAL ShapeType
+        STICK_LOCAL_ENUM_CLASS(ShapeType)
         {
             None,
             Rectangle, //also rounded rect

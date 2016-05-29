@@ -1,6 +1,7 @@
 #include <Paper/OpenGL/GLRenderer.hpp>
 #include <Paper/Private/PathFlattener.hpp>
 #include <Paper/Private/StrokeTriangulator.hpp>
+#include <Paper/Constants.hpp>
 #include <Stick/Platform.hpp>
 #include <Crunch/MatrixFunc.hpp>
 #include <Crunch/StringConversion.hpp>
@@ -22,6 +23,7 @@
 #include <GL/glext.h>
 #undef None //??? some glx thing
 #undef GL_GLEXT_PROTOTYPES
+#undef WindingRule //????? where is this a macro on linux?
 #endif
 
 #ifdef STICK_DEBUG
@@ -367,7 +369,7 @@ namespace paper
             auto planes = prepareStencilPlanes(_bIsClippingPath);
             if (style.bHasFill || _bIsClippingPath)
             {
-                if (_path.windingRule() == WindingRule::EvenOdd)
+                if (static_cast<WindingRule>(_path.windingRule()) == WindingRule::EvenOdd)
                 {
                     ret = drawFillEvenOdd(paths, cache.boundsVertices, children.count() ? &cache.transformProjection : nullptr,
                                           planes.targetStencilMask, planes.clippingPlaneToTestAgainst, style, _bIsClippingPath);
@@ -623,8 +625,8 @@ namespace paper
 
         Error GLRenderer::finishDrawing()
         {
-            ASSERT_NO_GL_ERROR(glUseProgram(NULL));
-            ASSERT_NO_GL_ERROR(glBindVertexArray(NULL));
+            ASSERT_NO_GL_ERROR(glUseProgram(0));
+            ASSERT_NO_GL_ERROR(glBindVertexArray(0));
 
             return Error();
         }
