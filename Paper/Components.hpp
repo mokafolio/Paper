@@ -12,7 +12,7 @@ namespace paper
     namespace comps
     {
         using ItemType = brick::Component<ComponentName("ItemType"), EntityType>;
-        using HubPointer = brick::Component<ComponentName("HubPointer"), brick::Hub*>;
+        using HubPointer = brick::Component<ComponentName("HubPointer"), brick::Hub *>;
         using Parent = brick::Component<ComponentName("Parent"), brick::Entity>;
         using Name = brick::Component<ComponentName("Name"), stick::String>;
         using Children = brick::Component<ComponentName("Children"), EntityArray>;
@@ -45,6 +45,14 @@ namespace paper
         using Bounds = brick::Component<ComponentName("Bounds"), BoundsData>;
         using LocalBounds = brick::Component<ComponentName("LocalBounds"), BoundsData>;
         using Pivot = brick::Component<ComponentName("Pivot"), Vec2f>;
+
+        struct DecomposedData
+        {
+            Vec2f translation;
+            Float rotation;
+            Vec2f scaling;
+        };
+        using DecomposedTransform = brick::Component<ComponentName("DecomposedTransform"), DecomposedData>;
 
         //document specific components
         using DocumentSize = brick::Component<ComponentName("DocumentSize"), Vec2f>;

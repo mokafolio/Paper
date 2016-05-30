@@ -48,7 +48,7 @@ namespace paper
         void setPosition(const Vec2f & _position);
 
         void setPivot(const Vec2f & _pivot);
-        
+
         void setVisible(bool _b);
 
         void setName(const stick::String & _name);
@@ -99,6 +99,18 @@ namespace paper
         const Mat3f & transform() const;
 
         const Mat3f & absoluteTransform() const;
+
+        stick::Float32 rotation() const;
+
+        const Vec2f & translation() const;
+
+        const Vec2f & scaling() const;
+
+        Vec2f absoluteScaling() const;
+
+        Vec2f absoluteTranslation() const;
+
+        Vec2f absoluteRotation() const;
 
         const Rect & bounds() const;
 
@@ -200,12 +212,14 @@ namespace paper
 
         Vec2f strokePadding(Float _strokeWidth, const Mat3f & _strokeMat) const;
 
+        void decomposeIfNeeded() const;
+
         struct BoundsResult
         {
             bool bEmpty;
             Rect rect;
         };
-        
+
         BoundsResult computeBounds(const Mat3f * _transform, BoundsType _type, bool _bAbsolute) const;
 
 
@@ -213,10 +227,10 @@ namespace paper
         stick::Maybe<typename C::ValueType &> findComponent() const
         {
             Item i(*this);
-            while(i.isValid())
-            {   
+            while (i.isValid())
+            {
                 auto maybe = i.maybe<C>();
-                if(maybe)
+                if (maybe)
                     return maybe;
                 i = i.parent();
             }

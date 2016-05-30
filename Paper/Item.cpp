@@ -359,6 +359,55 @@ namespace paper
         return transform();
     }
 
+    void Item::decomposeIfNeeded() const
+    {
+        if (hasComponent<comps::DecomposedTransform>())
+            return;
+        Float rotation;
+        Vec2f scaling, translation;
+        crunch::decompose(transform(), translation, rotation, scaling);
+        const_cast<Item*>(this)->set<comps::DecomposedTransform>((comps::DecomposedData){translation, rotation, scaling});
+    }
+
+    stick::Float32 Item::rotation() const
+    {
+        decomposeIfNeeded();
+        return get<comps::DecomposedTransform>().rotation;
+    }
+
+    const Vec2f & Item::translation() const
+    {
+        decomposeIfNeeded();
+        return get<comps::DecomposedTransform>().translation;
+    }
+
+    const Vec2f & Item::scaling() const
+    {
+        decomposeIfNeeded();
+        return get<comps::DecomposedTransform>().scaling;
+    }
+
+    Vec2f Item::absoluteScaling() const
+    {
+        decomposeIfNeeded();
+        if (parent().isValid())
+            return Item(parent()).absoluteScaling() + scaling();
+    }
+
+    Vec2f Item::absoluteTranslation() const
+    {
+        decomposeIfNeeded();
+        if (parent().isValid())
+            return Item(parent()).absoluteTranslation() + translation();
+    }
+
+    Vec2f Item::absoluteRotation() const
+    {
+        decomposeIfNeeded();
+        if (parent().isValid())
+            return Item(parent()).absoluteRotation() + rotation();
+    }
+
     Vec2f Item::strokePadding(Float _strokeWidth, const Mat3f & _mat) const
     {
         // If a matrix is provided, we need to rotate the stroke circle
@@ -483,7 +532,7 @@ namespace paper
                     ret.rect = crunch::merge(ret.rect, tmp.rect);
             }
         }
-        
+
         return ret;
     }
 
