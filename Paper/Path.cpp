@@ -211,6 +211,7 @@ namespace paper
 
             if (crunch::isClose(first.position(), last.position(), detail::PaperConstants::tolerance()))
             {
+                printf("REMOVE DOUBLE SEG IN CLOSE\n");
                 first.setHandleIn(last.handleIn());
                 curveArray().last().m_segmentB = first.m_index;
                 segmentArray().removeLast();
@@ -373,9 +374,13 @@ namespace paper
                 Float hx = px[i] - segment.position().x;
                 Float hy = py[i] - segment.position().y;
                 if (bLoop || i < max)
+                {
                     segment.setHandleOut(Vec2f(hx, hy));
+                }
                 if (bLoop || i > paddingLeft)
+                {
                     segment.setHandleIn(Vec2f(-hx, -hy));
+                }
             }
 
             rebuildCurves();

@@ -204,7 +204,8 @@ namespace paper
             m_bCanSwapStencilPlanesWhenEnding(true),
             m_bIsClipping(false)
         {
-
+            m_projection = Mat4f::identity();
+            m_transform = Mat4f::identity();
         }
 
         GLRenderer::GLRenderer(const Document & _doc) :
@@ -243,6 +244,11 @@ namespace paper
             m_viewport = Vec2f(_widthInPixels, _heightInPixels);
         }
 
+        void GLRenderer::setTransform(const Mat3f & _transform)
+        {
+            m_transform = crunch::to3DTransform(_transform);;
+        }
+
         GLRenderer::RenderCacheData & GLRenderer::updateRenderCache(const Path & _path, const PathStyle & _style, bool _bIsClipping)
         {
             Path p(_path);
@@ -254,7 +260,7 @@ namespace paper
             RenderCacheData & cache = p.get<RenderCache>();
             if (_bIsClipping || _style.bHasFill || _style.strokeWidth > 0)
             {
-                cache.transformProjection = m_projection * crunch::to3DTransform(p.absoluteTransform());
+                cache.transformProjection = m_projection * m_transform * crunch::to3DTransform(p.absoluteTransform());
                 if (p.hasComponent<comps::FillGeometryDirtyFlag>())
                 {
                     if (p.get<comps::FillGeometryDirtyFlag>())

@@ -119,6 +119,12 @@ namespace paper
         p.markBoundsDirty(true);
     }
 
+    void Item::reverseChildren()
+    {
+        auto & cs = get<comps::Children>();
+        std::reverse(cs.begin(), cs.end());
+    }
+
     void Item::remove()
     {
         STICK_ASSERT(isValid());
@@ -190,6 +196,8 @@ namespace paper
         set<comps::Transform>(_transform);
         markBoundsDirty(true);
         markAbsoluteTransformDirty();
+        if (hasComponent<comps::DecomposedTransform>())
+            removeComponent<comps::DecomposedTransform>();
     }
 
     void Item::setPosition(const Vec2f & _position)
@@ -258,6 +266,8 @@ namespace paper
         set<comps::Transform>(_matrix * transform());
         markBoundsDirty(true);
         markAbsoluteTransformDirty();
+        if (hasComponent<comps::DecomposedTransform>())
+            removeComponent<comps::DecomposedTransform>();
     }
 
     void Item::translate(Float _x, Float _y)
@@ -363,10 +373,11 @@ namespace paper
     {
         if (hasComponent<comps::DecomposedTransform>())
             return;
+        
         Float rotation;
         Vec2f scaling, translation;
         crunch::decompose(transform(), translation, rotation, scaling);
-        const_cast<Item*>(this)->set<comps::DecomposedTransform>((comps::DecomposedData){translation, rotation, scaling});
+        const_cast<Item *>(this)->set<comps::DecomposedTransform>((comps::DecomposedData) {translation, rotation, scaling});
     }
 
     stick::Float32 Item::rotation() const

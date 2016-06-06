@@ -20,6 +20,7 @@ namespace paper
 
             void setViewport(Float _widthInPixels, Float _heightInPixels) override;
 
+            void setTransform(const Mat3f & _transform) override;
 
         protected:
 
@@ -126,6 +127,7 @@ namespace paper
             bool m_bIsClipping;
             crunch::Vec2f m_viewport;
             crunch::Mat4f m_projection;
+            crunch::Mat4f m_transform;
         };
     }
 }

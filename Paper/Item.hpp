@@ -38,6 +38,8 @@ namespace paper
 
         void removeChildren();
 
+        void reverseChildren();
+
         const EntityArray & children() const;
 
         const stick::String & name() const;

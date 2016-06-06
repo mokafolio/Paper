@@ -25,6 +25,8 @@ namespace paper
 
         virtual void setViewport(Float _widthInPixels, Float _heightInPixels) = 0;
 
+        virtual void setTransform(const Mat3f & _transform) = 0;
+
 
     protected:
 

@@ -50,6 +50,9 @@ namespace paper
         if (et == EntityType::Group)
         {
             Group grp(_item);
+            if(!grp.isVisible())
+                return ret;
+
             if (grp.isClipped())
             {
                 const auto & c2 = grp.children();
@@ -69,7 +72,9 @@ namespace paper
         }
         else if (et == EntityType::Path)
         {
-            ret = drawPath(Path(_item));
+            Path p(_item);
+            if(p.isVisible() && p.segments().count() > 1)
+                ret = drawPath(p);
         }
         return ret;
     }
