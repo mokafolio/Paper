@@ -139,7 +139,7 @@ namespace paper
     {
         auto res = exportSVG();
         if (res)
-            return saveTextFile(res.text(), _uri);
+            return saveTextFile(res.get(), _uri);
         return res.error();
     }
 
