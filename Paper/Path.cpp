@@ -211,7 +211,6 @@ namespace paper
 
             if (crunch::isClose(first.position(), last.position(), detail::PaperConstants::tolerance()))
             {
-                printf("REMOVE DOUBLE SEG IN CLOSE\n");
                 first.setHandleIn(last.handleIn());
                 curveArray().last().m_segmentB = first.m_index;
                 segmentArray().removeLast();
@@ -1166,5 +1165,10 @@ namespace paper
         {
             s.transform(_transform);
         }
+    }
+
+    Path Path::clone() const
+    {
+        return Path(Item::clone());
     }
 }

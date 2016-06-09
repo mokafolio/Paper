@@ -22,4 +22,9 @@ namespace paper
     {
         return get<comps::ClippedFlag>();
     }
+
+    Group Group::clone() const
+    {
+        return Group(Item::clone());
+    }
 }

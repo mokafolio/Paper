@@ -24,6 +24,8 @@ namespace paper
         void setClipped(bool _b);
         
         bool isClipped() const;
+
+        Group clone() const;
     };
 }
 

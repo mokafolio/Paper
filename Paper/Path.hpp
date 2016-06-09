@@ -139,6 +139,8 @@ namespace paper
 
         bool contains(const Vec2f & _p) const;
 
+        Path clone() const;
+
 
     private:
 
