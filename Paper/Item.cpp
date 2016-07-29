@@ -323,9 +323,10 @@ namespace paper
         {
             Path p(*this);
             p.applyTransform(_transform);
-            markGeometryDirty();
-            markBoundsDirty(_bNotifyParent);
         }
+
+        markGeometryDirty();
+        markBoundsDirty(_bNotifyParent);
 
         if (hasComponent<comps::Children>())
         {
