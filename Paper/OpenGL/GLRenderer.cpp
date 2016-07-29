@@ -97,11 +97,10 @@ namespace paper
                 //2 bits. These need to be the lower bits in order to work with the
                 //Increment, Decrement stencil operations
                 //http://www.opengl.org/discussion_boards/showthread.php/149740-glStencilOp-s-GL_INCR-GL_DECR-behaviour-when-masked
-                FillRasterStencilPlane = 0x3, //binary mask 00000011
-                ClipStencilPlaneOne = 1 << 3, //binary mask 00000100
-                ClipStencilPlaneTwo = 1 << 4, //binary mask 00001000
-                OcclusionStencilPlane = 1 << 5, //binary mask 00010000 /* Not used right now, I did some tests using it for drawing opaque geometry back to front to minimize overdraw, didn't seem to make a big difference */
-                StrokeRasterStencilPlane = 1 << 6 //binary mask 00100000
+                FillRasterStencilPlane = 0x1F, //binary mask    00011111
+                ClipStencilPlaneOne = 1 << 5, //binary mask     00100000
+                ClipStencilPlaneTwo = 1 << 6, //binary mask     01000000
+                StrokeRasterStencilPlane = 1 << 7 //binary mask 10000000
             };
         }
 
@@ -559,7 +558,7 @@ namespace paper
             }
 
             //this is sort of meta O_o: 32 in binary is 00100000, which represents the two bits of OcclusionStencilPlane...not exactly sure why this works, needs more checking.
-            ASSERT_NO_GL_ERROR(glStencilFunc(GL_LESS, 32, detail::FillRasterStencilPlane));
+            ASSERT_NO_GL_ERROR(glStencilFunc(GL_NOTEQUAL, 0, detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilMask(detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
@@ -624,6 +623,7 @@ namespace paper
 
             ASSERT_NO_GL_ERROR(glUseProgram(m_program));
             ASSERT_NO_GL_ERROR(glBindVertexArray(m_vao));
+            ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
             ASSERT_NO_GL_ERROR(glViewport(0, 0, m_viewport.x, m_viewport.y));
             m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
             return Error();
@@ -632,7 +632,12 @@ namespace paper
         Error GLRenderer::finishDrawing()
         {
             ASSERT_NO_GL_ERROR(glUseProgram(0));
+            ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, 0));
             ASSERT_NO_GL_ERROR(glBindVertexArray(0));
+
+            ASSERT_NO_GL_ERROR(glDisable(GL_BLEND));
+            ASSERT_NO_GL_ERROR(glDisable(GL_CULL_FACE));
+            ASSERT_NO_GL_ERROR(glDisable(GL_STENCIL_TEST));
 
             return Error();
         }

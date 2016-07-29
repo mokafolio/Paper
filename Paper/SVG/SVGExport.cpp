@@ -44,16 +44,32 @@ namespace paper
                 exportItem(item, *parent, false);
             }
 
+            for (auto & child : m_tree)
+            {
+                printf("SCRUB CHILD: %s\n", child.name().cString());
+            }
+
             return exportXML(m_tree);
         }
 
         void SVGExport::addToDefsNode(Shrub & _node)
         {
-
+            auto defs = m_tree.child("defs");
+            Shrub * defsPtr = nullptr;
+            if(defs)
+            {
+                defsPtr = &(*defs);
+            }
+            else
+            {
+                defsPtr = &m_tree.append("defs");
+            }
+            defsPtr->append(_node);
         }
 
         void SVGExport::exportItem(const Item & _item, Shrub & _parentTreeNode, bool _bIsClipMask)
         {
+            printf("EXPORT ITEM!!!\n");
             auto it = _item.get<comps::ItemType>();
             if (it == EntityType::Group)
             {
@@ -81,7 +97,7 @@ namespace paper
 
         void SVGExport::exportGroup(const Group & _group, Shrub & _parentTreeNode)
         {
-            if(!_group.children().count())
+            if (!_group.children().count())
                 return;
             Shrub groupNode("g");
             auto it = _group.children().begin();
@@ -215,7 +231,7 @@ namespace paper
         }
 
         void SVGExport::exportPath(const Path & _path, Shrub & _parentTreeNode, bool _bIsClipPath, bool _bMatchShape)
-        {   
+        {
             Shrub * pn = nullptr;
             bool bIsCompoundPath = _path.children().count();
             if (bIsCompoundPath)
@@ -237,11 +253,13 @@ namespace paper
             {
                 if (_bMatchShape)
                 {
+                    printf("MATCH SHAPE!!!\n");
                     //this does shape matching
                     detail::Shape shape(_path);
                     detail::ShapeType shapeType = shape.shapeType();
                     if (shapeType == detail::ShapeType::Circle)
                     {
+                        printf("GOT CIRCLEEE\n");
                         Shrub & circleNode = _parentTreeNode.append("circle");
                         circleNode.set("cx", shape.circle().position.x, ValueHint::XMLAttribute);
                         circleNode.set("cy", shape.circle().position.y, ValueHint::XMLAttribute);
@@ -333,7 +351,7 @@ namespace paper
                 {
                     _node.set("fill-rule", "evenodd", ValueHint::XMLAttribute);
                 }
-            } 
+            }
 
             //stroke related things
             if (!_item.hasStroke())

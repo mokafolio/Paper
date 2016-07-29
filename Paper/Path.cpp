@@ -514,9 +514,14 @@ namespace paper
         Size samples = 0;
         auto stepAndSampleCount = regularOffsetAndSampleCount(_maxDistance);
         Float step = stepAndSampleCount.offset;
-        for(Int32 i = 0; i < stepAndSampleCount.sampleCount; ++i)
+        for (Int32 i = 0; i < stepAndSampleCount.sampleCount; ++i)
         {
             tmp.append(positionAt(std::min(currentOffset, len)));
+            Float delta = len - currentOffset;
+            if (delta < step)
+            {
+                step = delta * 0.5;
+            }
             currentOffset += step;
         }
 

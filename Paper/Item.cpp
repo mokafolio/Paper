@@ -898,6 +898,7 @@ namespace paper
     {
         markFillGeometryDirty();
         markStrokeGeometryDirty();
+        set<comps::PathLength>(true);
     }
 
     static Item cloneGroup(const Item & _grp)
