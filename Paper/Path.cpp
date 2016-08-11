@@ -804,7 +804,7 @@ namespace paper
             curves.append(Curve(*this, i, i + 1));
         }
 
-        if (isClosed())
+        if (isClosed() && segs.count() > 1)
             curves.append(Curve(*this, segs.count() - 1, 0));
     }
 
