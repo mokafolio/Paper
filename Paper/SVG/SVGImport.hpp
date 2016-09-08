@@ -3,6 +3,7 @@
 
 #include <Stick/Result.hpp>
 #include <Stick/URI.hpp>
+#include <Stick/HashMap.hpp>
 #include <Scrub/Shrub.hpp>
 #include <Paper/BasicTypes.hpp>
 
@@ -32,33 +33,37 @@ namespace paper
 
             GroupResult importFromFile(const stick::URI & _uri);
 
-            void recursivelyImportNode(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Item recursivelyImportNode(const Shrub & _node, stick::Error & _error);
 
-            void importGroup(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Group importGroup(const Shrub & _node, stick::Error & _error);
 
-            void importPath(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importPath(const Shrub & _node, stick::Error & _error);
 
-            void importPolygon(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importPolygon(const Shrub & _node, stick::Error & _error);
 
-            void importPolyline(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, bool _bIsPolygon, stick::Error & _error);
+            Path importPolyline(const Shrub & _node, bool _bIsPolygon, stick::Error & _error);
 
-            void importCircle(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importCircle(const Shrub & _node, stick::Error & _error);
 
-            void importEllipse(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importEllipse(const Shrub & _node, stick::Error & _error);
 
-            void importRectangle(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importRectangle(const Shrub & _node, stick::Error & _error);
 
-            void importLine(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, stick::Error & _error);
+            Path importLine(const Shrub & _node, stick::Error & _error);
 
-            void importText();
-
-            void importSymbol();
-
-            void importUse();
+            // // Not supported yet
+            // void importText();
+            // // Not supported yet
+            // void importSymbol();
+            // // Not supported yet
+            // void importUse();
 
         private:
 
+            void parseAttributes(const Shrub & _node, Item & _item);
+
             Document * m_document;
+            stick::HashMap<stick::String, Item> m_defs;
         };
     }
 }

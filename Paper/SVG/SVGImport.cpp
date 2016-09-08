@@ -21,17 +21,18 @@ namespace paper
 
         GroupResult SVGImport::importFromString(const String & _svg)
         {
+            m_defs.clear();
             auto shrubRes = parseXML(_svg);
             if (!shrubRes)
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
-            auto maybe = svg.child("defs");
-            Shrub * defs = nullptr;
-            if (maybe) defs = &*maybe;
 
-            Group ret = m_document->createGroup();
+            // auto maybe = svg.child("defs");
+            // Shrub * defs = nullptr;
+            // if (maybe) defs = &*maybe;
+
             Error err;
-            recursivelyImportNode(svg, ret, defs, err);
+            Group ret = Group(recursivelyImportNode(svg, err));
             if (err) return err;
             return ret;
         }
@@ -41,61 +42,84 @@ namespace paper
 
         }
 
-        void SVGImport::recursivelyImportNode(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        void SVGImport::parseAttributes(const Shrub & _node, Item & _item)
         {
-            if (_node.name() == "svg")
+            if (auto ch = _node.child("id"))
             {
-                importGroup(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "g")
-            {
-                importGroup(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "rect")
-            {
-                importRectangle(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "circle")
-            {
-                importCircle(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "ellipse")
-            {
-                importEllipse(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "line")
-            {
-                importLine(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "polyline")
-            {
-                importPolyline(_node, _parentToAddTo, _defsNode, false, _error);
-            }
-            else if (_node.name() == "polygon")
-            {
-                importPolygon(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else if (_node.name() == "path")
-            {
-                importPath(_node, _parentToAddTo, _defsNode, _error);
-            }
-            else
-            {
-
+                if ((*ch).valueHint() == ValueHint::XMLAttribute)
+                {
+                    const String & name = (*ch).value();
+                    _item.setName(name);
+                    m_defs.insert(name, _item);
+                }
             }
         }
 
-        void SVGImport::importGroup(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Item SVGImport::recursivelyImportNode(const Shrub & _node, Error & _error)
+        {
+            Item item;
+            if (_node.name() == "svg")
+            {
+                item = importGroup(_node, _error);
+            }
+            else if (_node.name() == "g")
+            {
+                item = importGroup(_node, _error);
+            }
+            else if (_node.name() == "rect")
+            {
+                item = importRectangle(_node, _error);
+            }
+            else if (_node.name() == "circle")
+            {
+                item = importCircle(_node, _error);
+            }
+            else if (_node.name() == "ellipse")
+            {
+                item = importEllipse(_node, _error);
+            }
+            else if (_node.name() == "line")
+            {
+                item = importLine(_node, _error);
+            }
+            else if (_node.name() == "polyline")
+            {
+                item = importPolyline(_node, false, _error);
+            }
+            else if (_node.name() == "polygon")
+            {
+                item = importPolygon(_node, _error);
+            }
+            else if (_node.name() == "path")
+            {
+                item = importPath(_node, _error);
+            }
+            else
+            {
+                //?
+            }
+
+            if (item.isValid())
+            {
+                parseAttributes(_node, item);
+            }
+
+            return item;
+        }
+
+        Group SVGImport::importGroup(const Shrub & _node, Error & _error)
         {
             Group grp = m_document->createGroup();
             for (auto & child : _node)
             {
                 if (child.valueHint() != ValueHint::XMLAttribute)
                 {
-                    recursivelyImportNode(child, grp, _defsNode, _error);
+                    Item item = recursivelyImportNode(child, _error);
                     if (_error) break;
+                    else grp.addChild(item);
                 }
             }
+            return grp;
         }
 
         static bool isCommand(const char _c)
@@ -167,10 +191,9 @@ namespace paper
             return _around + (_around - _position);
         }
 
-        void SVGImport::importPath(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importPath(const Shrub & _node, Error & _error)
         {
             auto maybe = _node.child("d");
-            // MmLlHhVvCcSsQqTtAaZz
             if (maybe)
             {
                 const String & val = (*maybe).value();
@@ -322,69 +345,82 @@ namespace paper
                     }
                     else if (cmd == 'A' || cmd == 'a')
                     {
-
+                        bool bRelative = cmd == 'a';
+                        for (int i = 0; i < numbers.count(); i += 7)
+                        {
+                            last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
+                            currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
+                                              crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 3], (bool)numbers[i + 4]);
+                            lastHandle = currentPath.segments().last().handleOutAbsolute();
+                        }
                     }
                     else if (cmd == 'Z' || cmd == 'z')
                     {
-
+                        currentPath.closePath();
+                        last = currentPath.segments().last().position();
+                        lastHandle = currentPath.segments().last().handleOutAbsolute();
                     }
                     else
                     {
                         //unknown command??
-                        //it = advanceToNextCommand(it, end);
+                        //warning? ignore silently?
                     }
                 }
                 while (it != end);
+
+                //return the path
+                return p;
             }
             else
             {
                 //TODO: Error
             }
+            return Path();
         }
 
-        void SVGImport::importPolygon(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importPolygon(const Shrub & _node, Error & _error)
         {
 
         }
 
-        void SVGImport::importPolyline(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, bool _bIsPolygon, Error & _error)
+        Path SVGImport::importPolyline(const Shrub & _node, bool _bIsPolygon, Error & _error)
         {
 
         }
 
-        void SVGImport::importCircle(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importCircle(const Shrub & _node, Error & _error)
         {
 
         }
 
-        void SVGImport::importEllipse(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importEllipse(const Shrub & _node, Error & _error)
         {
 
         }
 
-        void SVGImport::importRectangle(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importRectangle(const Shrub & _node, Error & _error)
         {
 
         }
 
-        void SVGImport::importLine(const Shrub & _node, Group & _parentToAddTo, Shrub * _defsNode, Error & _error)
+        Path SVGImport::importLine(const Shrub & _node, Error & _error)
         {
 
         }
 
-        void SVGImport::importText()
-        {
+        // void SVGImport::importText()
+        // {
 
-        }
+        // }
 
-        void SVGImport::importSymbol()
-        {
+        // void SVGImport::importSymbol()
+        // {
 
-        }
+        // }
 
-        void SVGImport::importUse()
-        {
+        // void SVGImport::importUse()
+        // {
 
-        }
+        // }
     }
 }
