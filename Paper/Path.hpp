@@ -39,6 +39,8 @@ namespace paper
 
         stick::Error arcTo(const Vec2f & _to, bool _bClockwise = true);
 
+        stick::Error arcTo(const Vec2f & _to, const Vec2f & _radii, Float _rotation, bool _bClockwise, bool _bLarge);
+
 
         //relative post-script style drawing commands
         void cubicCurveBy(const Vec2f & _handleOne, const Vec2f & _handleTwo, const Vec2f & _by);
@@ -168,6 +170,9 @@ namespace paper
         BoundsResult computeHandleBounds(const Mat3f * _transform);
 
         BoundsResult computeStrokeBounds(const Mat3f * _transform);
+
+        stick::Error arcHelper(Float _extentDeg, Segment & _segment, const Vec2f & _direction, const Vec2f & _to,
+                               const Vec2f & _center, const Mat3f * _transform);
 
         void applyTransform(const Mat3f & _transform);
     };

@@ -56,7 +56,7 @@ namespace paper
         cubicCurveTo(_handle + (current.position() - _handle) / 3.0, _handle + (_to - _handle) / 3.0 , _to);
     }
 
-    void Path::curveTo(const Vec2f & _through, const Vec2f & _to, stick::Float32 _parameter)
+    void Path::curveTo(const Vec2f & _through, const Vec2f & _to, Float32 _parameter)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
@@ -68,7 +68,7 @@ namespace paper
         quadraticCurveTo(handle, _to);
     }
 
-    stick::Error Path::arcTo(const Vec2f & _through, const Vec2f & _to)
+    Error Path::arcTo(const Vec2f & _through, const Vec2f & _to)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
@@ -85,7 +85,7 @@ namespace paper
 
         crunch::IntersectionResult<Vec2f> result = crunch::intersect(lineOne, lineTwo);
         crunch::Line<Vec2f> line(from, _to);
-        stick::Int32 throughSide = line.side(_through);
+        Int32 throughSide = line.side(_through);
 
         if (!result)
         {
@@ -98,13 +98,13 @@ namespace paper
                 // between the two points, so we can use #lineTo instead.
                 // Otherwise we bail out:
                 addPoint(_to);
-                return stick::Error();
+                return Error();
             }
-            return stick::Error(stick::ec::InvalidArgument, stick::String::concat("Cannot put an arc through the given points: " , crunch::toString(_through), " and ", crunch::toString(_to)), STICK_FILE, STICK_LINE);
+            return Error(ec::InvalidArgument, String::concat("Cannot put an arc through the given points: " , crunch::toString(_through), " and ", crunch::toString(_to)), STICK_FILE, STICK_LINE);
         }
         Vec2f vec =  from - result.intersections()[0];
         Float extent = crunch::toDegrees(crunch::directedAngle(vec, _to - result.intersections()[0]));
-        stick::Int32 centerSide = line.side(result.intersections()[0]);
+        Int32 centerSide = line.side(result.intersections()[0]);
         if (centerSide == 0)
         {
             // If the center is lying on the line, we might have gotten the
@@ -120,38 +120,38 @@ namespace paper
             extent -= 360.0 * (extent < 0 ? -1 : 1);
         }
 
-        Float ext = crunch::abs(extent);
-        stick::Int32 count = ext >= 360.0 ? 4 : crunch::ceil(ext / 90.0);
-        Float inc = extent / (Float)count;
-        Float half = inc * crunch::Constants<Float>::pi() / 360.0;
-        Float z = 4.0 / 3.0 * std::sin(half) / (1.0 + std::cos(half));
+        // Float ext = crunch::abs(extent);
+        // Int32 count = ext >= 360.0 ? 4 : crunch::ceil(ext / 90.0);
+        // Float inc = extent / (Float)count;
+        // Float half = inc * crunch::Constants<Float>::pi() / 360.0;
+        // Float z = 4.0 / 3.0 * std::sin(half) / (1.0 + std::cos(half));
 
-        for (stick::Int32 i = 0; i <= count; ++i)
-        {
-            // Explicitely use to point for last segment, since depending
-            // on values the calculation adds imprecision:
-            Vec2f pt = i < count ? result.intersections()[0] + vec : _to;
-            Vec2f out(-vec.y * z, vec.x * z);
-            if (i == 0)
-            {
-                // Modify startSegment
-                current.setHandleOut(out);
-            }
-            else
-            {
-                // Add new Segment
-                if (i < count)
-                    createSegment(pt, Vec2f(vec.y * z, -vec.x * z), out);
-                else
-                    createSegment(pt, Vec2f(vec.y * z, -vec.x * z), Vec2f(0.0));
-            }
-            vec = crunch::rotate(vec, crunch::toRadians(inc));
-        }
-
-        return stick::Error();
+        // for (Int32 i = 0; i <= count; ++i)
+        // {
+        //     // Explicitely use to point for last segment, since depending
+        //     // on values the calculation adds imprecision:
+        //     Vec2f pt = i < count ? result.intersections()[0] + vec : _to;
+        //     Vec2f out(-vec.y * z, vec.x * z);
+        //     if (i == 0)
+        //     {
+        //         // Modify startSegment
+        //         current.setHandleOut(out);
+        //     }
+        //     else
+        //     {
+        //         // Add new Segment
+        //         if (i < count)
+        //             createSegment(pt, Vec2f(vec.y * z, -vec.x * z), out);
+        //         else
+        //             createSegment(pt, Vec2f(vec.y * z, -vec.x * z), Vec2f(0.0));
+        //     }
+        //     vec = crunch::rotate(vec, crunch::toRadians(inc));
+        // }
+        //return Error();
+        return arcHelper(extent, current, vec, _to, result.intersections()[0], nullptr);
     }
 
-    stick::Error Path::arcTo(const Vec2f & _to, bool _bClockwise)
+    Error Path::arcTo(const Vec2f & _to, bool _bClockwise)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
@@ -162,6 +162,109 @@ namespace paper
         Vec2f dir = (mid - from);
         dir = !_bClockwise ? Vec2f(-dir.y, dir.x) : Vec2f(dir.y, -dir.x);
         return arcTo(mid + dir, _to);
+    }
+
+    Error Path::arcTo(const Vec2f & _to, const Vec2f & _radii, Float _rotation, bool _bClockwise, bool _bLarge)
+    {
+        STICK_ASSERT(segmentArray().count());
+        if (crunch::isClose(_radii.x, (Float)0.0) || crunch::isClose(_radii.y, (Float)0.0))
+        {
+            addPoint(_to);
+            return Error();
+        }
+
+        Vec2f from = segmentArray().last().position();
+        Vec2f middle = (from + _to) * 0.5;
+        Vec2f pt = crunch::rotate(from - middle, -_rotation);
+        Float rx = crunch::abs(_radii.x);
+        Float ry = crunch::abs(_radii.y);
+        Float rxSq = rx * rx;
+        Float rySq = ry * ry;
+        Float xSq = pt.x * pt.x;
+        Float ySq = pt.y * pt.y;
+        Float factor = std::sqrt(xSq / rxSq + ySq / rySq);
+        if (factor > 1)
+        {
+            rx *= factor;
+            ry *= factor;
+            rxSq = rx * rx;
+            rySq = ry * ry;
+        }
+
+        factor = (rxSq * rySq - rxSq * ySq - rySq * xSq) / (rxSq * ySq + rySq * xSq);
+        if (crunch::abs(factor) < detail::PaperConstants::epsilon())
+            factor = 0;
+
+        if (factor < 0)
+            return Error(ec::InvalidArgument, "Cannot create an arc with the given arguments", STICK_FILE, STICK_LINE);
+
+        Vec2f center(rx * pt.y / ry, -ry * pt.x / rx);
+        center = crunch::rotate(center * (_bLarge == _bClockwise ? -1 : 1 * std::sqrt(factor)), _rotation) + middle;
+        // Now create a matrix that maps the unit circle to the ellipse,
+        // for easier construction below.
+        Mat3f matrix = Mat3f::translation2D(center);
+        matrix.rotate2D(_rotation);
+        matrix.scale(_radii);
+        Mat3f inv = crunch::inverse(matrix);
+        Vec2f vect = inv * from;
+        Float extent = crunch::directedAngle(vect, inv * _to);
+
+        if (!_bClockwise && extent > 0)
+            extent -= crunch::Constants<Float>::twoPi();
+        else if (_bClockwise && extent < 0)
+            extent += crunch::Constants<Float>::twoPi();
+
+        return arcHelper(crunch::toDegrees(extent), segmentArray().last(), vect, _to, center, &matrix);
+    }
+
+    Error Path::arcHelper(Float _extentDeg, Segment & _segment, const Vec2f & _direction, const Vec2f & _to, const Vec2f & _center, const Mat3f * _transform)
+    {
+        Float ext = crunch::abs(_extentDeg);
+        Int32 count = ext >= 360.0 ? 4 : crunch::ceil(ext / 90.0);
+        Float inc = _extentDeg / (Float)count;
+        Float half = inc * crunch::Constants<Float>::pi() / 360.0;
+        Float z = 4.0 / 3.0 * std::sin(half) / (1.0 + std::cos(half));
+        Vec2f dir = _direction;
+
+        for (Int32 i = 0; i <= count; ++i)
+        {
+            // Explicitely use to point for last segment, since depending
+            // on values the calculation adds imprecision:
+            Vec2f pt = _to;
+            Vec2f out(-dir.y * z, dir.x * z);
+            if (i < count)
+            {
+                if (_transform)
+                {
+                    pt = *_transform * dir;
+                    out = (*_transform * (dir + out)) - pt;
+                }
+                else
+                {
+                    pt = _center + dir;
+                }
+            }
+            if (i == 0)
+            {
+                // Modify startSegment
+                _segment.setHandleOut(out);
+            }
+            else
+            {
+                // Add new Segment
+                Vec2f in(dir.y * z, -dir.x * z);
+                if (!_transform)
+                {
+                    createSegment(pt, in, i < count ? out : Vec2f(0.0));
+                }
+                else
+                {
+                    createSegment(pt, (*_transform * (dir + in)) - pt, i < count ? out : Vec2f(0.0));
+                }
+            }
+            dir = crunch::rotate(dir, crunch::toRadians(inc));
+        }
+        return Error();
     }
 
     void Path::cubicCurveBy(const Vec2f & _handleOne, const Vec2f & _handleTwo, const Vec2f & _by)
@@ -178,21 +281,21 @@ namespace paper
         quadraticCurveTo(current.position() + _handle, current.position() + _by);
     }
 
-    void Path::curveBy(const Vec2f & _through, const Vec2f & _by, stick::Float32 _parameter)
+    void Path::curveBy(const Vec2f & _through, const Vec2f & _by, Float32 _parameter)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
         curveTo(current.position() + _through, current.position() + _by, _parameter);
     }
 
-    stick::Error Path::arcBy(const Vec2f & _through, const Vec2f & _by)
+    Error Path::arcBy(const Vec2f & _through, const Vec2f & _by)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
         return arcTo(current.position() + _through, current.position() + _by);
     }
 
-    stick::Error Path::arcBy(const Vec2f & _to, bool _bClockwise)
+    Error Path::arcBy(const Vec2f & _to, bool _bClockwise)
     {
         STICK_ASSERT(segmentArray().count());
         Segment & current = segmentArray().last();
@@ -398,7 +501,7 @@ namespace paper
         createSegment(_point, _handleIn, _handleOut);
     }
 
-    void Path::removeSegment(stick::Size _index)
+    void Path::removeSegment(Size _index)
     {
         auto & segs = segmentArray();
         STICK_ASSERT(_index < segs.count());
@@ -408,7 +511,7 @@ namespace paper
         markGeometryDirty();
     }
 
-    void Path::removeSegments(stick::Size _from)
+    void Path::removeSegments(Size _from)
     {
         auto & segs = segmentArray();
         STICK_ASSERT(_from < segs.count());
@@ -417,7 +520,7 @@ namespace paper
         markGeometryDirty();
     }
 
-    void Path::removeSegments(stick::Size _from, stick::Size _to)
+    void Path::removeSegments(Size _from, Size _to)
     {
         auto & segs = segmentArray();
         STICK_ASSERT(_from < segs.count());
@@ -454,7 +557,7 @@ namespace paper
         //TODO: Can be optimized
         auto & segs = get<comps::Segments>();
         std::reverse(segs.begin(), segs.end());
-        stick::Size i = 0;
+        Size i = 0;
         Vec2f tmp;
         for (; i < segs.count(); ++i)
         {
@@ -480,7 +583,7 @@ namespace paper
             reverse();
     }
 
-    void Path::flatten(Float _angleTolerance, Float _minDistance, stick::Size _maxRecursion)
+    void Path::flatten(Float _angleTolerance, Float _minDistance, Size _maxRecursion)
     {
         detail::PathFlattener::PositionArray newSegmentPositions;
         newSegmentPositions.reserve(1024);
@@ -774,10 +877,10 @@ namespace paper
 
         Float sum = 0;
 
-        stick::Size i = 0;
-        stick::Size i2;
+        Size i = 0;
+        Size i2;
         auto & segs = segmentArray();
-        stick::Size s = segs.count();
+        Size s = segs.count();
         for (; i < s; ++i)
         {
             Vec2f posA = segs[i].position();
@@ -799,7 +902,7 @@ namespace paper
         auto & curves = curveArray();
         curves.clear();
         auto & segs = segmentArray();
-        for (stick::Size i = 0; i < segs.count() - 1; ++i)
+        for (Size i = 0; i < segs.count() - 1; ++i)
         {
             curves.append(Curve(*this, i, i + 1));
         }
@@ -808,9 +911,9 @@ namespace paper
             curves.append(Curve(*this, segs.count() - 1, 0));
     }
 
-    void Path::updateSegmentIndices(stick::Size _from, stick::Size _to)
+    void Path::updateSegmentIndices(Size _from, Size _to)
     {
-        for (stick::Size i = _from; i < _to && i < segmentArray().count(); ++i)
+        for (Size i = _from; i < _to && i < segmentArray().count(); ++i)
         {
             segmentArray()[i].m_index = i;
         }
@@ -1092,16 +1195,16 @@ namespace paper
             return result;
 
         auto & segments = segmentArray();
-        stick::Size segmentCount = isClosed() ? segments.count() : segments.count() - 1;
+        Size segmentCount = isClosed() ? segments.count() : segments.count() - 1;
 
         Mat3f ismat = crunch::inverse(smat);
-        stick::DynamicArray<detail::SegmentData> strokeSegs(segments.count());
-        for (stick::Size i = 0; i < strokeSegs.count(); ++i)
+        DynamicArray<detail::SegmentData> strokeSegs(segments.count());
+        for (Size i = 0; i < strokeSegs.count(); ++i)
         {
             strokeSegs[i] = {ismat * segments[i].position(), ismat * (segments[i].position() + segments[i].handleIn()), ismat * (segments[i].position() + segments[i].handleOut())};
         }
 
-        for (stick::Size i = 1; i < segments.count(); ++i)
+        for (Size i = 1; i < segments.count(); ++i)
         {
             detail::mergeStrokeJoin(result.rect, join, ml, strokeSegs[i - 1], strokeSegs[i], strokeSegs[i + 1], sp, smat, _transform);
         }

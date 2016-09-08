@@ -4,7 +4,6 @@
 
 namespace paper
 {
-
     Segment::Segment(const Path & _path,
                      const Vec2f & _pos,
                      const Vec2f & _handleIn,

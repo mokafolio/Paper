@@ -22,6 +22,7 @@ Paper/RenderInterface.hpp
 Paper/Segment.hpp
 Paper/OpenGL/GLRenderer.hpp
 Paper/SVG/SVGExport.hpp
+Paper/SVG/SVGImport.hpp
 )
 
 set (PAPERSRC 
@@ -40,6 +41,7 @@ Paper/Private/PathFlattener.cpp
 Paper/Private/Shape.cpp
 Paper/Private/StrokeTriangulator.cpp
 Paper/SVG/SVGExport.cpp
+Paper/SVG/SVGImport.cpp
 )
 
 add_library (Paper SHARED ${PAPERSRC})
