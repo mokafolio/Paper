@@ -53,6 +53,7 @@ namespace paper
             Vec2f scaling;
         };
         using DecomposedTransform = brick::Component<ComponentName("DecomposedTransform"), DecomposedData>;
+        using AbsoluteDecomposedTransform = brick::Component<ComponentName("AbsoluteDecomposedTransform"), DecomposedData>;
 
         //document specific components
         using DocumentSize = brick::Component<ComponentName("DocumentSize"), Vec2f>;

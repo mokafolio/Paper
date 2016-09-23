@@ -201,7 +201,8 @@ namespace paper
             m_currentClipStencilPlane(detail::ClipStencilPlaneOne),
             m_bIsInitialized(false),
             m_bCanSwapStencilPlanesWhenEnding(true),
-            m_bIsClipping(false)
+            m_bIsClipping(false),
+            m_bHasCustomProjection(false)
         {
             m_projection = Mat4f::identity();
             m_transform = Mat4f::identity();
@@ -248,6 +249,12 @@ namespace paper
             m_transform = crunch::to3DTransform(_transform);;
         }
 
+        void GLRenderer::setProjection(const Mat4f & _projection)
+        {
+            m_projection = _projection;
+            m_bHasCustomProjection = true;
+        }
+
         GLRenderer::RenderCacheData & GLRenderer::updateRenderCache(const Path & _path, const PathStyle & _style, bool _bIsClipping)
         {
             Path p(_path);
@@ -268,7 +275,10 @@ namespace paper
                         cache.fillVertices.reserve(256);
                         cache.joins.clear();
                         cache.joins.reserve(256);
-                        paper::detail::PathFlattener::flatten(p, cache.fillVertices, &cache.joins, 0.15, 0.0, 32);
+
+                        const Vec2f & scale = p.absoluteScaling();
+ 
+                        paper::detail::PathFlattener::flatten(p, cache.fillVertices, &cache.joins, 0.15 / std::max(std::abs(scale.x), std::abs(scale.y)), 0.0, 32);
                         STICK_ASSERT(cache.joins.count() == cache.fillVertices.count());
                         p.set<comps::FillGeometryDirtyFlag>(false);
                     }
@@ -311,9 +321,7 @@ namespace paper
                     Vec2f * invScale;
                     if (!bIsScalingStroke)
                     {
-                        Mat3f absTrans = _path.absoluteTransform();
-                        crunch::decompose(absTrans, trans, rot, scale);
-                        scale = Vec2f(1.0) / scale;
+                        scale = p.absoluteScaling();
                         invScale = &scale;
                     }
 
@@ -608,6 +616,8 @@ namespace paper
                 m_bIsInitialized = true;
             }
 
+            //TODO Record existing gl state, so we can return to it in finish drawing
+
             ASSERT_NO_GL_ERROR(glDisable(GL_DEPTH_TEST));
             ASSERT_NO_GL_ERROR(glDepthMask(false));
             ASSERT_NO_GL_ERROR(glEnable(GL_MULTISAMPLE));
@@ -625,7 +635,8 @@ namespace paper
             ASSERT_NO_GL_ERROR(glBindVertexArray(m_vao));
             ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
             ASSERT_NO_GL_ERROR(glViewport(0, 0, m_viewport.x, m_viewport.y));
-            m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
+            if(!m_bHasCustomProjection)
+                m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
             return Error();
         }
 

@@ -27,6 +27,8 @@ namespace paper
 
         virtual void setTransform(const Mat3f & _transform) = 0;
 
+        virtual void setProjection(const Mat4f & _projection) = 0;
+
 
     protected:
 

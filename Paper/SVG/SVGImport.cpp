@@ -1,3 +1,4 @@
+#include <Stick/HashMap.hpp>
 #include <Paper/SVG/SVGImport.hpp>
 #include <Paper/Document.hpp>
 
@@ -8,18 +9,31 @@ namespace paper
         using namespace stick;
         using namespace crunch;
 
-        struct NamedColor
+        enum class SVGUnits
         {
-            String name;
-            ColorRGB color;
+            em,
+            ex,
+            px,
+            pt,
+            cm,
+            mm,
+            in
         };
+
+        static Float toPixels(Float _value, SVGUnits _units)
+        {
+            // switch (_units)
+            // {
+            //     case SVGUnits::em: return 
+            // };
+        }
 
         static ColorRGB rgb(UInt8 _r, UInt8 _g, UInt8 _b)
         {
             return ColorRGB(_r / 255.0, _r / 255.0, _b / 255.0);
         }
 
-        NamedColor svgColors[] =
+        HashMap<String, ColorRGB> svgColors =
         {
             {"aliceblue", rgb(240, 248, 255)},
             {"antiquewhite", rgb(250, 235, 215)},
@@ -170,6 +184,13 @@ namespace paper
             {"yellowgreen", rgb(154, 205, 50)}
         };
 
+        static String::ConstIter skipWhitespace(String::ConstIter _it, String::ConstIter _end)
+        {
+            while (_it != _end && std::isspace(*_it))
+                ++_it;
+            return _it;
+        }
+
         SVGImport::SVGImport() :
             m_document(nullptr)
         {
@@ -185,6 +206,9 @@ namespace paper
         GroupResult SVGImport::importFromString(const String & _svg)
         {
             m_defs.clear();
+
+            //TODO: It might be worthwhile to use pugixml directly to parse the svg
+            //as that should be a lot faster as it would skip allocating the shrub tree etc.
             auto shrubRes = parseXML(_svg);
             if (!shrubRes)
                 return shrubRes.error();
@@ -205,15 +229,60 @@ namespace paper
 
         }
 
-        template<class Comp, class Functor>
-        static bool setComponentFromXMLAttrCB(const Shrub & _node, const String & _path, Item & _item, Functor _cb)
+        static String::ConstIter consumeIncluding(String::ConstIter _it, String::ConstIter _end, const char _to)
+        {
+            while (_it != _end && *_it != _to)
+                ++_it;
+            return _it;
+        }
+
+        static ColorRGB parseColor(String::ConstIter _begin, String::ConstIter _end)
+        {
+            _begin = skipWhitespace(_begin, _end);
+            if (*_begin == '#')
+            {
+                ++_begin; //skip the pound sign
+                UInt32 hexCountPerChannel = _end - _begin <= 4 ? 1 : 2;
+                String tmp(_begin, _begin + hexCountPerChannel);
+                auto r = std::strtol(tmp.cString(), NULL, 16);
+                tmp = String(_begin + hexCountPerChannel, _begin + hexCountPerChannel * 2);
+                auto g = std::strtol(tmp.cString(), NULL, 16);
+                tmp = String(_begin + hexCountPerChannel * 2, _begin + hexCountPerChannel * 3);
+                auto b = std::strtol(tmp.cString(), NULL, 16);
+                return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
+            }
+            else if (String(_begin, _begin + 3) == "rgb")
+            {
+                //code adjusted from nanosvg: https://github.com/memononen/nanosvg/blob/master/src/nanosvg.h
+                Int32 r = -1, g = -1, b = -1;
+                char s1[32] = "", s2[32] = "";
+                Int32 n = std::sscanf(_begin + 4, "%d%[%%, \t]%d%[%%, \t]%d", &r, s1, &g, s2, &b);
+                STICK_ASSERT(n == 5);
+                if (std::strchr(s1, '%'))
+                    return ColorRGB(r / 100.0, g / 100.0, b / 100);
+                else
+                    return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
+            }
+            else
+            {
+                //is this a named svg color?
+                auto it = svgColors.find(String(_begin, _end));
+                if (it != svgColors.end())
+                    return it->value;
+                //warn somehow?
+                return ColorRGB(1, 0, 0);
+            }
+        }
+
+        template<class Functor>
+        static bool findXMLAttrCB(const Shrub & _node, const String & _path, Item & _item, Functor _cb)
         {
             if (auto ch = _node.child(_path))
             {
                 if ((*ch).valueHint() == ValueHint::XMLAttribute)
                 {
                     //_item.set<Comp>((*ch).value<typename Comp::ValueType>());
-                    _cb(_item, (*ch).value<typename Comp::ValueType>());
+                    _cb(_item, *ch);
                     return true;
                 }
             }
@@ -223,18 +292,68 @@ namespace paper
         template<class Comp>
         static bool setComponentFromXMLAttr(const Shrub & _node, const String & _path, Item & _item)
         {
-            return setComponentFromXMLAttrCB<Comp>(_node, _path, _item, [](Item & _it, const typename Comp::ValueType & _val) { _it.set<Comp>(_val); });
+            return findXMLAttrCB(_node, _path, _item, [](Item & _it, const Shrub & _child) { _it.set<Comp>(_child.value<typename Comp::ValueType>()); });
         }
+
+        template<class Comp>
+        static bool setColorComponentFromXMLAttr(const Shrub & _node, const String & _path, Item & _item)
+        {
+            return findXMLAttrCB(_node, _path, _item, [](Item & _itm, const Shrub & _child) { const String & str = _child.valueString(); _itm.set<Comp>(toRGBA(parseColor(str.begin(), str.end()))); });
+        }
+
 
         void SVGImport::parseAttributes(const Shrub & _node, Item & _item)
         {
             //order is important to some degree
-            //setComponentFromXMLAttrCB<comps::Fill>(_node, "fill", _item);
-            // setComponentFromXMLAttr<comps::WindingRule>(_node, "fill-rule", _item);
-            // setComponentFromXMLAttr<comps::Stroke>(_node, "stroke", _item);
+            setColorComponentFromXMLAttr<comps::Fill>(_node, "fill", _item);
+            findXMLAttrCB(_node, "fill-rule", _item, [](Item & _it, const Shrub & _child)
+            {
+                if (_child.valueString() == "nonzero")
+                    _it.setWindingRule(WindingRule::NonZero);
+                else if (_child.valueString() == "evenodd")
+                    _it.setWindingRule(WindingRule::EvenOdd);
+            });
+            setColorComponentFromXMLAttr<comps::Stroke>(_node, "stroke", _item);
             setComponentFromXMLAttr<comps::StrokeWidth>(_node, "stroke-width", _item);
-            //setComponentFromXMLAttribute<comps::StrokeCap>(_node, "stroke-linecap", _item);
+            findXMLAttrCB(_node, "stroke-linecap", _item, [](Item & _it, const Shrub & _child)
+            {
+                if (_child.valueString() == "butt")
+                    _it.setStrokeCap(StrokeCap::Butt);
+                else if (_child.valueString() == "round")
+                    _it.setStrokeCap(StrokeCap::Round);
+                else if (_child.valueString() == "square")
+                    _it.setStrokeCap(StrokeCap::Square);
+            });
+            findXMLAttrCB(_node, "stroke-linejoin", _item, [](Item & _it, const Shrub & _child)
+            {
+                if (_child.valueString() == "miter")
+                    _it.setStrokeJoin(StrokeJoin::Miter);
+                else if (_child.valueString() == "round")
+                    _it.setStrokeJoin(StrokeJoin::Round);
+                else if (_child.valueString() == "bevel")
+                    _it.setStrokeJoin(StrokeJoin::Bevel);
+            });
+            findXMLAttrCB(_node, "vector-effect", _item, [](Item & _it, const Shrub & _child)
+            {
+                _it.setStrokeScaling(_child.valueString() != "non-scaling-stroke");
+            });
+            setComponentFromXMLAttr<comps::MiterLimit>(_node, "stroke-miterlimit", _item);
+            findXMLAttrCB(_node, "stroke-dasharray", _item, [](Item & _it, const Shrub & _child)
+            {
+                // auto it = _child.valueString().begin();
+                // auto end = _child.valueString().end();
+                // it = skipWhitespace(it, end);
+                // String tmp;
 
+                // //handle none case
+                // if (*it != _end && *it == 'n')
+                //     return;
+
+                // while (it != end)
+                // {
+                //     //while(std::isdigit(*it))
+                // }
+            });
 
             if (auto ch = _node.child("id"))
             {
@@ -334,13 +453,6 @@ namespace paper
             {
                 ++_it;
             }
-            return _it;
-        }
-
-        static String::ConstIter skipWhitespace(String::ConstIter _it, String::ConstIter _end)
-        {
-            while (_it != _end && std::isspace(*_it))
-                ++_it;
             return _it;
         }
 

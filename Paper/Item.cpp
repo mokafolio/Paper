@@ -268,6 +268,8 @@ namespace paper
         markAbsoluteTransformDirty();
         if (hasComponent<comps::DecomposedTransform>())
             removeComponent<comps::DecomposedTransform>();
+        if (hasComponent<comps::AbsoluteDecomposedTransform>())
+            removeComponent<comps::AbsoluteDecomposedTransform>();
     }
 
     void Item::translate(Float _x, Float _y)
@@ -374,11 +376,22 @@ namespace paper
     {
         if (hasComponent<comps::DecomposedTransform>())
             return;
-        
+
         Float rotation;
         Vec2f scaling, translation;
         crunch::decompose(transform(), translation, rotation, scaling);
         const_cast<Item *>(this)->set<comps::DecomposedTransform>((comps::DecomposedData) {translation, rotation, scaling});
+    }
+
+    void Item::decomposeAbsoluteIfNeeded() const
+    {
+        if (hasComponent<comps::AbsoluteDecomposedTransform>())
+            return;
+
+        Float rotation;
+        Vec2f scaling, translation;
+        crunch::decompose(absoluteTransform(), translation, rotation, scaling);
+        const_cast<Item *>(this)->set<comps::AbsoluteDecomposedTransform>((comps::DecomposedData) {translation, rotation, scaling});
     }
 
     stick::Float32 Item::rotation() const
@@ -399,25 +412,22 @@ namespace paper
         return get<comps::DecomposedTransform>().scaling;
     }
 
-    Vec2f Item::absoluteScaling() const
+    const Vec2f & Item::absoluteScaling() const
     {
-        decomposeIfNeeded();
-        if (parent().isValid())
-            return Item(parent()).absoluteScaling() + scaling();
+        decomposeAbsoluteIfNeeded();
+        return get<comps::AbsoluteDecomposedTransform>().scaling;
     }
 
-    Vec2f Item::absoluteTranslation() const
+    const Vec2f & Item::absoluteTranslation() const
     {
-        decomposeIfNeeded();
-        if (parent().isValid())
-            return Item(parent()).absoluteTranslation() + translation();
+        decomposeAbsoluteIfNeeded();
+        return get<comps::AbsoluteDecomposedTransform>().translation;
     }
 
-    Vec2f Item::absoluteRotation() const
+    Float Item::absoluteRotation() const
     {
-        decomposeIfNeeded();
-        if (parent().isValid())
-            return Item(parent()).absoluteRotation() + rotation();
+        decomposeAbsoluteIfNeeded();
+        return get<comps::AbsoluteDecomposedTransform>().rotation;
     }
 
     Vec2f Item::strokePadding(Float _strokeWidth, const Mat3f & _mat) const
@@ -899,7 +909,7 @@ namespace paper
     {
         markFillGeometryDirty();
         markStrokeGeometryDirty();
-        set<comps::PathLength>(true);
+        set<comps::PathLength>((comps::PathLengthData) {true, 0.0f});
     }
 
     static Item cloneGroup(const Item & _grp)

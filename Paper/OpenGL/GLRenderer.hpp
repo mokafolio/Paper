@@ -22,6 +22,8 @@ namespace paper
 
             void setTransform(const Mat3f & _transform) override;
 
+            void setProjection(const Mat4f & _projection) override;
+
         protected:
 
             using PathArray = stick::DynamicArray<Path>;
@@ -125,9 +127,10 @@ namespace paper
             bool m_bIsInitialized;
             bool m_bCanSwapStencilPlanesWhenEnding;
             bool m_bIsClipping;
-            crunch::Vec2f m_viewport;
-            crunch::Mat4f m_projection;
-            crunch::Mat4f m_transform;
+            Vec2f m_viewport;
+            Mat4f m_projection;
+            bool m_bHasCustomProjection;
+            Mat4f m_transform;
         };
     }
 }

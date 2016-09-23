@@ -108,11 +108,11 @@ namespace paper
 
         const Vec2f & scaling() const;
 
-        Vec2f absoluteScaling() const;
+        stick::Float32 absoluteRotation() const;
 
-        Vec2f absoluteTranslation() const;
+        const Vec2f & absoluteTranslation() const;
 
-        Vec2f absoluteRotation() const;
+        const Vec2f & absoluteScaling() const;
 
         const Rect & bounds() const;
 
@@ -215,6 +215,8 @@ namespace paper
         Vec2f strokePadding(Float _strokeWidth, const Mat3f & _strokeMat) const;
 
         void decomposeIfNeeded() const;
+
+        void decomposeAbsoluteIfNeeded() const;
 
         struct BoundsResult
         {
