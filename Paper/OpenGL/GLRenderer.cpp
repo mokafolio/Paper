@@ -277,7 +277,7 @@ namespace paper
                         cache.joins.reserve(256);
 
                         const Vec2f & scale = p.absoluteScaling();
- 
+                        
                         paper::detail::PathFlattener::flatten(p, cache.fillVertices, &cache.joins, 0.15 / std::max(std::abs(scale.x), std::abs(scale.y)), 0.0, 32);
                         STICK_ASSERT(cache.joins.count() == cache.fillVertices.count());
                         p.set<comps::FillGeometryDirtyFlag>(false);

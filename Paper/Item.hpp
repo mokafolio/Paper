@@ -58,7 +58,7 @@ namespace paper
 
         //transformation things
 
-        void setTransform(const Mat3f & _transform);
+        void setTransform(const Mat3f & _transform, bool _bIncludesScaling = false);
 
         void translateTransform(Float _x, Float _y);
 
@@ -76,7 +76,7 @@ namespace paper
 
         void rotateTransform(Float _radians, const Vec2f & _point);
 
-        void transform(const Mat3f & _transform);
+        void transform(const Mat3f & _transform, bool _bIncludesScaling = false);
 
 
         void translate(Float _x, Float _y);
@@ -195,7 +195,7 @@ namespace paper
 
         void markStrokeGeometryDirty();
 
-        void markGeometryDirty();
+        void markGeometryDirty(bool _bMarkLengthDirty);
 
         void markBoundsDirty(bool _bNotifyParent);
 
@@ -207,6 +207,8 @@ namespace paper
         static Mat3f strokeTransform(const Mat3f * _transform, Float _strokeWidth, bool _bIsScalingStroke);
 
     protected:
+
+        void recursivePostTransform(bool _bIncludesScaling);
 
         void removeFromParent();
 

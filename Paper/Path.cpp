@@ -324,7 +324,7 @@ namespace paper
             }
 
             set<comps::ClosedFlag>(true);
-            markGeometryDirty();
+            markGeometryDirty(true);
             markBoundsDirty(true);
         }
     }
@@ -486,7 +486,7 @@ namespace paper
             }
 
             rebuildCurves();
-            markGeometryDirty();
+            markGeometryDirty(true);
             markBoundsDirty(true);
         }
     }
@@ -508,7 +508,7 @@ namespace paper
         segs.remove(segs.begin() + _index);
         updateSegmentIndices(_index, segmentArray().count());
         rebuildCurves();
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     void Path::removeSegments(Size _from)
@@ -517,7 +517,7 @@ namespace paper
         STICK_ASSERT(_from < segs.count());
         segs.remove(segs.begin() + _from, segs.end());
         rebuildCurves();
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     void Path::removeSegments(Size _from, Size _to)
@@ -528,14 +528,14 @@ namespace paper
         segs.remove(segs.begin() + _from, segs.begin() + _to);
         updateSegmentIndices(_from, _to);
         rebuildCurves();
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     void Path::removeSegments()
     {
         segmentArray().clear();
         curveArray().clear();
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     Segment & Path::createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut)
@@ -548,7 +548,7 @@ namespace paper
             curves.append(Curve(*this, segs.count() - 2, segs.count() - 1));
         }
         markBoundsDirty(true);
-        markGeometryDirty();
+        markGeometryDirty(true);
         return segs.last();
     }
 
@@ -574,7 +574,7 @@ namespace paper
         }
 
         rebuildCurves();
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     void Path::setClockwise(bool _b)
@@ -606,7 +606,7 @@ namespace paper
 
         rebuildCurves();
         markBoundsDirty(true);
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     void Path::flattenRegular(Float _maxDistance)
@@ -655,7 +655,7 @@ namespace paper
 
         rebuildCurves();
         markBoundsDirty(true);
-        markGeometryDirty();
+        markGeometryDirty(true);
     }
 
     Path::OffsetAndSampleCount Path::regularOffsetAndSampleCount(Float _maxDistance)
@@ -942,7 +942,7 @@ namespace paper
             curveArray()[_seg.m_index].markDirty();
         }
         markBoundsDirty(true);
-        markGeometryDirty();
+        markGeometryDirty(true);
         //printf("SEGMENT CHANGED E\n");
     }
 

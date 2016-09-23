@@ -191,13 +191,26 @@ namespace paper
         }
     }
 
-    void Item::setTransform(const Mat3f & _transform)
+    void Item::setTransform(const Mat3f & _transform, bool _bIncludesScaling)
     {
         set<comps::Transform>(_transform);
-        markBoundsDirty(true);
-        markAbsoluteTransformDirty();
+        recursivePostTransform(_bIncludesScaling);
         if (hasComponent<comps::DecomposedTransform>())
             removeComponent<comps::DecomposedTransform>();
+    }
+
+    void Item::recursivePostTransform(bool _bIncludesScaling)
+    {
+        markBoundsDirty(true);
+        set<comps::AbsoluteTransformDirtyFlag>(true);
+        if (hasComponent<comps::AbsoluteDecomposedTransform>())
+            removeComponent<comps::AbsoluteDecomposedTransform>();
+        if (_bIncludesScaling)
+        {
+            markGeometryDirty(false);
+        }
+        for(Item c : children())
+            c.recursivePostTransform(_bIncludesScaling);
     }
 
     void Item::setPosition(const Vec2f & _position)
@@ -245,7 +258,7 @@ namespace paper
         Mat3f mat = Mat3f::translation2D(_center);
         mat.scale2D(_scale);
         mat.translate2D(-_center);
-        transform(mat);
+        transform(mat, true);
     }
 
     void Item::rotateTransform(Float _radians)
@@ -261,15 +274,9 @@ namespace paper
         transform(mat);
     }
 
-    void Item::transform(const Mat3f & _matrix)
+    void Item::transform(const Mat3f & _matrix, bool _bIncludesScaling)
     {
-        set<comps::Transform>(_matrix * transform());
-        markBoundsDirty(true);
-        markAbsoluteTransformDirty();
-        if (hasComponent<comps::DecomposedTransform>())
-            removeComponent<comps::DecomposedTransform>();
-        if (hasComponent<comps::AbsoluteDecomposedTransform>())
-            removeComponent<comps::AbsoluteDecomposedTransform>();
+        setTransform(_matrix * transform(), _bIncludesScaling);
     }
 
     void Item::translate(Float _x, Float _y)
@@ -327,7 +334,7 @@ namespace paper
             p.applyTransform(_transform);
         }
 
-        markGeometryDirty();
+        markGeometryDirty(true);
         markBoundsDirty(_bNotifyParent);
 
         if (hasComponent<comps::Children>())
@@ -905,11 +912,12 @@ namespace paper
         set<comps::StrokeGeometryDirtyFlag>(true);
     }
 
-    void Item::markGeometryDirty()
+    void Item::markGeometryDirty(bool _bMarkLengthDirty)
     {
         markFillGeometryDirty();
         markStrokeGeometryDirty();
-        set<comps::PathLength>((comps::PathLengthData) {true, 0.0f});
+        if (_bMarkLengthDirty)
+            set<comps::PathLength>((comps::PathLengthData) {true, 0.0f});
     }
 
     static Item cloneGroup(const Item & _grp)
