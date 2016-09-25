@@ -131,6 +131,8 @@ namespace paper
             Mat4f m_projection;
             bool m_bHasCustomProjection;
             Mat4f m_transform;
+            Vec2f m_transformScale;
+            bool m_bTransformScaleChanged;
         };
     }
 }

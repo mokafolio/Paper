@@ -205,7 +205,7 @@ namespace paper
         set<comps::AbsoluteTransformDirtyFlag>(true);
         if (hasComponent<comps::AbsoluteDecomposedTransform>())
             removeComponent<comps::AbsoluteDecomposedTransform>();
-        if (_bIncludesScaling)
+        if (_bIncludesScaling && remeshOnTransformChange())
         {
             markGeometryDirty(false);
         }
@@ -666,6 +666,12 @@ namespace paper
         removeComponent<comps::Fill>();
     }
 
+    void Item::setRemeshOnTransformChange(bool _b)
+    {
+        set<comps::RemeshOnTransformChange>(true);
+        removeComponentFromChildren<comps::RemeshOnTransformChange>(*this);
+    }
+
     void Item::setWindingRule(WindingRule _rule)
     {
         set<comps::WindingRule>(_rule);
@@ -712,6 +718,17 @@ namespace paper
             return *ret;
         }
         return 0.0;
+    }
+
+    bool Item::remeshOnTransformChange() const
+    {
+        auto ret = findComponent<comps::RemeshOnTransformChange>();
+        if (ret)
+        {
+            return *ret;
+        }
+
+        return true;
     }
 
     bool Item::hasStroke() const

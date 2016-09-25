@@ -246,7 +246,15 @@ namespace paper
 
         void GLRenderer::setTransform(const Mat3f & _transform)
         {
-            m_transform = crunch::to3DTransform(_transform);;
+            m_transform = crunch::to3DTransform(_transform);
+            Vec2f trans, scaling;
+            Float rot;
+            decompose(_transform, trans, rot, scaling);
+            if (scaling != m_transformScale)
+            {
+                m_bTransformScaleChanged = true;
+            }
+            m_transformScale = scaling;
         }
 
         void GLRenderer::setProjection(const Mat4f & _projection)
@@ -269,15 +277,15 @@ namespace paper
                 cache.transformProjection = m_projection * m_transform * crunch::to3DTransform(p.absoluteTransform());
                 if (p.hasComponent<comps::FillGeometryDirtyFlag>())
                 {
-                    if (p.get<comps::FillGeometryDirtyFlag>())
+                    if (p.get<comps::FillGeometryDirtyFlag>() || (m_bTransformScaleChanged && p.remeshOnTransformChange()))
                     {
                         cache.fillVertices.clear();
                         cache.fillVertices.reserve(256);
                         cache.joins.clear();
                         cache.joins.reserve(256);
 
-                        const Vec2f & scale = p.absoluteScaling();
-                        
+                        Vec2f scale = p.absoluteScaling() * m_transformScale;
+
                         paper::detail::PathFlattener::flatten(p, cache.fillVertices, &cache.joins, 0.15 / std::max(std::abs(scale.x), std::abs(scale.y)), 0.0, 32);
                         STICK_ASSERT(cache.joins.count() == cache.fillVertices.count());
                         p.set<comps::FillGeometryDirtyFlag>(false);
@@ -635,7 +643,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glBindVertexArray(m_vao));
             ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
             ASSERT_NO_GL_ERROR(glViewport(0, 0, m_viewport.x, m_viewport.y));
-            if(!m_bHasCustomProjection)
+            if (!m_bHasCustomProjection)
                 m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
             return Error();
         }
@@ -649,6 +657,8 @@ namespace paper
             ASSERT_NO_GL_ERROR(glDisable(GL_BLEND));
             ASSERT_NO_GL_ERROR(glDisable(GL_CULL_FACE));
             ASSERT_NO_GL_ERROR(glDisable(GL_STENCIL_TEST));
+
+            m_bTransformScaleChanged = false;
 
             return Error();
         }

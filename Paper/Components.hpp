@@ -34,6 +34,7 @@ namespace paper
         using FillGeometryDirtyFlag = brick::Component<ComponentName("FillGeometryDirtyFlag"), bool>;
         using BoundsGeometryDirtyFlag = brick::Component<ComponentName("BoundsGeometryDirtyFlag"), bool>;
         using VisibilityFlag = brick::Component<ComponentName("VisibilityFlag"), bool>;
+        using RemeshOnTransformChange = brick::Component<ComponentName("RemeshOnTransformChange"), bool>;
 
         struct BoundsData
         {

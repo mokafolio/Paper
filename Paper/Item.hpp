@@ -151,6 +151,8 @@ namespace paper
 
         void setFill(const ColorRGBA & _color);
 
+        void setRemeshOnTransformChange(bool _b);
+
         void removeFill();
 
         void setWindingRule(WindingRule _rule);
@@ -162,6 +164,8 @@ namespace paper
         Float miterLimit() const;
 
         Float strokeWidth() const;
+
+        bool remeshOnTransformChange() const;
 
         const DashArray & dashArray() const;
 
