@@ -484,6 +484,7 @@ namespace paper
         {
             printf("IMPORT GROUP\n");
             Group grp = m_document->createGroup();
+            pushAttributes(_node, grp);
             for (auto & child : _node)
             {
                 if (child.valueHint() != ValueHint::XMLAttribute)
@@ -493,6 +494,7 @@ namespace paper
                     else grp.addChild(item);
                 }
             }
+            popAttributes();
             return grp;
         }
 

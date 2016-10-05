@@ -76,6 +76,10 @@ namespace paper
 
         void rotateTransform(Float _radians, const Vec2f & _point);
 
+        void skewTransform(const Vec2f & _angles);
+
+        void skewTransform(const Vec2f & _angles, const Vec2f & _center);
+
         void transform(const Mat3f & _transform, bool _bIncludesScaling = false);
 
 
@@ -94,6 +98,10 @@ namespace paper
         void rotate(Float _radians);
 
         void rotate(Float _radians, const Vec2f & _point);
+
+        void skew(const Vec2f & _angles);
+
+        void skew(const Vec2f & _angles, const Vec2f & _center);
 
         void applyTransform(const Mat3f & _transform, bool _bNotifyParent = true);
 

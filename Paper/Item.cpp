@@ -209,7 +209,7 @@ namespace paper
         {
             markGeometryDirty(false);
         }
-        for(Item c : children())
+        for (Item c : children())
             c.recursivePostTransform(_bIncludesScaling);
     }
 
@@ -274,6 +274,19 @@ namespace paper
         transform(mat);
     }
 
+    void Item::skewTransform(const Vec2f & _angles)
+    {
+        skewTransform(_angles, pivot());
+    }
+
+    void Item::skewTransform(const Vec2f & _angles, const Vec2f & _center)
+    {
+        Mat3f mat = Mat3f::translation2D(_center);
+        mat.skew2D(_angles.x, _angles.y);
+        mat.translate2D(-_center);
+        transform(mat);
+    }
+
     void Item::transform(const Mat3f & _matrix, bool _bIncludesScaling)
     {
         setTransform(_matrix * transform(), _bIncludesScaling);
@@ -322,6 +335,19 @@ namespace paper
         Mat3f mat = Mat3f::translation2D(_point);
         mat.rotate2D(_radians);
         mat.translate2D(-_point);
+        applyTransform(mat);
+    }
+
+    void Item::skew(const Vec2f & _angles)
+    {
+        skew(_angles, pivot());
+    }
+
+    void Item::skew(const Vec2f & _angles, const Vec2f & _center)
+    {
+        Mat3f mat = Mat3f::translation2D(_center);
+        mat.skew2D(_angles.x, _angles.y);
+        mat.translate2D(-_center);
         applyTransform(mat);
     }
 
