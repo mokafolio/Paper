@@ -225,10 +225,6 @@ namespace paper
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
 
-            // auto maybe = svg.child("defs");
-            // Shrub * defs = nullptr;
-            // if (maybe) defs = &*maybe;
-
             Error err;
             Group grp = Group(recursivelyImportNode(svg, err));
 
@@ -785,8 +781,7 @@ namespace paper
                     }
                     else
                     {
-                        //unknown command??
-                        //warning? ignore silently?
+
                     }
                 }
                 while (it != end);
@@ -798,7 +793,7 @@ namespace paper
             }
             else
             {
-                //TODO: Error
+                _error = Error(ec::ParseFailed, "SVG path is missing d attribute", STICK_FILE, STICK_LINE);
             }
             return Path();
         }
@@ -829,7 +824,7 @@ namespace paper
             }
             else
             {
-                //TODO Warning?
+                _error = Error(ec::ParseFailed, "SVG circle has to provide cx, cy and r", STICK_FILE, STICK_LINE);
             }
             return Path();
         }
@@ -852,14 +847,40 @@ namespace paper
             }
             else
             {
-                //TODO Warning?
+                _error = Error(ec::ParseFailed, "SVG ellipse has to provide cx, cy, rx and ry", STICK_FILE, STICK_LINE);
             }
             return Path();
         }
 
         Path SVGImport::importRectangle(const Shrub & _node, Error & _error)
         {
+            auto mx = _node.child("x");
+            auto my = _node.child("y");
+            auto mw = _node.child("width");
+            auto mh = _node.child("height");
 
+            if (mx && my && mw && mh)
+            {
+                //TODO: as soon as we added the createRoundedRectangle function to Document,
+                //take these into account!
+                // auto mrx = _node.child("rx");
+                // auto mry = _node.child("ry");
+
+                Float x = coordinatePixels((*mx).valueString().begin());
+                Float y = coordinatePixels((*my).valueString().begin());
+                Path ret = m_document->createRectangle(Vec2f(x, y), Vec2f(x, y) +
+                                                       Vec2f(coordinatePixels((*mw).valueString().begin()),
+                                                               coordinatePixels((*mh).valueString().begin())));
+                pushAttributes(_node, ret);
+                popAttributes();
+                return ret;
+            }
+            else
+            {
+                _error = Error(ec::ParseFailed, "SVG rect missing x, y, width or height attribute", STICK_FILE, STICK_LINE);
+            }
+
+            return Path();
         }
 
         Path SVGImport::importLine(const Shrub & _node, Error & _error)

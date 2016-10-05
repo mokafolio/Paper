@@ -23,6 +23,7 @@ Paper/Segment.hpp
 Paper/OpenGL/GLRenderer.hpp
 Paper/SVG/SVGExport.hpp
 Paper/SVG/SVGImport.hpp
+Paper/SVG/SVGImportResult.hpp
 )
 
 set (PAPERSRC 
