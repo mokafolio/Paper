@@ -4,22 +4,58 @@
 #include <Stick/Result.hpp>
 #include <Stick/URI.hpp>
 #include <Stick/HashMap.hpp>
+#include <Stick/DynamicArray.hpp>
 #include <Scrub/Shrub.hpp>
 #include <Paper/BasicTypes.hpp>
+#include <Paper/Constants.hpp>
+#include <Paper/Group.hpp>
+#include <Paper/SVG/SVGImportResult.hpp>
 
 namespace paper
 {
     class Document;
-    class Item;
-    class Group;
     class Path;
-    class Curve;
 
     namespace svg
     {
         using namespace scrub;
 
-        using GroupResult = stick::Result<Group>;
+        enum class SVGUnits
+        {
+            EM,
+            EX,
+            PX,
+            PT,
+            PC,
+            CM,
+            MM,
+            IN,
+            Percent,
+            User
+        };
+
+        struct STICK_LOCAL SVGAttributes
+        {
+            ColorRGBA fillColor;
+            WindingRule windingRule;
+            ColorRGBA strokeColor;
+            Float strokeWidth;
+            StrokeCap strokeCap;
+            StrokeJoin strokeJoin;
+            bool bScalingStroke;
+            Float miterLimit;
+            stick::DynamicArray<Float> dashArray;
+            Float dashOffset;
+            // since we dont support text yet, we only care
+            // about font size for em/ex calculations
+            Float fontSize;
+        };
+
+        struct STICK_LOCAL SVGCoordinate
+        {
+            SVGUnits units;
+            Float value;
+        };
 
         class STICK_LOCAL SVGImport
         {
@@ -29,9 +65,7 @@ namespace paper
 
             SVGImport(Document & _doc);
 
-            GroupResult importFromString(const stick::String & _svg);
-
-            GroupResult importFromFile(const stick::URI & _uri);
+            SVGImportResult parse(const stick::String & _svg, stick::Size _dpi = 72);
 
             Item recursivelyImportNode(const Shrub & _node, stick::Error & _error);
 
@@ -60,9 +94,24 @@ namespace paper
 
         private:
 
-            void parseAttributes(const Shrub & _node, Item & _item);
+            Float toPixels(Float _value, SVGUnits _units, Float _start = 0.0, Float _length = 1.0);
+
+            SVGCoordinate parseCoordinate(const char * _str);
+
+            Float coordinatePixels(const char * _str, Float _start = 0.0, Float _length = 1.0);
+
+            stick::String::ConstIter parseNumbers(stick::String::ConstIter _it,
+                                                  stick::String::ConstIter _end,
+                                                  stick::DynamicArray<Float> & _outNumbers);
+
+            void pushAttributes(const Shrub & _node, Item & _item);
+
+            void popAttributes();
+
 
             Document * m_document;
+            stick::Size m_dpi;
+            stick::DynamicArray<SVGAttributes> m_attributeStack;
             stick::HashMap<stick::String, Item> m_defs;
         };
     }

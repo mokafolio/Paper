@@ -9,28 +9,9 @@ namespace paper
         using namespace stick;
         using namespace crunch;
 
-        enum class SVGUnits
-        {
-            em,
-            ex,
-            px,
-            pt,
-            cm,
-            mm,
-            in
-        };
-
-        static Float toPixels(Float _value, SVGUnits _units)
-        {
-            // switch (_units)
-            // {
-            //     case SVGUnits::em: return 
-            // };
-        }
-
         static ColorRGB rgb(UInt8 _r, UInt8 _g, UInt8 _b)
         {
-            return ColorRGB(_r / 255.0, _r / 255.0, _b / 255.0);
+            return ColorRGB(_r / 255.0, _g / 255.0, _b / 255.0);
         }
 
         HashMap<String, ColorRGB> svgColors =
@@ -184,27 +165,57 @@ namespace paper
             {"yellowgreen", rgb(154, 205, 50)}
         };
 
-        static String::ConstIter skipWhitespace(String::ConstIter _it, String::ConstIter _end)
+        static String::ConstIter skipWhitespaceAndCommas(String::ConstIter _it, String::ConstIter _end)
         {
-            while (_it != _end && std::isspace(*_it))
+            while (_it != _end && (std::isspace(*_it) || *_it == ','))
                 ++_it;
             return _it;
         }
 
         SVGImport::SVGImport() :
-            m_document(nullptr)
+            m_document(nullptr),
+            m_dpi(72)
         {
 
         }
 
         SVGImport::SVGImport(Document & _doc) :
-            m_document(&_doc)
+            m_document(&_doc),
+            m_dpi(72)
         {
 
         }
 
-        GroupResult SVGImport::importFromString(const String & _svg)
+        Float SVGImport::toPixels(Float _value, SVGUnits _units, Float _start, Float _length)
         {
+            switch (_units)
+            {
+                case SVGUnits::PX:
+                case SVGUnits::User:
+                default:
+                    return _value;
+                case SVGUnits::PT:
+                    return _value / (Float)72.0 * m_dpi;
+                case SVGUnits::PC:
+                    return _value / (Float)6.0 * m_dpi;
+                case SVGUnits::EM:
+                    return _value / (Float)6.0 * m_dpi;
+                case SVGUnits::EX:
+                    return _value / (Float)6.0 * m_dpi;
+                case SVGUnits::CM:
+                    return _value / (Float)2.54 * m_dpi;
+                case SVGUnits::MM:
+                    return _value / (Float)25.4 * m_dpi;
+                case SVGUnits::IN:
+                    return _value * m_dpi;
+                case SVGUnits::Percent:
+                    return _start + _value / 100.0 * _length;
+            }
+        }
+
+        SVGImportResult SVGImport::parse(const String & _svg, Size _dpi)
+        {
+            m_dpi = _dpi;
             m_defs.clear();
 
             //TODO: It might be worthwhile to use pugixml directly to parse the svg
@@ -219,14 +230,17 @@ namespace paper
             // if (maybe) defs = &*maybe;
 
             Error err;
-            Group ret = Group(recursivelyImportNode(svg, err));
-            if (err) return err;
-            return ret;
-        }
+            Group grp = Group(recursivelyImportNode(svg, err));
 
-        GroupResult SVGImport::importFromFile(const URI & _uri)
-        {
+            auto mw = svg.child("width");
+            auto mh = svg.child("height");
+            Float w, h;
+            if (mw)
+                w = (*mw).value<Float>();
+            if (mh)
+                h = (*mh).value<Float>();
 
+            return SVGImportResult(grp, w, h, err);
         }
 
         static String::ConstIter consumeIncluding(String::ConstIter _it, String::ConstIter _end, const char _to)
@@ -238,7 +252,7 @@ namespace paper
 
         static ColorRGB parseColor(String::ConstIter _begin, String::ConstIter _end)
         {
-            _begin = skipWhitespace(_begin, _end);
+            _begin = skipWhitespaceAndCommas(_begin, _end);
             if (*_begin == '#')
             {
                 ++_begin; //skip the pound sign
@@ -265,6 +279,7 @@ namespace paper
             }
             else
             {
+                printf("SVG COLOR\n");
                 //is this a named svg color?
                 auto it = svgColors.find(String(_begin, _end));
                 if (it != svgColors.end())
@@ -301,58 +316,102 @@ namespace paper
             return findXMLAttrCB(_node, _path, _item, [](Item & _itm, const Shrub & _child) { const String & str = _child.valueString(); _itm.set<Comp>(toRGBA(parseColor(str.begin(), str.end()))); });
         }
 
-
-        void SVGImport::parseAttributes(const Shrub & _node, Item & _item)
+        void SVGImport::pushAttributes(const Shrub & _node, Item & _item)
         {
+            SVGAttributes attr;
+            if (m_attributeStack.count()) attr = m_attributeStack.last();
+
             //order is important to some degree
-            setColorComponentFromXMLAttr<comps::Fill>(_node, "fill", _item);
-            findXMLAttrCB(_node, "fill-rule", _item, [](Item & _it, const Shrub & _child)
+            //setColorComponentFromXMLAttr<comps::Fill>(_node, "fill", _item);
+            findXMLAttrCB(_node, "fill", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                printf("SETTING FILL!\n");
+                const String & str = _child.valueString();
+                auto col = toRGBA(parseColor(str.begin(), str.end()));
+                _it.set<comps::Fill>(col);
+                attr.fillColor = col;
+            });
+            findXMLAttrCB(_node, "fill-rule", _item, [&attr](Item & _it, const Shrub & _child)
             {
                 if (_child.valueString() == "nonzero")
-                    _it.setWindingRule(WindingRule::NonZero);
+                    attr.windingRule = WindingRule::NonZero;
                 else if (_child.valueString() == "evenodd")
-                    _it.setWindingRule(WindingRule::EvenOdd);
+                    attr.windingRule = WindingRule::EvenOdd;
+                _it.setWindingRule(attr.windingRule);
             });
-            setColorComponentFromXMLAttr<comps::Stroke>(_node, "stroke", _item);
+            findXMLAttrCB(_node, "stroke", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                const String & str = _child.valueString();
+                auto col = toRGBA(parseColor(str.begin(), str.end()));
+                _it.set<comps::Stroke>(col);
+                attr.strokeColor = col;
+            });
             setComponentFromXMLAttr<comps::StrokeWidth>(_node, "stroke-width", _item);
-            findXMLAttrCB(_node, "stroke-linecap", _item, [](Item & _it, const Shrub & _child)
+            findXMLAttrCB(_node, "stroke-linecap", _item, [&attr](Item & _it, const Shrub & _child)
             {
                 if (_child.valueString() == "butt")
-                    _it.setStrokeCap(StrokeCap::Butt);
+                    attr.strokeCap = StrokeCap::Butt;
                 else if (_child.valueString() == "round")
-                    _it.setStrokeCap(StrokeCap::Round);
+                    attr.strokeCap = StrokeCap::Round;
                 else if (_child.valueString() == "square")
-                    _it.setStrokeCap(StrokeCap::Square);
+                    attr.strokeCap = StrokeCap::Square;
+
+                _it.setStrokeCap(attr.strokeCap);
             });
-            findXMLAttrCB(_node, "stroke-linejoin", _item, [](Item & _it, const Shrub & _child)
+            findXMLAttrCB(_node, "stroke-linejoin", _item, [&attr](Item & _it, const Shrub & _child)
             {
                 if (_child.valueString() == "miter")
-                    _it.setStrokeJoin(StrokeJoin::Miter);
+                    attr.strokeJoin = StrokeJoin::Miter;
                 else if (_child.valueString() == "round")
-                    _it.setStrokeJoin(StrokeJoin::Round);
+                    attr.strokeJoin = StrokeJoin::Round;
                 else if (_child.valueString() == "bevel")
-                    _it.setStrokeJoin(StrokeJoin::Bevel);
-            });
-            findXMLAttrCB(_node, "vector-effect", _item, [](Item & _it, const Shrub & _child)
-            {
-                _it.setStrokeScaling(_child.valueString() != "non-scaling-stroke");
-            });
-            setComponentFromXMLAttr<comps::MiterLimit>(_node, "stroke-miterlimit", _item);
-            findXMLAttrCB(_node, "stroke-dasharray", _item, [](Item & _it, const Shrub & _child)
-            {
-                // auto it = _child.valueString().begin();
-                // auto end = _child.valueString().end();
-                // it = skipWhitespace(it, end);
-                // String tmp;
+                    attr.strokeJoin = StrokeJoin::Bevel;
 
-                // //handle none case
-                // if (*it != _end && *it == 'n')
-                //     return;
+                _it.setStrokeJoin(attr.strokeJoin);
+            });
+            findXMLAttrCB(_node, "vector-effect", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.bScalingStroke = _child.valueString() != "non-scaling-stroke";
+                _it.setStrokeScaling(attr.bScalingStroke);
+            });
+            findXMLAttrCB(_node, "stroke-miterlimit", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.miterLimit = _child.value<Float>();
+                _it.setMiterLimit(attr.miterLimit);
+            });
+            findXMLAttrCB(_node, "stroke-dasharray", _item, [&](Item & _it, const Shrub & _child)
+            {
+                printf("SETTING DASH ARRAY\n");
+                attr.dashArray.clear();
 
-                // while (it != end)
-                // {
-                //     //while(std::isdigit(*it))
-                // }
+                auto it = _child.valueString().begin();
+                auto end = _child.valueString().end();
+                it = skipWhitespaceAndCommas(it, end);
+
+                //handle none case
+                if (it != end && *it != 'n')
+                {
+                    while (it != end)
+                    {
+                        //TODO take percentage start and length into account and pass it to toPixels
+                        attr.dashArray.append(coordinatePixels(it));
+                        while (it != end && !std::isspace(*it) && *it != ',') ++it;
+                        it = skipWhitespaceAndCommas(it, end);
+                    }
+                }
+
+                _it.setDashArray(attr.dashArray);
+            });
+
+            findXMLAttrCB(_node, "stroke-dashoffset", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.dashOffset = _child.value<Float>();
+                _it.setDashOffset(attr.dashOffset);
+            });
+
+            findXMLAttrCB(_node, "font-size", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.fontSize = _child.value<Float>();
             });
 
             if (auto ch = _node.child("id"))
@@ -364,6 +423,13 @@ namespace paper
                     m_defs.insert(name, _item);
                 }
             }
+
+            m_attributeStack.append(attr);
+        }
+
+        void SVGImport::popAttributes()
+        {
+            m_attributeStack.removeLast();
         }
 
         Item SVGImport::recursivelyImportNode(const Shrub & _node, Error & _error)
@@ -410,16 +476,17 @@ namespace paper
                 //?
             }
 
-            if (item.isValid())
-            {
-                parseAttributes(_node, item);
-            }
+            // if (item.isValid())
+            // {
+            //     parseAttributes(_node, item);
+            // }
 
             return item;
         }
 
         Group SVGImport::importGroup(const Shrub & _node, Error & _error)
         {
+            printf("IMPORT GROUP\n");
             Group grp = m_document->createGroup();
             for (auto & child : _node)
             {
@@ -456,35 +523,75 @@ namespace paper
             return _it;
         }
 
-        static String::ConstIter parseNumbers(String::ConstIter _it, String::ConstIter _end, DynamicArray<Float> & _outNumbers)
+        SVGCoordinate SVGImport::parseCoordinate(const char * _str)
+        {
+            // do
+            // {
+            //     ++_it;
+            // }
+            // while (_it != _end && std::isdigit(*_it));
+
+            // String number(begin, _it - 1);
+            // auto unitBegin = _it;
+            // while (_it != _end && !std::isspace(*_it) &&  *_it != ',')
+            //     _it++;
+
+            // String units;
+            // if(_it - unitBegin > )
+            SVGCoordinate ret;
+            char units[32] = "";
+            std::sscanf(_str, "%f%s", &ret.value, units);
+
+            if (units[0] == 'e' && units[1] == 'm')
+                ret.units = SVGUnits::EM;
+            else if (units[0] == 'e' && units[1] == 'x')
+                ret.units = SVGUnits::EX;
+            else if (units[0] == 'p' && units[1] == 'x')
+                ret.units = SVGUnits::PX;
+            else if (units[0] == 'p' && units[1] == 't')
+                ret.units = SVGUnits::PT;
+            else if (units[0] == 'p' && units[1] == 'c')
+                ret.units = SVGUnits::PC;
+            else if (units[0] == 'c' && units[1] == 'm')
+                ret.units = SVGUnits::CM;
+            else if (units[0] == 'm' && units[1] == 'm')
+                ret.units = SVGUnits::MM;
+            else if (units[0] == 'i' && units[1] == 'n')
+                ret.units = SVGUnits::IN;
+            else if (units[0] == '%')
+                ret.units = SVGUnits::Percent;
+            else
+                ret.units = SVGUnits::User;
+
+            return ret;
+        }
+
+        Float SVGImport::coordinatePixels(const char * _str, Float _start, Float _length)
+        {
+            auto coord = parseCoordinate(_str);
+            return toPixels(coord.value, coord.units, _start, _length);
+        }
+
+        String::ConstIter SVGImport::parseNumbers(String::ConstIter _it, String::ConstIter _end, DynamicArray<Float> & _outNumbers)
         {
             _outNumbers.clear();
             ++_it; //skip the command character
-            _it = skipWhitespace(_it, _end);
+            _it = skipWhitespaceAndCommas(_it, _end);
 
-            String number;
+            Float value;
             while (_it != _end)
             {
-                auto begin = _it;
-                //find the end of the current number
-                do
-                {
-                    ++_it;
-                }
-                while (_it != _end && !std::isspace(*_it) && *_it != ',' && !isCommand(*_it));
-
-                number = String(begin, _it - 1);
-                _outNumbers.append(toFloat64(number));
-
-                //if we reached the next command or end, we are done
-                if (isCommand(*_it) || _it == _end)
+                std::sscanf(_it, "%f", &value);
+                String tmp(_it, _end);
+                printf("VALUE %f %s\n", value, tmp.cString());
+                _outNumbers.append(value);
+                while (std::isdigit(*_it)) ++_it;
+                _it = skipWhitespaceAndCommas(_it, _end);
+                if (isCommand(*_it))
                     break;
-
-                //otherwise skip the comma
-                ++_it;
-                //and whitespace
-                _it = skipWhitespace(_it, _end);
             }
+
+            printf("NUM NUMBERS %lu\n", _outNumbers.count());
 
             //return advanceToNextCommand(_it, _end);
             return _it;
@@ -497,14 +604,17 @@ namespace paper
 
         Path SVGImport::importPath(const Shrub & _node, Error & _error)
         {
+            printf("IMPORT PATH\n");
             auto maybe = _node.child("d");
             if (maybe)
             {
+                printf("GOT DATA\n");
                 const String & val = (*maybe).valueString();
                 DynamicArray<Float> numbers;
                 auto end = val.end();
-                auto it = skipWhitespace(val.begin(), end);
+                auto it = skipWhitespaceAndCommas(val.begin(), end);
                 Path p = m_document->createPath();
+                pushAttributes(_node, p);
                 Path currentPath = p;
                 Vec2f last;
                 Vec2f lastHandle;
@@ -514,6 +624,7 @@ namespace paper
                     it = parseNumbers(it, end, numbers);
                     if (cmd == 'M' || cmd == 'm')
                     {
+                        printf("MOVE CMD\n");
                         if (currentPath.segments().count())
                         {
                             Path tmp = m_document->createPath();
@@ -534,6 +645,7 @@ namespace paper
                     }
                     else if (cmd == 'L' || cmd == 'l')
                     {
+                        printf("L CMD\n");
                         bool bRelative = cmd == 'l';
                         for (int i = 0; i < numbers.count(); i += 2)
                         {
@@ -547,6 +659,7 @@ namespace paper
                     }
                     else if (cmd == 'H' || cmd == 'h' || cmd == 'V' || cmd == 'v')
                     {
+                        printf("H CMD\n");
                         bool bRelative = cmd == 'h' || cmd == 'v';
                         bool bVert = cmd == 'V' || cmd == 'v';
                         for (int i = 0; i < numbers.count(); ++i)
@@ -571,6 +684,7 @@ namespace paper
                     }
                     else if (cmd == 'C' || cmd == 'c')
                     {
+                        printf("C CMD\n");
                         bool bRelative = cmd == 'c';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 6)
@@ -595,6 +709,7 @@ namespace paper
                     }
                     else if (cmd == 'S' || cmd == 's')
                     {
+                        printf("S CMD\n");
                         bool bRelative = cmd == 's';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 4)
@@ -618,6 +733,7 @@ namespace paper
                     }
                     else if (cmd == 'Q' || cmd == 'q')
                     {
+                        printf("Q CMD\n");
                         bool bRelative = cmd == 'q';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 4)
@@ -637,6 +753,7 @@ namespace paper
                     }
                     else if (cmd == 'T' || cmd == 't')
                     {
+                        printf("T CMD\n");
                         bool bRelative = cmd == 't';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 2)
@@ -649,6 +766,7 @@ namespace paper
                     }
                     else if (cmd == 'A' || cmd == 'a')
                     {
+                        printf("A CMD\n");
                         bool bRelative = cmd == 'a';
                         for (int i = 0; i < numbers.count(); i += 7)
                         {
@@ -660,6 +778,7 @@ namespace paper
                     }
                     else if (cmd == 'Z' || cmd == 'z')
                     {
+                        printf("Z CMD\n");
                         currentPath.closePath();
                         last = currentPath.segments().last().position();
                         lastHandle = currentPath.segments().last().handleOutAbsolute();
@@ -671,6 +790,8 @@ namespace paper
                     }
                 }
                 while (it != end);
+
+                popAttributes();
 
                 //return the path
                 return p;
@@ -694,12 +815,46 @@ namespace paper
 
         Path SVGImport::importCircle(const Shrub & _node, Error & _error)
         {
-
+            auto mcx = _node.child("cx");
+            auto mcy = _node.child("cy");
+            auto mr = _node.child("r");
+            if (mcx && mcy && mr)
+            {
+                Path ret = m_document->createCircle(Vec2f(coordinatePixels((*mcx).valueString().begin()),
+                                                    coordinatePixels((*mcy).valueString().begin())),
+                                                    coordinatePixels((*mr).valueString().begin()));
+                pushAttributes(_node, ret);
+                popAttributes();
+                return ret;
+            }
+            else
+            {
+                //TODO Warning?
+            }
+            return Path();
         }
 
         Path SVGImport::importEllipse(const Shrub & _node, Error & _error)
         {
-
+            auto mcx = _node.child("cx");
+            auto mcy = _node.child("cy");
+            auto mrx = _node.child("rx");
+            auto mry = _node.child("ry");
+            if (mcx && mcy && mrx && mry)
+            {
+                Path ret = m_document->createEllipse(Vec2f(coordinatePixels((*mcx).valueString().begin()),
+                                                     coordinatePixels((*mcy).valueString().begin())),
+                                                     Vec2f(coordinatePixels((*mrx).valueString().begin()),
+                                                             coordinatePixels((*mry).valueString().begin())));
+                pushAttributes(_node, ret);
+                popAttributes();
+                return ret;
+            }
+            else
+            {
+                //TODO Warning?
+            }
+            return Path();
         }
 
         Path SVGImport::importRectangle(const Shrub & _node, Error & _error)

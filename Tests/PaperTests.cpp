@@ -248,8 +248,9 @@ const Suite spec[] =
         EXPECT(doc.children()[0] == grp);
         EXPECT(doc.children()[1] == grp2);
     },
-    SUITE("SVG Tests")
+    SUITE("SVG Export Tests")
     {
+        //TODO: Turn this into an actual test
         Hub hub;
         Document doc = createDocument(hub);
         doc.translateTransform(Vec2f(100, 200));
@@ -258,6 +259,67 @@ const Suite spec[] =
         c.setFill(ColorRGBA(1.0, 1.0, 0.0, 1.0));
         auto res = doc.exportSVG();
         printf("%s\n", res.ensure().cString());
+    },
+    SUITE("SVG Import Tests")
+    {
+        {
+            Hub hub;
+            Document doc = createDocument(hub);
+            String svg = "<svg width='100px' height='50px'><path d='M10 20 L100 20 100 120 Z'/></svg>";
+            printf("SVG:\n%s\n", svg.cString());
+            auto svgdata = doc.parseSVG(svg);
+            EXPECT(svgdata.width() == 100);
+            EXPECT(svgdata.height() == 50);
+            EXPECT(svgdata.group().isValid());
+            EXPECT(svgdata.group().children().count() == 1);
+            EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Path);
+            Path p(svgdata.group().children()[0]);
+            EXPECT(p.segments().count() == 3);
+            EXPECT(isClose(p.segments()[0].position(), Vec2f(10, 20)));
+            EXPECT(isClose(p.segments()[1].position(), Vec2f(100, 20)));
+            EXPECT(isClose(p.segments()[2].position(), Vec2f(100, 120)));
+            EXPECT(p.isClosed());
+        }
+        {
+            //TODO: test transforms on the group element
+            Hub hub;
+            Document doc = createDocument(hub);
+            String svg = "<svg><g><path d='M10 20 L100 20'/><path d='M30 30 L100 20'/></g></svg>";
+            printf("SVG:\n%s\n", svg.cString());
+            auto svgdata = doc.parseSVG(svg);
+            EXPECT(!svgdata.error());
+            EXPECT(svgdata.group().children().count() == 1);
+            EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Group);
+            Group grp(svgdata.group().children()[0]);
+            EXPECT(grp.children().count() == 2);
+        }
+        {
+            //test basic colors and attribute import
+            Hub hub;
+            Document doc = createDocument(hub);
+            String svg = "<svg><path d='M10 20 L100 20' fill='red'/><circle cx='100' cy='200' r='20' fill='#4286f4' fill-rule='nonzero' stroke='black' stroke-miterlimit='33.5' stroke-dasharray='1, 2,3 4 5' stroke-dashoffset='20.33' vector-effect='non-scaling-stroke' stroke-linejoin='miter' stroke-linecap='round'/></svg>";
+            printf("SVG:\n%s\n", svg.cString());
+            auto svgdata = doc.parseSVG(svg);
+            Path p(svgdata.group().children()[0]);
+            EXPECT(p.fill() == ColorRGBA(1, 0, 0, 1));
+            EXPECT(p.windingRule() == WindingRule::EvenOdd);
+            Path p2(svgdata.group().children()[1]);
+            EXPECT(isClose(p2.fill().r, 66.0f / 255.0f) && isClose(p2.fill().g, 134.0f / 255.0f) && isClose(p2.fill().b, 244.0f / 255.0f));
+            EXPECT(p2.stroke() == ColorRGBA(0, 0, 0, 1));
+            EXPECT(p2.isScalingStroke() == false);
+            EXPECT(isClose(p2.miterLimit(), 33.5f));
+            EXPECT(isClose(p2.dashOffset(), 20.33f));
+            EXPECT(p2.windingRule() == WindingRule::NonZero);
+            printf("DA COUNT %lu\n", p2.dashArray().count());
+            EXPECT(p2.dashArray().count() == 5);
+            EXPECT(p2.dashArray()[0] == 1);
+            EXPECT(p2.dashArray()[1] == 2);
+            EXPECT(p2.dashArray()[2] == 3);
+            EXPECT(p2.dashArray()[3] == 4);
+            EXPECT(p2.dashArray()[4] == 5);
+            EXPECT(p2.strokeCap() == StrokeCap::Round);
+            EXPECT(p2.strokeJoin() == StrokeJoin::Miter);
+        }
     }
 };
 

@@ -1,11 +1,14 @@
 #include <Paper/Document.hpp>
 #include <Paper/Constants.hpp>
 #include <Paper/SVG/SVGExport.hpp>
+#include <Paper/SVG/SVGImport.hpp>
 #include <Crunch/StringConversion.hpp>
 #include <Stick/FileUtilities.hpp>
 
 namespace paper
 {
+    using namespace stick;
+
     Document::Document()
     {
 
@@ -29,7 +32,7 @@ namespace paper
         _e.set<comps::HandleBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
     }
 
-    Group Document::createGroup(const stick::String & _name)
+    Group Document::createGroup(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Group ret = hub->createEntity();
@@ -42,7 +45,7 @@ namespace paper
         return ret;
     }
 
-    Path Document::createPath(const stick::String & _name)
+    Path Document::createPath(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Path ret = hub->createEntity();
@@ -58,7 +61,7 @@ namespace paper
         return ret;
     }
 
-    Path Document::createEllipse(Vec2f _center, Vec2f _size, const stick::String & _name)
+    Path Document::createEllipse(Vec2f _center, Vec2f _size, const String & _name)
     {
         static Float s_kappa = detail::PaperConstants::kappa();
         static Vec2f s_unitSegments[12] = { Vec2f(1, 0), Vec2f(0, -s_kappa), Vec2f(0, s_kappa),
@@ -68,7 +71,7 @@ namespace paper
                                           };
         Path ret = createPath(_name);
         Vec2f rad = _size * 0.5;
-        for (stick::Int32 i = 0; i < 4; ++i)
+        for (Int32 i = 0; i < 4; ++i)
         {
             ret.addSegment(s_unitSegments[i * 3] * rad + _center, s_unitSegments[i * 3 + 1] * rad, s_unitSegments[i * 3 + 2] * rad);
         }
@@ -76,12 +79,12 @@ namespace paper
         return ret;
     }
 
-    Path Document::createCircle(Vec2f _center, Float _radius, const stick::String & _name)
+    Path Document::createCircle(Vec2f _center, Float _radius, const String & _name)
     {
         return createEllipse(_center, Vec2f(_radius) * 2.0f, _name);
     }
 
-    Path Document::createRectangle(Vec2f _from, Vec2f _to, const stick::String & _name)
+    Path Document::createRectangle(Vec2f _from, Vec2f _to, const String & _name)
     {
         Path ret = createPath(_name);
 
@@ -121,21 +124,27 @@ namespace paper
         return *get<comps::HubPointer>();
     }
 
-    stick::Allocator & Document::allocator() const
+    Allocator & Document::allocator() const
     {
         STICK_ASSERT(isValid());
         STICK_ASSERT(hasComponent<comps::HubPointer>());
         return get<comps::HubPointer>()->allocator();
     }
 
-    stick::TextResult Document::exportSVG() const
+    svg::SVGImportResult Document::parseSVG(const String & _svg, Size _dpi)
+    {
+        svg::SVGImport importer(*this);
+        return importer.parse(_svg, _dpi);
+    }
+
+    TextResult Document::exportSVG() const
     {
         STICK_ASSERT(isValid());
         svg::SVGExport exporter;
         return exporter.exportDocument(*this);
     }
 
-    stick::Error Document::saveSVG(const stick::URI & _uri) const
+    Error Document::saveSVG(const URI & _uri) const
     {
         auto res = exportSVG();
         if (res)
@@ -149,7 +158,7 @@ namespace paper
         return s_hub;
     }
 
-    Document createDocument(brick::Hub & _hub, const stick::String & _name)
+    Document createDocument(brick::Hub & _hub, const String & _name)
     {
         Document doc = _hub.createEntity();
         addDefaultComponents(doc);

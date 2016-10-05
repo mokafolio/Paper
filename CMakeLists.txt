@@ -42,6 +42,7 @@ Paper/Private/Shape.cpp
 Paper/Private/StrokeTriangulator.cpp
 Paper/SVG/SVGExport.cpp
 Paper/SVG/SVGImport.cpp
+Paper/SVG/SVGImportResult.cpp
 )
 
 add_library (Paper SHARED ${PAPERSRC})

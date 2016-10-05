@@ -12,6 +12,7 @@
 #include <Paper/Segment.hpp>
 #include <Paper/Curve.hpp>
 #include <Paper/Group.hpp>
+#include <Paper/SVG/SVGImportResult.hpp>
 
 namespace paper
 {
@@ -42,7 +43,9 @@ namespace paper
         const Vec2f size() const;
 
         brick::Hub & hub();
-        
+
+        svg::SVGImportResult parseSVG(const stick::String & _svg, stick::Size _dpi = 72);
+
         stick::Allocator & allocator() const;
 
         stick::TextResult exportSVG() const;
