@@ -581,6 +581,10 @@ namespace paper
                 String tmp(_it, _end);
                 printf("VALUE %f %s\n", value, tmp.cString());
                 _outNumbers.append(value);
+
+                //skip the sign part
+                if (*_it == '+' || *_it == '-')
+                    ++_it;
                 //skip integer part
                 while (_it != _end && std::isdigit(*_it)) ++_it;
                 //skip fractional part
@@ -593,9 +597,9 @@ namespace paper
                 if (*_it == 'E' || *_it == 'e')
                 {
                     ++_it;
-                    if(*_it == '+' || *_it == '-')
+                    if (*_it == '+' || *_it == '-')
                         ++_it;
-                    
+
                     while (_it != _end && std::isdigit(*_it)) ++_it;
                 }
                 _it = skipWhitespaceAndCommas(_it, _end);

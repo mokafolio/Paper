@@ -284,7 +284,7 @@ const Suite spec[] =
             //TODO: test transforms on the group element
             Hub hub;
             Document doc = createDocument(hub);
-            String svg = "<svg><g><path d='M10 20 L100 20'/><path d='M30 30 L100 20'/></g></svg>";
+            String svg = "<svg><g><path d='M10 20 L100 20'/><path d='M-30 30.0e4 L100 20'/></g></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
             EXPECT(!svgdata.error());
