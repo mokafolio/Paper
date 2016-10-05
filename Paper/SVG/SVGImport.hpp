@@ -73,8 +73,6 @@ namespace paper
 
             Path importPath(const Shrub & _node, stick::Error & _error);
 
-            Path importPolygon(const Shrub & _node, stick::Error & _error);
-
             Path importPolyline(const Shrub & _node, bool _bIsPolygon, stick::Error & _error);
 
             Path importCircle(const Shrub & _node, stick::Error & _error);

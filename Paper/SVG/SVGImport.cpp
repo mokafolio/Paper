@@ -461,7 +461,7 @@ namespace paper
             }
             else if (_node.name() == "polygon")
             {
-                item = importPolygon(_node, _error);
+                item = importPolyline(_node, true, _error);
             }
             else if (_node.name() == "path")
             {
@@ -581,7 +581,23 @@ namespace paper
                 String tmp(_it, _end);
                 printf("VALUE %f %s\n", value, tmp.cString());
                 _outNumbers.append(value);
-                while (std::isdigit(*_it)) ++_it;
+                //skip integer part
+                while (_it != _end && std::isdigit(*_it)) ++_it;
+                //skip fractional part
+                if (*_it == '.')
+                {
+                    ++_it;
+                    while (_it != _end && std::isdigit(*_it)) ++_it;
+                }
+                //skip exponent
+                if (*_it == 'E' || *_it == 'e')
+                {
+                    ++_it;
+                    if(*_it == '+' || *_it == '-')
+                        ++_it;
+                    
+                    while (_it != _end && std::isdigit(*_it)) ++_it;
+                }
                 _it = skipWhitespaceAndCommas(_it, _end);
                 if (isCommand(*_it))
                     break;
@@ -798,14 +814,30 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importPolygon(const Shrub & _node, Error & _error)
-        {
-
-        }
-
         Path SVGImport::importPolyline(const Shrub & _node, bool _bIsPolygon, Error & _error)
         {
+            auto mpoints = _node.child("points");
+            if (mpoints)
+            {
+                DynamicArray<Float> numbers;
+                numbers.reserve(64);
+                parseNumbers((*mpoints).valueString().begin(), (*mpoints).valueString().end(), numbers);
+                Path ret = m_document->createPath();
+                for (Size i = 0; i < numbers.count(); i += 2)
+                    ret.addPoint(Vec2f(numbers[i], numbers[i + 1]));
 
+                if (_bIsPolygon)
+                    ret.closePath();
+
+                pushAttributes(_node, ret);
+                popAttributes();
+                return ret;
+            }
+            else
+            {
+                _error = Error(ec::ParseFailed, "SVG polyline/polygon is missing points attribute", STICK_FILE, STICK_LINE);
+            }
+            return Path();
         }
 
         Path SVGImport::importCircle(const Shrub & _node, Error & _error)
@@ -885,7 +917,28 @@ namespace paper
 
         Path SVGImport::importLine(const Shrub & _node, Error & _error)
         {
-
+            auto mx1 = _node.child("x1");
+            auto my1 = _node.child("y1");
+            auto mx2 = _node.child("x2");
+            auto my2 = _node.child("y2");
+            if (mx1 && my1 && mx2 && my2)
+            {
+                Float x1 = coordinatePixels((*mx1).valueString().begin());
+                Float y1 = coordinatePixels((*my1).valueString().begin());
+                Float x2 = coordinatePixels((*mx2).valueString().begin());
+                Float y2 = coordinatePixels((*my2).valueString().begin());
+                Path ret = m_document->createPath();
+                ret.addPoint(Vec2f(x1, y1));
+                ret.addPoint(Vec2f(x2, y2));
+                pushAttributes(_node, ret);
+                popAttributes();
+                return ret;
+            }
+            else
+            {
+                _error = Error(ec::ParseFailed, "SVG line missing x1, y1, x2 or y1 attribute", STICK_FILE, STICK_LINE);
+            }
+            return Path();
         }
 
         // void SVGImport::importText()
