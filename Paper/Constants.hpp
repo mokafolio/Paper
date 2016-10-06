@@ -11,7 +11,9 @@ namespace paper
     {
         Document,
         Group,
-        Path
+        Path,
+        Symbol,
+        Unknown
     };
 
     STICK_API_ENUM_CLASS(StrokeCap)

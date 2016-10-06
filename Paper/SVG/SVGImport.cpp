@@ -439,7 +439,7 @@ namespace paper
             Shrub & svg = shrubRes.get();
 
             Error err;
-            Group grp = Group(recursivelyImportNode(svg, err));
+            Group grp = reinterpretItem<Group>(recursivelyImportNode(svg, err));
 
             auto mw = svg.child("width");
             auto mh = svg.child("height");
@@ -612,6 +612,18 @@ namespace paper
             {
                 item = importPath(_node, _error);
             }
+            // else if (_node.name() == "defs")
+            // {
+            //     item = importGroup(_node, _error);
+            // }
+            // else if (_node.name() == "clipPath")
+            // {
+            //     item = importGroup(_node, _error);
+            // }
+            // else if (_node.name() == "symbol")
+            // {
+            //     item = importGroup(_node, _error);
+            // }
             else
             {
                 //?

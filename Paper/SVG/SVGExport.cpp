@@ -73,11 +73,11 @@ namespace paper
             auto it = _item.get<comps::ItemType>();
             if (it == EntityType::Group)
             {
-                exportGroup(Group(_item), _parentTreeNode);
+                exportGroup(reinterpretItem<Group>(_item), _parentTreeNode);
             }
             else if (it == EntityType::Path)
             {
-                exportPath(Path(_item), _parentTreeNode, _bIsClipMask, true);
+                exportPath(reinterpretItem<Path>(_item), _parentTreeNode, _bIsClipMask, true);
             }
         }
 
@@ -243,7 +243,7 @@ namespace paper
                 {
                     if (it != _path.children().begin())
                         pathsString.append(" ");
-                    addPathToPathData(Path(*it), pathsString, true);
+                    addPathToPathData(reinterpretItem<Path>(*it), pathsString, true);
                 }
                 Shrub pathNode("path");
                 pathNode.set("d", pathsString, ValueHint::XMLAttribute);

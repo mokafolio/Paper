@@ -7,6 +7,9 @@ namespace paper
 {
     class Document;
 
+    class Item;
+    using ItemArray = stick::DynamicArray<Item>;
+
     class Item : public brick::Entity
     {
     public:
@@ -20,15 +23,14 @@ namespace paper
 
 
         Item();
+        
+        void assignEntity(const brick::Entity & _e);
 
-        Item(const brick::Entity & _e);
+        void addChild(Item _e);
 
+        void insertAbove(Item _e);
 
-        void addChild(brick::Entity _e);
-
-        void insertAbove(brick::Entity _e);
-
-        void insertBelow(brick::Entity _e);
+        void insertBelow(Item _e);
 
         void sendToFront();
 
@@ -40,11 +42,11 @@ namespace paper
 
         void reverseChildren();
 
-        const EntityArray & children() const;
+        const ItemArray & children() const;
 
         const stick::String & name() const;
 
-        brick::Entity parent() const;
+        Item parent() const;
 
 
         void setPosition(const Vec2f & _position);
@@ -255,6 +257,25 @@ namespace paper
             return stick::Maybe<typename C::ValueType &>();
         }
     };
+
+    template<class T>
+    inline T reinterpretItem(const brick::Entity & _e)
+    {
+        T ret;
+        ret.assignEntity(_e);
+        return ret;
+    }
+
+    template<class T>
+    inline T itemCast(const Item & _item)
+    {
+        if(_item.itemType() == T::ItemType)
+        {
+            return reinterpretItem<T>(_item);
+        }
+
+        return T();
+    }
 }
 
 #endif //PAPER_ITEM_HPP

@@ -16,6 +16,8 @@ namespace paper
 
     public:
 
+        static constexpr EntityType ItemType = EntityType::Path;
+
         using SegmentIter = typename SegmentArray::Iter;
         using SegmentConstIter = typename SegmentArray::ConstIter;
         using CurveIter = typename CurveArray::Iter;
@@ -23,8 +25,6 @@ namespace paper
 
 
         Path();
-
-        Path(const brick::Entity & _e);
 
         //absolute post-script style drawing commands
         void addPoint(const Vec2f & _to);

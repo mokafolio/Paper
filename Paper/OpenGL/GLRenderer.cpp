@@ -381,7 +381,7 @@ namespace paper
             paths[0] = _path;
             for (Size i = 0; i < children.count(); ++i)
             {
-                Path p(children[i]);
+                Path p = reinterpretItem<Path>(children[i]);
                 updateRenderCache(p, style, _bIsClippingPath);
                 paths[i + 1] = p;
             }

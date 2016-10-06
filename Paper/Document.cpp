@@ -14,12 +14,6 @@ namespace paper
 
     }
 
-    Document::Document(const brick::Entity & _e) :
-        Item(_e)
-    {
-
-    }
-
     void addDefaultComponents(brick::Entity & _e)
     {
         //TODO: Only add these when they are used to save memory
@@ -32,14 +26,19 @@ namespace paper
         _e.set<comps::HandleBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
     }
 
+    Symbol Document::createSymbol(const Item & _item)
+    {
+
+    }
+
     Group Document::createGroup(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
-        Group ret = hub->createEntity();
+        Group ret = reinterpretItem<Group>(hub->createEntity());
         addDefaultComponents(ret);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Group);
-        ret.set<comps::Children>(EntityArray());
+        //ret.set<comps::Children>(EntityArray());
         ret.set<comps::ClippedFlag>(false);
         addChild(ret);
         return ret;
@@ -48,14 +47,14 @@ namespace paper
     Path Document::createPath(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
-        Path ret = hub->createEntity();
+        Path ret = reinterpretItem<Path>(hub->createEntity());
         addDefaultComponents(ret);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Path);
         ret.set<comps::Segments>(SegmentArray());
         ret.set<comps::Curves>(CurveArray());
         ret.set<comps::ClosedFlag>(false);
-        ret.set<comps::Children>(EntityArray());
+        //ret.set<comps::Children>(ItemArray());
         ret.set<comps::PathLength>((comps::PathLengthData) {true, 0.0});
         addChild(ret);
         return ret;
@@ -160,11 +159,11 @@ namespace paper
 
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
-        Document doc = _hub.createEntity();
+        Document doc = reinterpretItem<Document>(_hub.createEntity());
         addDefaultComponents(doc);
         doc.set<comps::Name>(_name);
         doc.set<comps::ItemType>(EntityType::Document);
-        doc.set<comps::Children>(EntityArray());
+        //doc.set<comps::Children>(EntityArray());
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
         return doc;

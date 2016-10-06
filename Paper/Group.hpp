@@ -14,12 +14,10 @@ namespace paper
 
     public:
 
-        static constexpr EntityType itemType = EntityType::Group;
+        static constexpr EntityType ItemType = EntityType::Group;
 
 
         Group();
-
-        Group(const brick::Entity & _e);
 
         void setClipped(bool _b);
         

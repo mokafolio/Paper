@@ -12,6 +12,7 @@
 #include <Paper/Segment.hpp>
 #include <Paper/Curve.hpp>
 #include <Paper/Group.hpp>
+#include <Paper/Symbol.hpp>
 #include <Paper/SVG/SVGImportResult.hpp>
 
 namespace paper
@@ -20,9 +21,11 @@ namespace paper
     {
     public:
 
+        static constexpr EntityType ItemType = EntityType::Document;
+
         Document();
 
-        Document(const brick::Entity & _e);
+        Symbol createSymbol(const Item & _item);
 
         Group createGroup(const stick::String & _name = "");
 

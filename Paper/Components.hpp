@@ -8,15 +8,16 @@
 namespace paper
 {
     class Document;
+    class Item;
+    using ItemArray = stick::DynamicArray<Item>;
 
     namespace comps
     {
         using ItemType = brick::Component<ComponentName("ItemType"), EntityType>;
         using HubPointer = brick::Component<ComponentName("HubPointer"), brick::Hub *>;
-        using Parent = brick::Component<ComponentName("Parent"), brick::Entity>;
+        using Parent = brick::Component<ComponentName("Parent"), Item>;
         using Name = brick::Component<ComponentName("Name"), stick::String>;
-        using Children = brick::Component<ComponentName("Children"), EntityArray>;
-        using Paths = brick::Component<ComponentName("Paths"), EntityArray>;
+        using Children = brick::Component<ComponentName("Children"), ItemArray>;
         using Transform = brick::Component<ComponentName("Transform"), Mat3f>;
         using AbsoluteTransform = brick::Component<ComponentName("AbsoluteTransform"), Mat3f>;
         using AbsoluteTransformDirtyFlag = brick::Component<ComponentName("AbsoluteTransformDirtyFlag"), bool>;

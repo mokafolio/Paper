@@ -133,8 +133,9 @@ namespace paper
                 loops.append(data);
 
                 // If this is a compound path, get the child mono curves and append them
-                for(Path p : _path.children())
-                {
+                for(const Item & c : _path.children())
+                {   
+                    Path p = reinterpretItem<Path>(c);
                     const MonoCurveLoopArray & cc = monoCurves(p);
 
                     // technically nested compound paths are not supported right now
@@ -159,21 +160,6 @@ namespace paper
             Int32 windingLeft = 0;
             Int32 windingRight = 0;
             stick::DynamicArray<Float> roots;
-
-            /*
-            printf("WINDING START\n");
-
-            printf("NUM MONO CURVES %lu, \n", _data.monoCurves.count());
-
-            for (const auto & c : _data.monoCurves)
-            {
-                printf("MC: %s, %s, %s, %s, %i\n", crunch::toString(c.bezier.positionOne()).cString(), crunch::toString(c.bezier.handleOne()).cString(),
-                       crunch::toString(c.bezier.handleTwo()).cString(), crunch::toString(c.bezier.positionTwo()).cString(), c.winding);
-            }
-
-            printf("LAST: %s, %s, %s, %s, %i\n", crunch::toString(_data.last.bezier.positionOne()).cString(), crunch::toString(_data.last.bezier.handleOne()).cString(),
-                   crunch::toString(_data.last.bezier.handleTwo()).cString(), crunch::toString(_data.last.bezier.positionTwo()).cString(), _data.last.winding);
-            */
 
             // Horizontal curves may return wrong results, since the curves are
             // monotonic in y direction and this is an indeterminate state.

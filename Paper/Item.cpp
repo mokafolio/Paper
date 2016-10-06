@@ -15,20 +15,19 @@ namespace paper
 
     }
 
-    Item::Item(const brick::Entity & _e) :
-        brick::Entity(_e)
+    void Item::assignEntity(const brick::Entity & _e)
     {
-
+        static_cast<brick::Entity*>(this)->operator=(_e);
     }
 
-    void Item::addChild(brick::Entity _e)
+    void Item::addChild(Item _e)
     {
         STICK_ASSERT(_e.isValid());
         STICK_ASSERT(_e.get<comps::ItemType>() == EntityType::Path ||
                      _e.get<comps::ItemType>() == EntityType::Group);
 
         if (!hasComponent<comps::Children>())
-            set<comps::Children>(EntityArray());
+            set<comps::Children>(ItemArray());
 
         //this is a compound path
         if (get<comps::ItemType>() == EntityType::Path)
@@ -39,8 +38,9 @@ namespace paper
             //for non zero winding rule we adjust the direction of the added path if needed
             if (windingRule() == WindingRule::NonZero)
             {
-                Path p(_e);
-                Path tp(*this);
+                Path p = itemCast<Path>(_e);
+                Path tp = itemCast<Path>(*this);
+                STICK_ASSERT(p.isValid() && tp.isValid());
                 p.setClockwise(!tp.isClockwise());
             }
         }
@@ -55,7 +55,7 @@ namespace paper
         markBoundsDirty(true);
     }
 
-    void Item::insertAbove(brick::Entity _e)
+    void Item::insertAbove(Item _e)
     {
         removeFromParent();
 
@@ -72,7 +72,7 @@ namespace paper
         p.markBoundsDirty(true);
     }
 
-    void Item::insertBelow(brick::Entity _e)
+    void Item::insertBelow(Item _e)
     {
         removeFromParent();
 
@@ -151,12 +151,11 @@ namespace paper
         }
     }
 
-    const EntityArray & Item::children() const
+    const ItemArray & Item::children() const
     {
         if (!hasComponent<comps::Children>())
         {
-            static EntityArray s_proxy;
-            return s_proxy;
+            const_cast<Item*>(this)->set<comps::Children>(ItemArray());
         }
         return get<comps::Children>();
     }
@@ -166,12 +165,12 @@ namespace paper
         return get<comps::Name>();
     }
 
-    brick::Entity Item::parent() const
+    Item Item::parent() const
     {
         if (hasComponent<comps::Parent>())
             return get<comps::Parent>();
         else
-            return brick::Entity();
+            return Item();
     }
 
     void Item::removeFromParent()
@@ -185,7 +184,7 @@ namespace paper
                 auto it = stick::find(children.begin(), children.end(), *this);
                 STICK_ASSERT(it != children.end());
                 children.remove(it);
-                set<comps::Parent>(brick::Entity());
+                set<comps::Parent>(Item());
                 p.markBoundsDirty(true);
             }
         }
@@ -356,7 +355,7 @@ namespace paper
         auto itemType = get<comps::ItemType>();
         if (itemType == EntityType::Path)
         {
-            Path p(*this);
+            Path p = itemCast<Path>(*this);
             p.applyTransform(_transform);
         }
 
@@ -528,16 +527,17 @@ namespace paper
         ret = {true, Rect(0, 0, 0, 0)};
         if (itemType == EntityType::Path)
         {
+            Path p = reinterpretItem<Path>(*this);
             if (_type == BoundsType::Fill)
-                ret = Path(*this).computeBounds(_bAbsolute ? &absoluteTransform() : _transform);
+                ret = p.computeBounds(_bAbsolute ? &absoluteTransform() : _transform);
             else if (_type == BoundsType::Stroke)
-                ret = Path(*this).computeStrokeBounds(_bAbsolute ? &absoluteTransform() : _transform);
+                ret = p.computeStrokeBounds(_bAbsolute ? &absoluteTransform() : _transform);
             else if (_type == BoundsType::Handle)
-                ret = Path(*this).computeHandleBounds(_bAbsolute ? &absoluteTransform() : _transform);
+                ret = p.computeHandleBounds(_bAbsolute ? &absoluteTransform() : _transform);
         }
         else if (itemType == EntityType::Group)
         {
-            Group grp(*this);
+            Group grp = reinterpretItem<Group>(*this);
             if (grp.isClipped())
             {
                 if (grp.children().count())
@@ -965,7 +965,7 @@ namespace paper
 
     static Item cloneGroup(const Item & _grp)
     {
-        Group copy = _grp.cloneWithout<comps::Parent, comps::Children>();
+        Group copy = reinterpretItem<Group>(_grp.cloneWithout<comps::Parent, comps::Children>());
         for (Item child : _grp.children())
         {
             copy.addChild(child.clone());
@@ -977,14 +977,14 @@ namespace paper
 
     static Item clonePath(const Item & _path)
     {
-        Path from(_path);
-        Path copy = from.cloneWithout<comps::Parent, comps::Segments, comps::Curves>();
+        Path from = reinterpretItem<Path>(_path);
+        Path copy = reinterpretItem<Path>(from.cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
         STICK_ASSERT(!copy.hasComponent<comps::Parent>());
         STICK_ASSERT(!copy.hasComponent<comps::Segments>());
         STICK_ASSERT(!copy.hasComponent<comps::Curves>());
         copy.set<comps::Segments>(SegmentArray());
         copy.set<comps::Curves>(CurveArray());
-        copy.set<comps::Children>(EntityArray());
+        copy.set<comps::Children>(ItemArray());
         for (const auto & seg : from.segments())
         {
             copy.addSegment(seg.position(), seg.handleIn(), seg.handleOut());
@@ -1028,7 +1028,7 @@ namespace paper
             item = item.parent();
         }
         STICK_ASSERT(item.get<comps::ItemType>() == EntityType::Document);
-        return Document(item);
+        return reinterpretItem<Document>(item);
     }
 
     EntityType Item::itemType() const

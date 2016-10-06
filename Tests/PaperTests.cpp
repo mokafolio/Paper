@@ -273,7 +273,7 @@ const Suite spec[] =
             EXPECT(svgdata.group().isValid());
             EXPECT(svgdata.group().children().count() == 1);
             EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Path);
-            Path p(svgdata.group().children()[0]);
+            Path p = reinterpretItem<Path>(svgdata.group().children()[0]);
             EXPECT(p.segments().count() == 3);
             EXPECT(isClose(p.segments()[0].position(), Vec2f(10, 20)));
             EXPECT(isClose(p.segments()[1].position(), Vec2f(100, 20)));
@@ -290,7 +290,7 @@ const Suite spec[] =
             EXPECT(!svgdata.error());
             EXPECT(svgdata.group().children().count() == 1);
             EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Group);
-            Group grp(svgdata.group().children()[0]);
+            Group grp = reinterpretItem<Group>(svgdata.group().children()[0]);
             EXPECT(grp.children().count() == 2);
         }
         {
@@ -300,10 +300,10 @@ const Suite spec[] =
             String svg = "<svg><path d='M10 20 L100 20' fill='red'/><circle cx='100' cy='200' r='20' fill='#4286f4' fill-rule='nonzero' stroke='black' stroke-miterlimit='33.5' stroke-dasharray='1, 2,3 4 5' stroke-dashoffset='20.33' vector-effect='non-scaling-stroke' stroke-linejoin='miter' stroke-linecap='round'/></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
-            Path p(svgdata.group().children()[0]);
+            Path p = reinterpretItem<Path>(svgdata.group().children()[0]);
             EXPECT(p.fill() == ColorRGBA(1, 0, 0, 1));
             EXPECT(p.windingRule() == WindingRule::EvenOdd);
-            Path p2(svgdata.group().children()[1]);
+            Path p2 = reinterpretItem<Path>(svgdata.group().children()[1]);
             EXPECT(isClose(p2.fill().r, 66.0f / 255.0f) && isClose(p2.fill().g, 134.0f / 255.0f) && isClose(p2.fill().b, 244.0f / 255.0f));
             EXPECT(p2.stroke() == ColorRGBA(0, 0, 0, 1));
             EXPECT(p2.isScalingStroke() == false);

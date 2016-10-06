@@ -19,13 +19,7 @@ namespace paper
     {
 
     }
-
-    Path::Path(const brick::Entity & _e) :
-        Item(_e)
-    {
-
-    }
-
+    
     void Path::addPoint(const Vec2f & _to)
     {
         createSegment(_to, Vec2f(0.0), Vec2f(0.0));
@@ -569,7 +563,7 @@ namespace paper
 
         for (auto & c : get<comps::Children>())
         {
-            Path p(c);
+            Path p = reinterpretItem<Path>(c);
             p.reverse();
         }
 
@@ -1277,6 +1271,6 @@ namespace paper
 
     Path Path::clone() const
     {
-        return Path(Item::clone());
+        return reinterpretItem<Path>(Item::clone());
     }
 }

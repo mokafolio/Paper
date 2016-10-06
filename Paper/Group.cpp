@@ -5,12 +5,7 @@ namespace paper
 {
     Group::Group()
     {
-    }
-
-    Group::Group(const brick::Entity & _e) :
-        Item(_e)
-    {
-
+        
     }
 
     void Group::setClipped(bool _b)
@@ -25,6 +20,6 @@ namespace paper
 
     Group Group::clone() const
     {
-        return Group(Item::clone());
+        return reinterpretItem<Group>(Item::clone());
     }
 }
