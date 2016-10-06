@@ -606,7 +606,7 @@ namespace paper
                     while (_it != _end && std::isdigit(*_it)) ++_it;
                 }
                 _it = skipWhitespaceAndCommas(_it, _end);
-                if(_endCondition(*_it))
+                if (_endCondition(*_it))
                     break;
             }
 
@@ -668,8 +668,50 @@ namespace paper
                 }
 
                 //advance to the opening bracket
-                while(_it != _end && *_it != '(') ++_it;
-                _it = parseNumbers(_it, _end, [](char _c){ return _c == ')'; }, numbers);
+                while (_it != _end && *_it != '(') ++_it;
+                _it = parseNumbers(_it, _end, [](char _c) { return _c == ')'; }, numbers);
+                ++_it; //skip ')'
+
+                if (action == TransformAction::Matrix && numbers.count() == 6)
+                {
+                    tmp = Mat3f(Vec3f(numbers[0], numbers[1], numbers[2]),
+                                Vec3f(numbers[3], numbers[4], numbers[5]),
+                                Vec3f(0, 0, 1));
+                }
+                else if (action == TransformAction::Translate && numbers.count() >= 1)
+                {
+                    tmp = Mat3f::translation2D(Vec2f(numbers[0], numbers.count() < 2 ? 0.0 : numbers[1]));
+                }
+                else if (action == TransformAction::Scale && numbers.count() >= 1)
+                {
+                    tmp = Mat3f::scaling2D(Vec2f(numbers[0], numbers.count() < 2 ? numbers[0] : numbers[1]));
+                }
+                else if (action == TransformAction::Rotate && numbers.count() >= 1)
+                {
+                    if (numbers.count() == 3)
+                    {
+                        Vec2f center = Vec2f(numbers[1], numbers[2]);
+                        tmp = Mat3f::translation2D(center);
+                        tmp.rotate2D(toRadians(numbers[0]));
+                        tmp.translate2D(-center);
+                    }
+                    else
+                    {
+                        tmp = Mat3f::rotation2D(numbers[0]);
+                    }
+                }
+                else if (action == TransformAction::SkewX && numbers.count() == 1)
+                {
+                    tmp = Mat3f::skewMatrix2D(Vec2f(numbers[0], 0));
+                }
+                else if (action == TransformAction::SkewY && numbers.count() == 1)
+                {
+                    tmp = Mat3f::skewMatrix2D(Vec2f(0, numbers[0]));
+                }
+                else
+                {
+                    continue;
+                }
 
                 //multiply with the current matrix (open gl style, right to left)
                 ret = tmp * ret;
@@ -702,7 +744,7 @@ namespace paper
                 {
                     char cmd = *it;
                     //auto tend = advanceToNextCommand(it + 1, end);
-                    it = parseNumbers(it, end, [](char _c){ return isCommand(_c); }, numbers);
+                    it = parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
