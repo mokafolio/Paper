@@ -233,6 +233,7 @@ namespace paper
             static Mat3f parseTransform(stick::String::ConstIter _it,
                                         stick::String::ConstIter _end)
             {
+                printf("PARSE TRANSFORM YO\n");
                 Mat3f ret = Mat3f::identity();
                 TransformAction action = TransformAction::None;
                 DynamicArray<Float> numbers;
@@ -266,14 +267,15 @@ namespace paper
                     }
                     else
                     {
-                        continue;
+                        printf("CONTINUE\n");
                         ++_it;
+                        continue;
                     }
 
                     //advance to the opening bracket
                     while (_it != _end && *_it != '(') ++_it;
                     _it = parseNumbers(_it, _end, [](char _c) { return _c == ')'; }, numbers);
-                    ++_it; //skip ')'
+                    if (_it != _end) ++_it; //skip ')'
 
                     if (action == TransformAction::Matrix && numbers.count() == 6)
                     {
@@ -283,6 +285,7 @@ namespace paper
                     }
                     else if (action == TransformAction::Translate && numbers.count() >= 1)
                     {
+                        printf("TRANSLATE BRO\n");
                         tmp = Mat3f::translation2D(Vec2f(numbers[0], numbers.count() < 2 ? 0.0 : numbers[1]));
                     }
                     else if (action == TransformAction::Scale && numbers.count() >= 1)
