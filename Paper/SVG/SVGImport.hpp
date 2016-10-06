@@ -98,10 +98,6 @@ namespace paper
 
             Float coordinatePixels(const char * _str, Float _start = 0.0, Float _length = 1.0);
 
-            stick::String::ConstIter parseNumbers(stick::String::ConstIter _it,
-                                                  stick::String::ConstIter _end,
-                                                  stick::DynamicArray<Float> & _outNumbers);
-
             void pushAttributes(const Shrub & _node, Item & _item);
 
             void popAttributes();

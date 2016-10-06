@@ -570,7 +570,8 @@ namespace paper
             return toPixels(coord.value, coord.units, _start, _length);
         }
 
-        String::ConstIter SVGImport::parseNumbers(String::ConstIter _it, String::ConstIter _end, DynamicArray<Float> & _outNumbers)
+        template<class F>
+        static String::ConstIter parseNumbers(String::ConstIter _it, String::ConstIter _end, F _endCondition, DynamicArray<Float> & _outNumbers)
         {
             _outNumbers.clear();
             ++_it; //skip the command character
@@ -605,7 +606,7 @@ namespace paper
                     while (_it != _end && std::isdigit(*_it)) ++_it;
                 }
                 _it = skipWhitespaceAndCommas(_it, _end);
-                if (isCommand(*_it))
+                if(_endCondition(*_it))
                     break;
             }
 
@@ -613,6 +614,67 @@ namespace paper
 
             //return advanceToNextCommand(_it, _end);
             return _it;
+        }
+
+        enum class TransformAction
+        {
+            Matrix,
+            Translate,
+            Scale,
+            Rotate,
+            SkewX,
+            SkewY,
+            None
+        };
+
+        static Mat3f parseTransform(stick::String::ConstIter _it,
+                                    stick::String::ConstIter _end)
+        {
+            Mat3f ret = Mat3f::identity();
+            TransformAction action = TransformAction::None;
+            DynamicArray<Float> numbers;
+            numbers.reserve(64);
+            while (_it != _end)
+            {
+                Mat3f tmp;
+                if (std::strncmp(_it, "matrix", 6) == 0)
+                {
+                    action = TransformAction::Matrix;
+                }
+                else if (std::strncmp(_it, "translate", 9) == 0)
+                {
+                    action = TransformAction::Translate;
+                }
+                else if (std::strncmp(_it, "scale", 5) == 0)
+                {
+                    action = TransformAction::Scale;
+                }
+                else if (std::strncmp(_it, "rotate", 6) == 0)
+                {
+                    action = TransformAction::Rotate;
+                }
+                else if (std::strncmp(_it, "skewX", 5) == 0)
+                {
+                    action = TransformAction::SkewX;
+                }
+                else if (std::strncmp(_it, "skewY", 5) == 0)
+                {
+                    action = TransformAction::SkewY;
+                }
+                else
+                {
+                    continue;
+                    ++_it;
+                }
+
+                //advance to the opening bracket
+                while(_it != _end && *_it != '(') ++_it;
+                _it = parseNumbers(_it, _end, [](char _c){ return _c == ')'; }, numbers);
+
+                //multiply with the current matrix (open gl style, right to left)
+                ret = tmp * ret;
+            }
+            return ret;
         }
 
         static Vec2f reflect(const Vec2f & _position, const Vec2f & _around)
@@ -639,7 +701,9 @@ namespace paper
                 do
                 {
                     char cmd = *it;
-                    it = parseNumbers(it, end, numbers);
+                    //auto tend = advanceToNextCommand(it + 1, end);
+                    it = parseNumbers(it, end, [](char _c){ return isCommand(_c); }, numbers);
+                    // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
                         printf("MOVE CMD\n");
@@ -827,7 +891,7 @@ namespace paper
             {
                 DynamicArray<Float> numbers;
                 numbers.reserve(64);
-                parseNumbers((*mpoints).valueString().begin(), (*mpoints).valueString().end(), numbers);
+                //parseNumbers((*mpoints).valueString().begin(), (*mpoints).valueString().end(), numbers);
                 Path ret = m_document->createPath();
                 for (Size i = 0; i < numbers.count(); i += 2)
                     ret.addPoint(Vec2f(numbers[i], numbers[i + 1]));
