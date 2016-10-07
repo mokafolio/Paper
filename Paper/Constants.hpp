@@ -12,7 +12,7 @@ namespace paper
         Document,
         Group,
         Path,
-        Symbol,
+        PlacedSymbol,
         Unknown
     };
 

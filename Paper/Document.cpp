@@ -38,7 +38,6 @@ namespace paper
         addDefaultComponents(ret);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Group);
-        //ret.set<comps::Children>(EntityArray());
         ret.set<comps::ClippedFlag>(false);
         addChild(ret);
         return ret;
@@ -163,7 +162,6 @@ namespace paper
         addDefaultComponents(doc);
         doc.set<comps::Name>(_name);
         doc.set<comps::ItemType>(EntityType::Document);
-        //doc.set<comps::Children>(EntityArray());
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
         return doc;

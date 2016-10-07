@@ -20,6 +20,7 @@ Paper/Item.hpp
 Paper/Path.hpp
 Paper/RenderInterface.hpp
 Paper/Segment.hpp
+Paper/Symbol.hpp
 Paper/OpenGL/GLRenderer.hpp
 Paper/SVG/SVGExport.hpp
 Paper/SVG/SVGImport.hpp
@@ -35,6 +36,7 @@ Paper/Item.cpp
 Paper/Path.cpp
 Paper/RenderInterface.cpp
 Paper/Segment.cpp
+Paper/Symbol.hpp
 Paper/OpenGL/GLRenderer.cpp
 Paper/Private/BooleanOperations.cpp
 Paper/Private/JoinAndCap.cpp

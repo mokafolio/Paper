@@ -3,6 +3,7 @@
 #include <Paper/Path.hpp>
 #include <Paper/Group.hpp>
 #include <Paper/Document.hpp>
+#include <Paper/PlacedSymbol.hpp>
 #include <Paper/Private/BooleanOperations.hpp> //for removing the mono curve component in markGeometryDirty
 #include <Crunch/MatrixFunc.hpp>
 
@@ -24,7 +25,8 @@ namespace paper
     {
         STICK_ASSERT(_e.isValid());
         STICK_ASSERT(_e.get<comps::ItemType>() == EntityType::Path ||
-                     _e.get<comps::ItemType>() == EntityType::Group);
+                     _e.get<comps::ItemType>() == EntityType::Group ||
+                     _e.get<comps::ItemType>() == EntityType::Document);
 
         if (!hasComponent<comps::Children>())
             set<comps::Children>(ItemArray());
@@ -541,10 +543,15 @@ namespace paper
             if (grp.isClipped())
             {
                 if (grp.children().count())
-                    return Item(grp.children()[0]).computeBounds(_transform, _type, _bAbsolute);
+                    return grp.children()[0].computeBounds(_transform, _type, _bAbsolute);
                 else
                     return {true, Rect(0, 0, 0, 0)};
             }
+        }
+        else if(itemType == EntityType::PlacedSymbol)
+        {
+            PlacedSymbol s = reinterpretItem<PlacedSymbol>(*this);
+            return s.symbol().item().computeBounds(_bAbsolute)
         }
 
         // simply merge the children bounds recursively
@@ -562,16 +569,14 @@ namespace paper
         auto it = cs.begin();
         for (; it !=  cs.end(); ++it)
         {
-            Item item(*it);
-
             if (_bAbsolute)
             {
-                tmp = item.computeBounds(&item.absoluteTransform(), _type, true);
+                tmp = (*it).computeBounds(&(*it).absoluteTransform(), _type, true);
             }
             else
             {
-                tmpMat = _transform ? *_transform * item.transform() : item.transform();
-                tmp = item.computeBounds(&tmpMat, _type, false);
+                tmpMat = _transform ? *_transform * (*it).transform() : (*it).transform();
+                tmp = (*it).computeBounds(&tmpMat, _type, false);
             }
 
             if (tmp.bEmpty)

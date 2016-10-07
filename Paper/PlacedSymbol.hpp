@@ -7,20 +7,18 @@ namespace paper
 {
     class Symbol;
 
+    namespace comps
+    {
+        using ReferencedSymbol = brick::Component<ComponentName("ReferencedSymbol"), Symbol>;
+    }
+
     class STICK_API PlacedSymbol : public Item
     {
     public:
 
         PlacedSymbol();
 
-        PlacedSymbol(const brick::Entity & _e);
-
         Symbol symbol() const;
-        
-
-    private:
-
-        Symbol m_symbol;
     };
 }
 

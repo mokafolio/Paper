@@ -23,7 +23,7 @@ namespace paper
 
 
         Item();
-        
+
         void assignEntity(const brick::Entity & _e);
 
         void addChild(Item _e);
