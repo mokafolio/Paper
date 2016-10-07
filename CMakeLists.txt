@@ -18,6 +18,7 @@ Paper/Document.hpp
 Paper/Group.hpp
 Paper/Item.hpp
 Paper/Path.hpp
+Paper/PlacedSymbol.hpp
 Paper/RenderInterface.hpp
 Paper/Segment.hpp
 Paper/Symbol.hpp
@@ -34,9 +35,10 @@ Paper/Document.cpp
 Paper/Group.cpp
 Paper/Item.cpp
 Paper/Path.cpp
+Paper/PlacedSymbol.cpp
 Paper/RenderInterface.cpp
 Paper/Segment.cpp
-Paper/Symbol.hpp
+Paper/Symbol.cpp
 Paper/OpenGL/GLRenderer.cpp
 Paper/Private/BooleanOperations.cpp
 Paper/Private/JoinAndCap.cpp

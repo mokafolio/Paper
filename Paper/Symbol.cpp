@@ -9,12 +9,6 @@ namespace paper
 
     }
 
-    Symbol::Symbol(const brick::Entity & _e) :
-    brick::Entity(_e)
-    {
-
-    }
-
     void Symbol::assignEntity(const brick::Entity & _e)
     {
         static_cast<brick::Entity*>(this)->operator=(_e);
@@ -26,7 +20,7 @@ namespace paper
         STICK_ASSERT(hasComponent<comps::Doc>());
         Document doc = get<comps::Doc>();
         PlacedSymbol ret = reinterpretItem<PlacedSymbol>(doc.hub().createEntity());
-        ret.set<comps::ReferredSymbol>(*this);
+        ret.set<comps::ReferencedSymbol>(*this);
         ret.translateTransform(_position);
         doc.addChild(ret);
         return ret;

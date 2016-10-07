@@ -18,7 +18,7 @@ namespace paper
 
     void Item::assignEntity(const brick::Entity & _e)
     {
-        static_cast<brick::Entity*>(this)->operator=(_e);
+        static_cast<brick::Entity *>(this)->operator=(_e);
     }
 
     void Item::addChild(Item _e)
@@ -157,7 +157,7 @@ namespace paper
     {
         if (!hasComponent<comps::Children>())
         {
-            const_cast<Item*>(this)->set<comps::Children>(ItemArray());
+            const_cast<Item *>(this)->set<comps::Children>(ItemArray());
         }
         return get<comps::Children>();
     }
@@ -539,6 +539,7 @@ namespace paper
         }
         else if (itemType == EntityType::Group)
         {
+            // early out if this is a clipped group
             Group grp = reinterpretItem<Group>(*this);
             if (grp.isClipped())
             {
@@ -548,10 +549,12 @@ namespace paper
                     return {true, Rect(0, 0, 0, 0)};
             }
         }
-        else if(itemType == EntityType::PlacedSymbol)
+        else if (itemType == EntityType::PlacedSymbol)
         {
+            //for placed symbols, compute the bounds of the referenced item
+            //with the placed symbols transform.
             PlacedSymbol s = reinterpretItem<PlacedSymbol>(*this);
-            return s.symbol().item().computeBounds(_bAbsolute)
+            return s.symbol().item().computeBounds(_bAbsolute ? &s.absoluteTransform() : _transform, _type, false);
         }
 
         // simply merge the children bounds recursively

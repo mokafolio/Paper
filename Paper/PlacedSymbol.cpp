@@ -1,4 +1,5 @@
 #include <Paper/PlacedSymbol.hpp>
+#include <Paper/Symbol.hpp>
 
 namespace paper
 {

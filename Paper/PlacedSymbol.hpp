@@ -2,6 +2,7 @@
 #define PAPER_PLACEDSYMBOL_HPP
 
 #include <Paper/Item.hpp>
+#include <Brick/Component.hpp>
 
 namespace paper
 {
