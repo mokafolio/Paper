@@ -82,29 +82,34 @@ namespace paper
             using RenderCache = brick::Component<ComponentName("RenderCache"), RenderCacheData>;
 
             //these have to be implemented
-            stick::Error drawPath(const Path & _path) override;
-            stick::Error beginClipping(const Path & _clippingPath) override;
-            stick::Error endClipping(const Path & _clippingPath) override;
+            stick::Error drawPath(const Path & _path, const Mat3f * _transform) override;
+            stick::Error beginClipping(const Path & _clippingPath, const Mat3f * _transform) override;
+            stick::Error endClipping(const Path & _clippingPath, const Mat3f * _transform) override;
 
-            stick::Error drawPathImpl(const Path & _path, bool _bIsClippingPath);
-            stick::Error generateClippingMask(const Path & _clippingPath, bool _bIsRebuilding);
+            stick::Error drawPathImpl(const Path & _path, bool _bIsClippingPath, const Mat3f * _transform);
+            stick::Error generateClippingMask(const Path & _clippingPath, bool _bIsRebuilding, const Mat3f * _transform);
 
             //these can be implemented
             stick::Error prepareDrawing() override;
             stick::Error finishDrawing() override;
 
             RenderCacheData & updateRenderCache(const Path & _path, const PathStyle & _style, bool _bIsClipping);
-            stick::Error drawFillEvenOdd(const PathArray & _paths,
-                                         const PathGeometryArray & _boundsVertices,
-                                         crunch::Mat4f * _boundsTransform,
+
+            const RenderCacheData & recursivelyDrawEvenOddPath(const Path & _path, const Mat3f * _transform,
+                    const PathStyle & _style, bool _bIsClipping);
+
+            const RenderCacheData & recursivelyDrawNonZeroPath(const Path & _path, const Mat3f * _transform,
+                    const PathStyle & _style, bool _bIsClipping);
+
+            stick::Error drawFillEvenOdd(const Path & _path,
+                                         const crunch::Mat3f * _transform,
                                          stick::UInt32 _targetStencilBufferMask,
                                          stick::UInt32 _clippingPlaneToTestAgainst,
                                          const PathStyle & _style,
                                          bool _bIsClippingPath);
 
-            stick::Error drawFillNonZero(const PathArray & _paths,
-                                         const PathGeometryArray & _boundsVertices,
-                                         crunch::Mat4f * _boundsTransform,
+            stick::Error drawFillNonZero(const Path & _path,
+                                         const crunch::Mat3f * _transform,
                                          stick::UInt32 _targetStencilBufferMask,
                                          stick::UInt32 _clippingPlaneToTestAgainst,
                                          const PathStyle & _style,

@@ -20,6 +20,8 @@ namespace paper
         PlacedSymbol();
 
         Symbol symbol() const;
+
+        void remove();
     };
 }
 

@@ -28,7 +28,12 @@ namespace paper
 
     Symbol Document::createSymbol(const Item & _item)
     {
-
+        brick::Hub * hub = get<comps::HubPointer>();
+        Symbol ret;
+        ret.assignEntity(hub->createEntity());
+        ret.set<comps::Doc>(*this);
+        ret.set<comps::ReferencedItem>(_item);
+        return ret;
     }
 
     Group Document::createGroup(const String & _name)

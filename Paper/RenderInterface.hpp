@@ -33,16 +33,16 @@ namespace paper
     protected:
 
         //these have to be implemented
-        virtual stick::Error drawPath(const Path & _path) = 0;
-        virtual stick::Error beginClipping(const Path & _clippingPath) = 0;
-        virtual stick::Error endClipping(const Path & _clippingPath) = 0;
+        virtual stick::Error drawPath(const Path & _path, const Mat3f * _transform) = 0;
+        virtual stick::Error beginClipping(const Path & _clippingPath, const Mat3f * _transform) = 0;
+        virtual stick::Error endClipping(const Path & _clippingPath, const Mat3f * _transform) = 0;
 
         //these can be implemented
         virtual stick::Error prepareDrawing() { return stick::Error(); }
         virtual stick::Error finishDrawing() { return stick::Error(); }
 
-        stick::Error drawChildren(const Item & _item);
-        stick::Error drawItem(const Item & _item);
+        stick::Error drawChildren(const Item & _item, const Mat3f * _transform);
+        stick::Error drawItem(const Item & _item, const Mat3f * _transform);
 
         Document m_document;
     };

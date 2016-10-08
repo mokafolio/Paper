@@ -22,6 +22,13 @@ namespace paper
         PlacedSymbol ret = reinterpretItem<PlacedSymbol>(doc.hub().createEntity());
         ret.set<comps::ReferencedSymbol>(*this);
         ret.translateTransform(_position);
+
+        if(!hasComponent<comps::PlacedSymbols>())
+            set<comps::PlacedSymbols>(PlacedSymbolArray());
+
+        PlacedSymbolArray & ps = get<comps::PlacedSymbols>();
+        ps.append(ret);
+
         doc.addChild(ret);
         return ret;
     }
