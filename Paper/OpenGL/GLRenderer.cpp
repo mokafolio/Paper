@@ -403,21 +403,10 @@ namespace paper
 
             if (_bIsClippingPath) return ret;
 
-            // if (style.strokeWidth > 0.0)
-            // {
-            //     if (paths.count() > 1)
-            //     {
-            //         for (const auto & p : paths)
-            //         {
-            //             ret = drawStroke(p.get<RenderCache>(), style, planes.clippingPlaneToTestAgainst);
-            //             if (ret) break;
-            //         }
-            //     }
-            //     else
-            //     {
-            //         ret = drawStroke(cache, style, planes.clippingPlaneToTestAgainst);
-            //     }
-            // }
+            if (style.strokeWidth > 0.0)
+            {
+                ret = drawStroke(_path, _transform, style, planes.clippingPlaneToTestAgainst);
+            }
 
             return ret;
         }
@@ -519,6 +508,31 @@ namespace paper
             return cache;
         }
 
+        Error GLRenderer::recursivelyDrawStroke(const Path & _path, const Mat3f * _transform,
+                                                const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
+        {
+            auto & cache = _path.get<RenderCache>();
+            ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
+            ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
+            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeVertices.count(), &cache.strokeVertices[0].x, GL_DYNAMIC_DRAW));
+            ASSERT_NO_GL_ERROR(glDrawArrays(cache.strokeVertexDrawMode, 0, cache.strokeVertices.count()));
+            ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
+            ASSERT_NO_GL_ERROR(glStencilFunc(GL_EQUAL, 0, detail::StrokeRasterStencilPlane));
+            ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
+            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeBoundsVertices.count(), &cache.strokeBoundsVertices[0].x, GL_DYNAMIC_DRAW));
+            ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.strokeColor.ptr()));
+            ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+            Error ret;
+            for (auto & child : _path.children())
+            {
+                STICK_ASSERT(child.itemType() == EntityType::Path);
+                ret = recursivelyDrawStroke(reinterpretItem<Path>(child), _transform, _style, _clippingPlaneToTestAgainst);
+                if (ret) return ret;
+            }
+            return ret;
+        }
+
         Error GLRenderer::drawFillEvenOdd(const Path & _path,
                                           const Mat3f * _transform,
                                           UInt32 _targetStencilBufferMask,
@@ -527,6 +541,7 @@ namespace paper
                                           bool _bIsClippingPath)
         {
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
+            ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
             ASSERT_NO_GL_ERROR(glStencilMask(_targetStencilBufferMask));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
@@ -598,26 +613,11 @@ namespace paper
             return Error();
         }
 
-        Error GLRenderer::drawStroke(const RenderCacheData & _geom, const PathStyle & _style, stick::UInt32 _clippingPlaneToTestAgainst)
+        Error GLRenderer::drawStroke(const Path & _path, const Mat3f * _transform, const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
         {
             Error ret;
-
-            ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilMask(detail::StrokeRasterStencilPlane));
-            ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
-            ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _geom.transformProjection.ptr()));
-            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * _geom.strokeVertices.count(), &_geom.strokeVertices[0].x, GL_DYNAMIC_DRAW));
-            ASSERT_NO_GL_ERROR(glDrawArrays(_geom.strokeVertexDrawMode, 0, _geom.strokeVertices.count()));
-
-            ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
-            ASSERT_NO_GL_ERROR(glStencilFunc(GL_EQUAL, 0, detail::StrokeRasterStencilPlane));
-            ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
-            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * _geom.strokeBoundsVertices.count(), &_geom.strokeBoundsVertices[0].x, GL_DYNAMIC_DRAW));
-            ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.strokeColor.ptr()));
-            ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-
-            return ret;
+            return recursivelyDrawStroke(_path, _transform, _style, _clippingPlaneToTestAgainst);
         }
 
         Error GLRenderer::prepareDrawing()

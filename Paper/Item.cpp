@@ -142,6 +142,21 @@ namespace paper
         destroy();
     }
 
+    bool Item::removeChild(const Item & _item)
+    {
+        if(hasComponent<comps::Children>())
+        {
+            auto & cs = get<comps::Children>();
+            auto it = stick::find(cs.begin(), cs.end(), _item);
+            if(it != cs.end())
+            {
+                cs.remove(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
     void Item::removeChildren()
     {
         if (hasComponent<comps::Children>())

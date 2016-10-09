@@ -101,6 +101,9 @@ namespace paper
             const RenderCacheData & recursivelyDrawNonZeroPath(const Path & _path, const Mat3f * _transform,
                     const PathStyle & _style, bool _bIsClipping);
 
+            stick::Error recursivelyDrawStroke(const Path & _path, const Mat3f * _transform,
+                                               const PathStyle & _style, stick::UInt32 _clippingPlaneToTestAgainst);
+
             stick::Error drawFillEvenOdd(const Path & _path,
                                          const crunch::Mat3f * _transform,
                                          stick::UInt32 _targetStencilBufferMask,
@@ -115,7 +118,7 @@ namespace paper
                                          const PathStyle & _style,
                                          bool _bIsClippingPath);
 
-            stick::Error drawStroke(const RenderCacheData & _geom, const PathStyle & _style, stick::UInt32 _clippingPlaneToTestAgainst);
+            stick::Error drawStroke(const Path & _path, const Mat3f * _transform, const PathStyle & _style, stick::UInt32 _clippingPlaneToTestAgainst);
 
             struct StencilPlanes
             {

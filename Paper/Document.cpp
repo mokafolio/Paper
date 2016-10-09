@@ -28,6 +28,8 @@ namespace paper
 
     Symbol Document::createSymbol(const Item & _item)
     {
+        if(_item.parent().isValid())
+            _item.parent().removeChild(_item);
         brick::Hub * hub = get<comps::HubPointer>();
         Symbol ret;
         ret.assignEntity(hub->createEntity());
