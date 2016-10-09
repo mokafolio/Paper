@@ -38,8 +38,8 @@ namespace paper
 
         void remove();
 
-        bool removeChild(const Item & _item);
-        
+        bool removeChild(Item _item);
+
         void removeChildren();
 
         void reverseChildren();

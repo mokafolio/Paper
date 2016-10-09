@@ -23,10 +23,11 @@ namespace paper
 
     void Item::addChild(Item _e)
     {
+        STICK_ASSERT(isValid());
         STICK_ASSERT(_e.isValid());
         STICK_ASSERT(_e.get<comps::ItemType>() == EntityType::Path ||
                      _e.get<comps::ItemType>() == EntityType::Group ||
-                     _e.get<comps::ItemType>() == EntityType::Document);
+                     _e.get<comps::ItemType>() == EntityType::PlacedSymbol);
 
         if (!hasComponent<comps::Children>())
             set<comps::Children>(ItemArray());
@@ -142,7 +143,7 @@ namespace paper
         destroy();
     }
 
-    bool Item::removeChild(const Item & _item)
+    bool Item::removeChild(Item _item)
     {
         if(hasComponent<comps::Children>())
         {
@@ -150,6 +151,7 @@ namespace paper
             auto it = stick::find(cs.begin(), cs.end(), _item);
             if(it != cs.end())
             {
+                _item.removeComponent<comps::Parent>();
                 cs.remove(it);
                 return true;
             }

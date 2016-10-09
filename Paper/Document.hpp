@@ -13,6 +13,7 @@
 #include <Paper/Curve.hpp>
 #include <Paper/Group.hpp>
 #include <Paper/Symbol.hpp>
+#include <Paper/PlacedSymbol.hpp>
 #include <Paper/SVG/SVGImportResult.hpp>
 
 namespace paper

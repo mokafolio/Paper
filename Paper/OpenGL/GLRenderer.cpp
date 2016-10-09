@@ -274,7 +274,7 @@ namespace paper
             RenderCacheData & cache = p.get<RenderCache>();
             if (_bIsClipping || _style.bHasFill || _style.strokeWidth > 0)
             {
-                cache.transformProjection = m_projection * m_transform * crunch::to3DTransform(p.absoluteTransform());
+                cache.transformProjection = m_transformProjection * crunch::to3DTransform(p.absoluteTransform());
                 if (p.hasComponent<comps::FillGeometryDirtyFlag>())
                 {
                     if (p.get<comps::FillGeometryDirtyFlag>() || (m_bTransformScaleChanged && p.remeshOnTransformChange()))
@@ -376,27 +376,23 @@ namespace paper
             if (!_bIsClippingPath)
                 style = PathStyle(_path);
 
-            // const auto & children = _path.children();
-            // PathArray paths(1 + children.count());
-            // paths[0] = _path;
-            // for (Size i = 0; i < children.count(); ++i)
-            // {
-            //     Path p = reinterpretItem<Path>(children[i]);
-            //     updateRenderCache(p, style, _bIsClippingPath);
-            //     paths[i + 1] = p;
-            // }
-
-            //auto & cache = updateRenderCache(_path, style, _bIsClippingPath);
+            Mat4f * tp = nullptr;
+            Mat4f ttp;
+            if(_transform)
+            {
+                ttp = m_transformProjection * to3DTransform(*_transform);
+                tp = &ttp;
+            }
             auto planes = prepareStencilPlanes(_bIsClippingPath);
             if (style.bHasFill || _bIsClippingPath)
             {
                 if (static_cast<WindingRule>(_path.windingRule()) == WindingRule::EvenOdd)
                 {
-                    ret = drawFillEvenOdd(_path, _transform, planes.targetStencilMask, planes.clippingPlaneToTestAgainst, style, _bIsClippingPath);
+                    ret = drawFillEvenOdd(_path, tp, planes.targetStencilMask, planes.clippingPlaneToTestAgainst, style, _bIsClippingPath);
                 }
                 else
                 {
-                    ret = drawFillNonZero(_path, _transform, planes.targetStencilMask, planes.clippingPlaneToTestAgainst, style, _bIsClippingPath);
+                    ret = drawFillNonZero(_path, tp, planes.targetStencilMask, planes.clippingPlaneToTestAgainst, style, _bIsClippingPath);
                 }
                 if (ret) return ret;
             }
@@ -405,7 +401,7 @@ namespace paper
 
             if (style.strokeWidth > 0.0)
             {
-                ret = drawStroke(_path, _transform, style, planes.clippingPlaneToTestAgainst);
+                ret = drawStroke(_path, tp, style, planes.clippingPlaneToTestAgainst);
             }
 
             return ret;
@@ -466,21 +462,21 @@ namespace paper
             return Error();
         }
 
-        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawEvenOddPath(const Path & _path, const Mat3f * _transform, const PathStyle & _style, bool _bIsClipping)
+        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
         {
             auto & cache = updateRenderCache(_path, _style, _bIsClipping);
-            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.fillVertices.count(), &cache.fillVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_FAN, 0, cache.fillVertices.count()));
             for (auto & c : _path.children())
             {
                 STICK_ASSERT(c.itemType() == EntityType::Path);
-                recursivelyDrawEvenOddPath(reinterpretItem<Path>(c), _transform, _style, _bIsClipping);
+                recursivelyDrawEvenOddPath(reinterpretItem<Path>(c), _tp, _style, _bIsClipping);
             }
             return cache;
         }
 
-        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawNonZeroPath(const Path & _path, const Mat3f * _transform, const PathStyle & _style, bool _bIsClipping)
+        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawNonZeroPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
         {
             auto & cache = updateRenderCache(_path, _style, _bIsClipping);
             //NonZero winding rule needs to use Increment and Decrement stencil operations.
@@ -491,7 +487,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glCullFace(GL_BACK));
             ASSERT_NO_GL_ERROR(glFrontFace(GL_CCW));
 
-            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.fillVertices.count(), &cache.fillVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_FAN, 0, cache.fillVertices.count()));
 
@@ -503,18 +499,18 @@ namespace paper
             for (auto & c : _path.children())
             {
                 STICK_ASSERT(c.itemType() == EntityType::Path);
-                recursivelyDrawNonZeroPath(reinterpretItem<Path>(c), _transform, _style, _bIsClipping);
+                recursivelyDrawNonZeroPath(reinterpretItem<Path>(c), _tp, _style, _bIsClipping);
             }
             return cache;
         }
 
-        Error GLRenderer::recursivelyDrawStroke(const Path & _path, const Mat3f * _transform,
+        Error GLRenderer::recursivelyDrawStroke(const Path & _path, const Mat4f * _tp,
                                                 const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
         {
             auto & cache = _path.get<RenderCache>();
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
-            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+            ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeVertices.count(), &cache.strokeVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(cache.strokeVertexDrawMode, 0, cache.strokeVertices.count()));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
@@ -527,14 +523,14 @@ namespace paper
             for (auto & child : _path.children())
             {
                 STICK_ASSERT(child.itemType() == EntityType::Path);
-                ret = recursivelyDrawStroke(reinterpretItem<Path>(child), _transform, _style, _clippingPlaneToTestAgainst);
+                ret = recursivelyDrawStroke(reinterpretItem<Path>(child), _tp, _style, _clippingPlaneToTestAgainst);
                 if (ret) return ret;
             }
             return ret;
         }
 
         Error GLRenderer::drawFillEvenOdd(const Path & _path,
-                                          const Mat3f * _transform,
+                                          const Mat4f * _tp,
                                           UInt32 _targetStencilBufferMask,
                                           UInt32 _clippingPlaneToTestAgainst,
                                           const PathStyle & _style,
@@ -546,7 +542,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilMask(_targetStencilBufferMask));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
 
-            auto & cache = recursivelyDrawEvenOddPath(_path, _transform, _style, _bIsClippingPath);
+            auto & cache = recursivelyDrawEvenOddPath(_path, _tp, _style, _bIsClippingPath);
 
             //if we are clipping, there is nothing else to do here
             if (_bIsClippingPath) return Error();
@@ -556,7 +552,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
             if (_path.children().count())
-                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, !_tp ? cache.transformProjection.ptr() : _tp->ptr()));
             ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
@@ -565,7 +561,7 @@ namespace paper
         }
 
         Error GLRenderer::drawFillNonZero(const Path & _path,
-                                          const Mat3f * _transform,
+                                          const Mat4f * _tp,
                                           UInt32 _targetStencilBufferMask,
                                           UInt32 _clippingPlaneToTestAgainst,
                                           const PathStyle & _style,
@@ -575,7 +571,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
             ASSERT_NO_GL_ERROR(glEnable(GL_CULL_FACE));
 
-            auto & cache = recursivelyDrawNonZeroPath(_path, _transform, _style, _bIsClippingPath);
+            auto & cache = recursivelyDrawNonZeroPath(_path, _tp, _style, _bIsClippingPath);
 
             ASSERT_NO_GL_ERROR(glDisable(GL_CULL_FACE));
             ASSERT_NO_GL_ERROR(glFrontFace(GL_CW));
@@ -588,7 +584,7 @@ namespace paper
                 ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
 
                 if (_path.children().count())
-                    ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+                    ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
 
                 ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
                 ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
@@ -606,18 +602,18 @@ namespace paper
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
             ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
             if (_path.children().count())
-                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, cache.transformProjection.ptr()));
+                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
             return Error();
         }
 
-        Error GLRenderer::drawStroke(const Path & _path, const Mat3f * _transform, const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
+        Error GLRenderer::drawStroke(const Path & _path, const Mat4f * _tp, const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
         {
             Error ret;
             ASSERT_NO_GL_ERROR(glStencilMask(detail::StrokeRasterStencilPlane));
-            return recursivelyDrawStroke(_path, _transform, _style, _clippingPlaneToTestAgainst);
+            return recursivelyDrawStroke(_path, _tp, _style, _clippingPlaneToTestAgainst);
         }
 
         Error GLRenderer::prepareDrawing()
@@ -656,6 +652,8 @@ namespace paper
             ASSERT_NO_GL_ERROR(glViewport(0, 0, m_viewport.x, m_viewport.y));
             if (!m_bHasCustomProjection)
                 m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
+
+            m_transformProjection = m_projection * m_transform;
             return Error();
         }
 
