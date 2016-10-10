@@ -53,9 +53,6 @@ namespace paper
         if (_transform)
             tmp = _item.absoluteTransform() * *_transform;
 
-        if (_transform)
-            printf("CUSTOM _transform\n");
-
         if (et == EntityType::Group)
         {
             Group grp = reinterpretItem<Group>(_item);
@@ -93,7 +90,6 @@ namespace paper
         }
         else if (et == EntityType::PlacedSymbol)
         {
-            printf("draw ps\n");
             PlacedSymbol ps = reinterpretItem<PlacedSymbol>(_item);
             drawItem(ps.symbol().item(), _transform ? &tmp : &ps.absoluteTransform());
         }

@@ -676,7 +676,6 @@ namespace paper
                 {
                     auto url = detail::parseURL(_child.valueString().begin(), _child.valueString().end());
                     String str(url.begin(), url.end());
-                    printf("URL: %s\n", str.cString());
                     auto it = m_namedItems.find(str);
                     Path mask;
                     //check if we allready imported the clip path
@@ -687,7 +686,16 @@ namespace paper
                     else
                     {
                         //if not, find it in the document and import it
-                        auto maybe = _rootNode.find([&str](const Shrub & _s){ return _s.name() == "id" && _s.valueString() == str; });
+                        auto maybe = _rootNode.find([&str](const Shrub & _s)
+                        { 
+                            for(auto & _c : _s)
+                            {
+                                if(_c.valueHint() == ValueHint::XMLAttribute && _c.name() == "id" && _c.valueString() == str)
+                                    return true;
+                            }
+                            return false;
+                        });
+                        
                         if(maybe)
                         {
                             Error err;
@@ -766,6 +774,7 @@ namespace paper
             }
             pushAttributes(_node, _rootNode, ret);
             popAttributes();
+            printf("IMPORTED IT BRO\n");
             return ret;
         }
 
