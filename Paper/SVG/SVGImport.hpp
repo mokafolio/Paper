@@ -67,21 +67,23 @@ namespace paper
 
             SVGImportResult parse(const stick::String & _svg, stick::Size _dpi = 72);
 
-            Item recursivelyImportNode(const Shrub & _node, stick::Error & _error);
+            Item recursivelyImportNode(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Group importGroup(const Shrub & _node, stick::Error & _error);
+            Group importGroup(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Path importPath(const Shrub & _node, stick::Error & _error);
+            Path importClipPath(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Path importPolyline(const Shrub & _node, bool _bIsPolygon, stick::Error & _error);
+            Path importPath(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Path importCircle(const Shrub & _node, stick::Error & _error);
+            Path importPolyline(const Shrub & _node, const Shrub & _rootNode, bool _bIsPolygon, stick::Error & _error);
 
-            Path importEllipse(const Shrub & _node, stick::Error & _error);
+            Path importCircle(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Path importRectangle(const Shrub & _node, stick::Error & _error);
+            Path importEllipse(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Path importLine(const Shrub & _node, stick::Error & _error);
+            Path importRectangle(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
+
+            Path importLine(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
             // // Not supported yet
             // void importText();
@@ -98,7 +100,7 @@ namespace paper
 
             Float coordinatePixels(const char * _str, Float _start = 0.0, Float _length = 1.0);
 
-            void pushAttributes(const Shrub & _node, Item & _item);
+            void pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item);
 
             void popAttributes();
 
@@ -106,7 +108,10 @@ namespace paper
             Document * m_document;
             stick::Size m_dpi;
             stick::DynamicArray<SVGAttributes> m_attributeStack;
-            stick::HashMap<stick::String, Item> m_defs;
+            // for items that are only temporary in the dom and should
+            // be removed at the end of the import (i.e. clipping masks, defs nodes etc.)
+            stick::DynamicArray<Item> m_tmpItems;
+            stick::HashMap<stick::String, Item> m_namedItems;
         };
     }
 }

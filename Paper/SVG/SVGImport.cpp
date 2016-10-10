@@ -233,7 +233,6 @@ namespace paper
             static Mat3f parseTransform(stick::String::ConstIter _it,
                                         stick::String::ConstIter _end)
             {
-                printf("PARSE TRANSFORM YO\n");
                 Mat3f ret = Mat3f::identity();
                 TransformAction action = TransformAction::None;
                 DynamicArray<Float> numbers;
@@ -267,7 +266,6 @@ namespace paper
                     }
                     else
                     {
-                        printf("CONTINUE\n");
                         ++_it;
                         continue;
                     }
@@ -285,7 +283,6 @@ namespace paper
                     }
                     else if (action == TransformAction::Translate && numbers.count() >= 1)
                     {
-                        printf("TRANSLATE BRO\n");
                         tmp = Mat3f::translation2D(Vec2f(numbers[0], numbers.count() < 2 ? 0.0 : numbers[1]));
                     }
                     else if (action == TransformAction::Scale && numbers.count() >= 1)
@@ -364,6 +361,48 @@ namespace paper
                 }
             }
 
+            class StringView
+            {
+            public:
+
+                StringView()
+                {
+
+                }
+
+                StringView(String::ConstIter _begin, String::ConstIter _end) :
+                    m_begin(_begin),
+                    m_end(_end)
+                {
+
+                }
+
+                String::ConstIter begin() const
+                {
+                    return m_begin;
+                }
+
+                String::ConstIter end() const
+                {
+                    return m_end;
+                }
+
+            private:
+
+                String::ConstIter m_begin;
+                String::ConstIter m_end;
+            };
+
+            static StringView parseURL(String::ConstIter _begin, String::ConstIter _end)
+            {
+                while (_begin != _end && *_begin != '(') ++_begin;
+                while (_begin != _end && *_begin != '#') ++_begin;
+                ++_begin;
+                auto begin = _begin;
+                while (_begin != _end && *_begin != ')') ++_begin;
+                return StringView(begin, _begin);
+            };
+
             template<class Functor>
             static bool findXMLAttrCB(const Shrub & _node, const String & _path, Item & _item, Functor _cb)
             {
@@ -429,7 +468,7 @@ namespace paper
         SVGImportResult SVGImport::parse(const String & _svg, Size _dpi)
         {
             m_dpi = _dpi;
-            m_defs.clear();
+            m_namedItems.clear();
 
             //TODO: It might be worthwhile to use pugixml directly to parse the svg
             //as that should be a lot faster as it would skip allocating the shrub tree etc.
@@ -439,7 +478,7 @@ namespace paper
             Shrub & svg = shrubRes.get();
 
             Error err;
-            Group grp = reinterpretItem<Group>(recursivelyImportNode(svg, err));
+            Group grp = reinterpretItem<Group>(recursivelyImportNode(svg, svg, err));
 
             auto mw = svg.child("width");
             auto mh = svg.child("height");
@@ -452,7 +491,7 @@ namespace paper
             return SVGImportResult(grp, w, h, err);
         }
 
-        void SVGImport::pushAttributes(const Shrub & _node, Item & _item)
+        void SVGImport::pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item)
         {
             SVGAttributes attr;
             if (m_attributeStack.count()) attr = m_attributeStack.last();
@@ -562,7 +601,7 @@ namespace paper
             detail::findXMLAttrCB(_node, "id", _item, [&](Item & _it, const Shrub & _child)
             {
                 _it.setName(_child.valueString());
-                m_defs.insert(_child.valueString(), _item);
+                m_namedItems.insert(_child.valueString(), _item);
             });
 
             m_attributeStack.append(attr);
@@ -573,50 +612,50 @@ namespace paper
             m_attributeStack.removeLast();
         }
 
-        Item SVGImport::recursivelyImportNode(const Shrub & _node, Error & _error)
+        Item SVGImport::recursivelyImportNode(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             Item item;
             if (_node.name() == "svg")
             {
-                item = importGroup(_node, _error);
+                item = importGroup(_node, _rootNode, _error);
             }
             else if (_node.name() == "g")
             {
-                item = importGroup(_node, _error);
+                item = importGroup(_node, _rootNode, _error);
             }
             else if (_node.name() == "rect")
             {
-                item = importRectangle(_node, _error);
+                item = importRectangle(_node, _rootNode, _error);
             }
             else if (_node.name() == "circle")
             {
-                item = importCircle(_node, _error);
+                item = importCircle(_node, _rootNode, _error);
             }
             else if (_node.name() == "ellipse")
             {
-                item = importEllipse(_node, _error);
+                item = importEllipse(_node, _rootNode, _error);
             }
             else if (_node.name() == "line")
             {
-                item = importLine(_node, _error);
+                item = importLine(_node, _rootNode, _error);
             }
             else if (_node.name() == "polyline")
             {
-                item = importPolyline(_node, false, _error);
+                item = importPolyline(_node, _rootNode, false, _error);
             }
             else if (_node.name() == "polygon")
             {
-                item = importPolyline(_node, true, _error);
+                item = importPolyline(_node, _rootNode, true, _error);
             }
             else if (_node.name() == "path")
             {
-                item = importPath(_node, _error);
+                item = importPath(_node, _rootNode, _error);
+            }
+            else if (_node.name() == "clipPath")
+            {
+                item = importClipPath(_node, _rootNode, _error);
             }
             // else if (_node.name() == "defs")
-            // {
-            //     item = importGroup(_node, _error);
-            // }
-            // else if (_node.name() == "clipPath")
             // {
             //     item = importGroup(_node, _error);
             // }
@@ -629,30 +668,105 @@ namespace paper
                 //?
             }
 
-            // if (item.isValid())
-            // {
-            //     parseAttributes(_node, item);
-            // }
+            if (item.isValid())
+            {
+                // we take care of the clip-path attribute after parsing finished, as it might 
+                // have us nest the item in a group that needs to be returned instead of the item
+                detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
+                {
+                    auto url = detail::parseURL(_child.valueString().begin(), _child.valueString().end());
+                    String str(url.begin(), url.end());
+                    printf("URL: %s\n", str.cString());
+                    auto it = m_namedItems.find(str);
+                    Path mask;
+                    //check if we allready imported the clip path
+                    if (it != m_namedItems.end())
+                    {
+                        mask = reinterpretItem<Path>(it->value);
+                    }
+                    else
+                    {
+                        //if not, find it in the document and import it
+                        auto maybe = _rootNode.find([&str](const Shrub & _s){ return _s.name() == "id" && _s.valueString() == str; });
+                        if(maybe)
+                        {
+                            Error err;
+                            mask = importClipPath(*maybe, _rootNode, err);
+                            //TODO: HANDLE ERROR?
+                        }
+                    }
+
+                    if (mask.isValid())
+                    {
+                        if (_it.itemType() == EntityType::Group)
+                        {
+                            Group grp = reinterpretItem<Group>(_it);
+                            grp.setClipped(true);
+                            if (grp.children().count())
+                            {
+                                _it.insertBelow(grp.children().first());
+                            }
+                            else
+                            {
+                                grp.addChild(mask);
+                            }
+                        }
+                        else
+                        {
+                            Group grp = m_document->createGroup();
+                            grp.addChild(mask);
+                            grp.addChild(_it);
+                            grp.setClipped(true);
+                            item = grp;
+                        }
+                    }
+                    else
+                    {
+                        //WARNING? ERROR?
+                    }
+                });
+            }
 
             return item;
         }
 
-        Group SVGImport::importGroup(const Shrub & _node, Error & _error)
+        Group SVGImport::importGroup(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             printf("IMPORT GROUP\n");
             Group grp = m_document->createGroup();
-            pushAttributes(_node, grp);
+            pushAttributes(_node, _rootNode, grp);
             for (auto & child : _node)
             {
                 if (child.valueHint() != ValueHint::XMLAttribute)
                 {
-                    Item item = recursivelyImportNode(child, _error);
+                    Item item = recursivelyImportNode(child, _rootNode, _error);
                     if (_error) break;
                     else grp.addChild(item);
                 }
             }
             popAttributes();
             return grp;
+        }
+
+        Path SVGImport::importClipPath(const Shrub & _node, const Shrub & _rootNode, Error & _error)
+        {
+            Path ret = m_document->createPath();
+            for (auto & child : _node)
+            {
+                if (child.valueHint() != ValueHint::XMLAttribute)
+                {
+                    Item item = recursivelyImportNode(child, _rootNode, _error);
+                    if (_error) break;
+                    //only add paths as children, ignore the rest (there should be no rest though, safety first :))
+                    if (Path p = itemCast<Path>(item))
+                    {
+                        ret.addChild(p);
+                    }
+                }
+            }
+            pushAttributes(_node, _rootNode, ret);
+            popAttributes();
+            return ret;
         }
 
         static bool isCommand(const char _c)
@@ -727,7 +841,7 @@ namespace paper
             return toPixels(coord.value, coord.units, _start, _length);
         }
 
-        Path SVGImport::importPath(const Shrub & _node, Error & _error)
+        Path SVGImport::importPath(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             printf("IMPORT PATH\n");
             auto maybe = _node.child("d");
@@ -739,7 +853,7 @@ namespace paper
                 auto end = val.end();
                 auto it = detail::skipWhitespaceAndCommas(val.begin(), end);
                 Path p = m_document->createPath();
-                pushAttributes(_node, p);
+                pushAttributes(_node, _rootNode, p);
                 Path currentPath = p;
                 Vec2f last;
                 Vec2f lastHandle;
@@ -929,7 +1043,7 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importPolyline(const Shrub & _node, bool _bIsPolygon, Error & _error)
+        Path SVGImport::importPolyline(const Shrub & _node, const Shrub & _rootNode, bool _bIsPolygon, Error & _error)
         {
             auto mpoints = _node.child("points");
             if (mpoints)
@@ -944,7 +1058,7 @@ namespace paper
                 if (_bIsPolygon)
                     ret.closePath();
 
-                pushAttributes(_node, ret);
+                pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
             }
@@ -955,7 +1069,7 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importCircle(const Shrub & _node, Error & _error)
+        Path SVGImport::importCircle(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             auto mcx = _node.child("cx");
             auto mcy = _node.child("cy");
@@ -965,7 +1079,7 @@ namespace paper
                 Path ret = m_document->createCircle(Vec2f(coordinatePixels((*mcx).valueString().begin()),
                                                     coordinatePixels((*mcy).valueString().begin())),
                                                     coordinatePixels((*mr).valueString().begin()));
-                pushAttributes(_node, ret);
+                pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
             }
@@ -976,7 +1090,7 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importEllipse(const Shrub & _node, Error & _error)
+        Path SVGImport::importEllipse(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             auto mcx = _node.child("cx");
             auto mcy = _node.child("cy");
@@ -988,7 +1102,7 @@ namespace paper
                                                      coordinatePixels((*mcy).valueString().begin())),
                                                      Vec2f(coordinatePixels((*mrx).valueString().begin()),
                                                              coordinatePixels((*mry).valueString().begin())));
-                pushAttributes(_node, ret);
+                pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
             }
@@ -999,7 +1113,7 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importRectangle(const Shrub & _node, Error & _error)
+        Path SVGImport::importRectangle(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             auto mx = _node.child("x");
             auto my = _node.child("y");
@@ -1018,7 +1132,7 @@ namespace paper
                 Path ret = m_document->createRectangle(Vec2f(x, y), Vec2f(x, y) +
                                                        Vec2f(coordinatePixels((*mw).valueString().begin()),
                                                                coordinatePixels((*mh).valueString().begin())));
-                pushAttributes(_node, ret);
+                pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
             }
@@ -1030,7 +1144,7 @@ namespace paper
             return Path();
         }
 
-        Path SVGImport::importLine(const Shrub & _node, Error & _error)
+        Path SVGImport::importLine(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             auto mx1 = _node.child("x1");
             auto my1 = _node.child("y1");
@@ -1045,7 +1159,7 @@ namespace paper
                 Path ret = m_document->createPath();
                 ret.addPoint(Vec2f(x1, y1));
                 ret.addPoint(Vec2f(x2, y2));
-                pushAttributes(_node, ret);
+                pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
             }
