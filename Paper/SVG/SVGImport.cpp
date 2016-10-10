@@ -488,6 +488,11 @@ namespace paper
             if (mh)
                 h = (*mh).value<Float>();
 
+            // remove all tmp items
+            for(auto & item : m_tmpItems)
+                item.remove();
+            m_tmpItems.clear();
+
             return SVGImportResult(grp, w, h, err);
         }
 
@@ -655,10 +660,12 @@ namespace paper
             {
                 item = importClipPath(_node, _rootNode, _error);
             }
-            // else if (_node.name() == "defs")
-            // {
-            //     item = importGroup(_node, _error);
-            // }
+            else if (_node.name() == "defs")
+            {
+                item = importGroup(_node, _rootNode, _error);
+                if(!_error)
+                    m_tmpItems.append(item);
+            }
             // else if (_node.name() == "symbol")
             // {
             //     item = importGroup(_node, _error);
@@ -712,17 +719,17 @@ namespace paper
                             grp.setClipped(true);
                             if (grp.children().count())
                             {
-                                _it.insertBelow(grp.children().first());
+                                mask.clone().insertBelow(grp.children().first());
                             }
                             else
                             {
-                                grp.addChild(mask);
+                                grp.addChild(mask.clone());
                             }
                         }
                         else
                         {
                             Group grp = m_document->createGroup();
-                            grp.addChild(mask);
+                            grp.addChild(mask.clone());
                             grp.addChild(_it);
                             grp.setClipped(true);
                             item = grp;
@@ -774,7 +781,7 @@ namespace paper
             }
             pushAttributes(_node, _rootNode, ret);
             popAttributes();
-            printf("IMPORTED IT BRO\n");
+            m_tmpItems.append(ret);
             return ret;
         }
 
@@ -803,19 +810,6 @@ namespace paper
 
         SVGCoordinate SVGImport::parseCoordinate(const char * _str)
         {
-            // do
-            // {
-            //     ++_it;
-            // }
-            // while (_it != _end && std::isdigit(*_it));
-
-            // String number(begin, _it - 1);
-            // auto unitBegin = _it;
-            // while (_it != _end && !std::isspace(*_it) &&  *_it != ',')
-            //     _it++;
-
-            // String units;
-            // if(_it - unitBegin > )
             SVGCoordinate ret;
             char units[32] = "";
             std::sscanf(_str, "%f%s", &ret.value, units);
