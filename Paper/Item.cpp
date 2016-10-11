@@ -369,7 +369,7 @@ namespace paper
         auto itemType = get<comps::ItemType>();
         if (itemType == EntityType::Path)
         {
-            Path p = brick::entityCast<Path>(*this);
+            Path p = brick::reinterpretEntity<Path>(*this);
             p.applyTransform(_transform);
         }
 
@@ -699,6 +699,11 @@ namespace paper
     {
         removeComponent<comps::Stroke>();
         markStrokeBoundsDirty(true);
+    }
+
+    void Item::setNoFill()
+    {
+        //set<comps::Fill>
     }
 
     void Item::setFill(const ColorRGBA & _color)

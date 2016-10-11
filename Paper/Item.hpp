@@ -159,6 +159,8 @@ namespace paper
 
         void removeStroke();
 
+        void setNoFill();
+        
         void setFill(const ColorRGBA & _color);
 
         void setRemeshOnTransformChange(bool _b);

@@ -44,7 +44,7 @@ namespace paper
         Geometric
     };
 
-    STICK_API_ENUM_CLASS(FillType)
+    STICK_API_ENUM_CLASS(PaintType)
     {
         None,
         Color,

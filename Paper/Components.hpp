@@ -9,6 +9,7 @@ namespace paper
 {
     class Document;
     class Item;
+    class Fill;
     using ItemArray = stick::DynamicArray<Item>;
 
     namespace comps

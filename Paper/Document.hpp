@@ -8,6 +8,7 @@
 #include <Brick/Hub.hpp>
 
 #include <Paper/Components.hpp>
+#include <Paper/Paint.hpp>
 #include <Paper/Path.hpp>
 #include <Paper/Segment.hpp>
 #include <Paper/Curve.hpp>
@@ -25,6 +26,10 @@ namespace paper
         static constexpr EntityType itemType = EntityType::Document;
 
         Document();
+
+        NoPaint createNoPaint();
+
+        ColorPaint createColorPaint(const ColorRGBA & _color);
 
         Symbol createSymbol(const Item & _item);
 

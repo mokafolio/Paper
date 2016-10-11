@@ -26,13 +26,26 @@ namespace paper
         _e.set<comps::HandleBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
     }
 
+    NoPaint Document::createNoPaint()
+    {
+        brick::Hub * hub = get<comps::HubPointer>();
+        return brick::createEntity<NoPaint>(*hub);
+    }
+
+    ColorPaint Document::createColorPaint(const ColorRGBA & _color)
+    {
+        brick::Hub * hub = get<comps::HubPointer>();
+        ColorPaint ret = brick::createEntity<ColorPaint>(*hub);
+        ret.setColor(_color);
+        return ret;
+    }
+
     Symbol Document::createSymbol(const Item & _item)
     {
-        if(_item.parent().isValid())
+        if (_item.parent().isValid())
             _item.parent().removeChild(_item);
         brick::Hub * hub = get<comps::HubPointer>();
-        Symbol ret;
-        ret.assignEntity(hub->createEntity());
+        Symbol ret = brick::createEntity<Symbol>(*hub);
         ret.set<comps::Doc>(*this);
         ret.set<comps::ReferencedItem>(_item);
         return ret;

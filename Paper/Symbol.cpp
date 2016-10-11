@@ -9,11 +9,6 @@ namespace paper
 
     }
 
-    void Symbol::assignEntity(const brick::Entity & _e)
-    {
-        static_cast<brick::Entity *>(this)->operator=(_e);
-    }
-
     PlacedSymbol Symbol::place(const Vec2f & _position)
     {
         STICK_ASSERT(isValid());
