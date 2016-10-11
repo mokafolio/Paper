@@ -511,7 +511,7 @@ namespace paper
                 if (col)
                 {
                     auto c =toRGBA(*col);
-                    _it.set<comps::Fill>(c);
+                    _it.setFill(c);
                     attr.fillColor = c;
                 }
             });
@@ -532,7 +532,7 @@ namespace paper
                 {
                     printf("DONE DEM STROKE\n");
                     auto c = toRGBA(*col);
-                    _it.set<comps::Stroke>(c);
+                    _it.setStroke(c);
                     attr.strokeColor = c;
                 }
             });
@@ -766,7 +766,7 @@ namespace paper
                     Item item = recursivelyImportNode(child, _rootNode, _error);
                     if (_error) break;
                     else grp.addChild(item);
-                    
+
                     //set the default fill if none is inherited
                     if(!item.hasFill())
                         item.setFill(ColorRGBA(0, 0, 0, 1));

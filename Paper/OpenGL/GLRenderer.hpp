@@ -43,11 +43,16 @@ namespace paper
                     bHasFill = _item.hasFill();
                     if (bHasFill)
                     {
-                        fillColor = _item.fill();
+                        Paint p = _item.fill();
+                        if (p.paintType() == PaintType::Color)
+                            fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
                     }
                     if (_item.hasStroke())
                     {
-                        strokeColor = _item.stroke();
+                        Paint p = _item.stroke();
+                        if (p.paintType() == PaintType::Color)
+                            strokeColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                        
                         strokeWidth = _item.strokeWidth();
                         miterLimit = _item.miterLimit();
                         cap = _item.strokeCap();

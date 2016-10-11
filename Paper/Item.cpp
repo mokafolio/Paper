@@ -683,7 +683,7 @@ namespace paper
         markStrokeGeometryDirty();
     }
 
-    void Item::setStroke(const ColorRGBA & _color)
+    Paint Item::setStroke(const ColorRGBA & _color)
     {
         if (!hasStroke())
         {
@@ -691,8 +691,10 @@ namespace paper
             markStrokeBoundsDirty(true);
         }
 
-        set<comps::Stroke>(_color);
+        Paint ret = document().createColorPaint(_color);
+        set<comps::Stroke>(ret);
         removeComponentFromChildren<comps::Stroke>(*this);
+        return ret;
     }
 
     void Item::removeStroke()
@@ -706,10 +708,12 @@ namespace paper
         //set<comps::Fill>
     }
 
-    void Item::setFill(const ColorRGBA & _color)
+    Paint Item::setFill(const ColorRGBA & _color)
     {
-        set<comps::Fill>(_color);
+        Paint ret = document().createColorPaint(_color);
+        set<comps::Fill>(ret);
         removeComponentFromChildren<comps::Fill>(*this);
+        return ret;
     }
 
     void Item::removeFill()
@@ -728,26 +732,28 @@ namespace paper
         set<comps::WindingRule>(_rule);
     }
 
-    const ColorRGBA & Item::fill() const
+    Paint Item::fill() const
     {
         auto ret = findComponent<comps::Fill>();
         if (ret)
         {
             return *ret;
         }
-        static ColorRGBA s_colorProxy(1.0, 1.0, 1.0, 1.0);
-        return s_colorProxy;
+        // static ColorRGBA s_colorProxy(1.0, 1.0, 1.0, 1.0);
+        // return s_colorProxy;
+        return Paint();
     }
 
-    const ColorRGBA & Item::stroke() const
+    Paint Item::stroke() const
     {
         auto ret = findComponent<comps::Stroke>();
         if (ret)
         {
             return *ret;
         }
-        static ColorRGBA s_colorProxy(0.0, 0.0, 0.0, 1.0);
-        return s_colorProxy;
+        // static ColorRGBA s_colorProxy(0.0, 0.0, 0.0, 1.0);
+        // return s_colorProxy;
+        return Paint();
     }
 
     const DashArray & Item::dashArray() const
@@ -784,12 +790,12 @@ namespace paper
 
     bool Item::hasStroke() const
     {
-        return (bool)findComponent<comps::Stroke>();
+        return (bool)findComponent<comps::Stroke>() && get<comps::Stroke>().paintType() != PaintType::None;
     }
 
     bool Item::hasFill() const
     {
-        return (bool)findComponent<comps::Fill>();
+        return (bool)findComponent<comps::Fill>() && get<comps::Fill>().paintType() != PaintType::None;
     }
 
     StrokeJoin Item::strokeJoin() const

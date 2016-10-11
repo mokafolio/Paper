@@ -56,7 +56,7 @@ namespace paper
         {
             auto defs = m_tree.child("defs");
             Shrub * defsPtr = nullptr;
-            if(defs)
+            if (defs)
             {
                 defsPtr = &(*defs);
             }
@@ -336,7 +336,11 @@ namespace paper
             }
             else
             {
-                const crunch::ColorRGBA & fillColor = _item.fill();
+                crunch::ColorRGBA fillColor(0.0, 0.0, 0.0, 1.0);
+                Paint p = _item.fill();
+                if (p.paintType() == PaintType::Color)
+                    fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
+
                 _node.set("fill", colorToHexCSSString(crunch::toRGB(fillColor)), ValueHint::XMLAttribute);
                 if (fillColor.a < 1.0)
                 {
@@ -360,7 +364,11 @@ namespace paper
             }
             else
             {
-                const crunch::ColorRGBA & strokeColor = _item.stroke();
+                crunch::ColorRGBA strokeColor(1.0, 1.0, 1.0, 1.0);
+                Paint p = _item.stroke();
+                if (p.paintType() == PaintType::Color)
+                    strokeColor = brick::reinterpretEntity<ColorPaint>(p).color();
+
                 _node.set("stroke", colorToHexCSSString(crunch::toRGB(strokeColor)), ValueHint::XMLAttribute);
                 if (strokeColor.a < 1.0)
                 {

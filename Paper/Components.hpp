@@ -9,7 +9,7 @@ namespace paper
 {
     class Document;
     class Item;
-    class Fill;
+    class Paint;
     using ItemArray = stick::DynamicArray<Item>;
 
     namespace comps
@@ -22,8 +22,8 @@ namespace paper
         using Transform = brick::Component<ComponentName("Transform"), Mat3f>;
         using AbsoluteTransform = brick::Component<ComponentName("AbsoluteTransform"), Mat3f>;
         using AbsoluteTransformDirtyFlag = brick::Component<ComponentName("AbsoluteTransformDirtyFlag"), bool>;
-        using Fill = brick::Component<ComponentName("Fill"), ColorRGBA>;
-        using Stroke = brick::Component<ComponentName("Stroke"), ColorRGBA>;
+        using Fill = brick::Component<ComponentName("Fill"), Paint>;
+        using Stroke = brick::Component<ComponentName("Stroke"), Paint>;
         using StrokeWidth = brick::Component<ComponentName("StrokeWidth"), Float>;
         using StrokeJoin = brick::Component<ComponentName("StrokeJoin"), StrokeJoin>;
         using StrokeCap = brick::Component<ComponentName("StrokeCap"), StrokeCap>;

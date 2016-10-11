@@ -10,6 +10,8 @@ namespace paper
     class Item;
     using ItemArray = stick::DynamicArray<Item>;
 
+    class Paint;
+
     class Item : public brick::TypedEntityT<Item>
     {
     public:
@@ -149,7 +151,7 @@ namespace paper
 
         void setStrokeWidth(Float _width);
 
-        void setStroke(const ColorRGBA & _color);
+        Paint setStroke(const ColorRGBA & _color);
 
         void setDashArray(const DashArray & _arr);
 
@@ -160,8 +162,8 @@ namespace paper
         void removeStroke();
 
         void setNoFill();
-        
-        void setFill(const ColorRGBA & _color);
+
+        Paint setFill(const ColorRGBA & _color);
 
         void setRemeshOnTransformChange(bool _b);
 
@@ -187,9 +189,9 @@ namespace paper
 
         bool isScalingStroke() const;
 
-        const ColorRGBA & fill() const;
+        Paint fill() const;
 
-        const ColorRGBA & stroke() const;
+        Paint stroke() const;
 
         bool hasStroke() const;
 
