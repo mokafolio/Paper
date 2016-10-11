@@ -489,7 +489,7 @@ namespace paper
                 h = (*mh).value<Float>();
 
             // remove all tmp items
-            for(auto & item : m_tmpItems)
+            for (auto & item : m_tmpItems)
                 item.remove();
             m_tmpItems.clear();
 
@@ -510,10 +510,16 @@ namespace paper
                 auto col = detail::parseColor(str.begin(), str.end());
                 if (col)
                 {
-                    auto c =toRGBA(*col);
+                    auto c = toRGBA(*col);
                     _it.setFill(c);
                     attr.fillColor = c;
                 }
+            });
+            detail::findXMLAttrCB(_node, "fill-opacity", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.fillColor.a = _child.value<Float>();
+                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.fill());
+                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.fillColor.a));
             });
             detail::findXMLAttrCB(_node, "fill-rule", _item, [&attr](Item & _it, const Shrub & _child)
             {
@@ -535,6 +541,12 @@ namespace paper
                     _it.setStroke(c);
                     attr.strokeColor = c;
                 }
+            });
+            detail::findXMLAttrCB(_node, "stroke-opacity", _item, [&attr](Item & _it, const Shrub & _child)
+            {
+                attr.strokeColor.a = _child.value<Float>();
+                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.stroke());
+                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.strokeColor.a));
             });
             detail::findXMLAttrCB(_node, "stroke-width", _item, [&attr](Item & _it, const Shrub & _child)
             {
@@ -686,7 +698,7 @@ namespace paper
             }
 
             if (item.isValid())
-            {   
+            {
                 // we take care of the clip-path attribute after parsing finished, as it might
                 // have us nest the item in a group that needs to be returned instead of the item
                 detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
@@ -768,7 +780,7 @@ namespace paper
                     else grp.addChild(item);
 
                     //set the default fill if none is inherited
-                    if(!item.hasFill())
+                    if (!item.hasFill())
                         item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
             }
