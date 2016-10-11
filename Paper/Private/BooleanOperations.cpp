@@ -135,7 +135,7 @@ namespace paper
                 // If this is a compound path, get the child mono curves and append them
                 for(const Item & c : _path.children())
                 {   
-                    Path p = reinterpretItem<Path>(c);
+                    Path p = brick::reinterpretEntity<Path>(c);
                     const MonoCurveLoopArray & cc = monoCurves(p);
 
                     // technically nested compound paths are not supported right now

@@ -10,7 +10,7 @@ namespace paper
     class Item;
     using ItemArray = stick::DynamicArray<Item>;
 
-    class Item : public brick::Entity
+    class Item : public brick::TypedEntityT<Item>
     {
     public:
 
@@ -23,8 +23,6 @@ namespace paper
 
 
         Item();
-
-        void assignEntity(const brick::Entity & _e);
 
         void addChild(Item _e);
 
@@ -259,25 +257,6 @@ namespace paper
             return stick::Maybe<typename C::ValueType &>();
         }
     };
-
-    template<class T>
-    inline T reinterpretItem(const brick::Entity & _e)
-    {
-        T ret;
-        ret.assignEntity(_e);
-        return ret;
-    }
-
-    template<class T>
-    inline T itemCast(const Item & _item)
-    {
-        if(_item.itemType() == T::itemType)
-        {
-            return reinterpretItem<T>(_item);
-        }
-
-        return T();
-    }
 }
 
 #endif //PAPER_ITEM_HPP

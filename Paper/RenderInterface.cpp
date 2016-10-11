@@ -55,7 +55,7 @@ namespace paper
 
         if (et == EntityType::Group)
         {
-            Group grp = reinterpretItem<Group>(_item);
+            Group grp = brick::reinterpretEntity<Group>(_item);
             if (!grp.isVisible())
                 return ret;
 
@@ -63,7 +63,7 @@ namespace paper
             {
                 const auto & c2 = grp.children();
                 STICK_ASSERT(c2.first().get<comps::ItemType>() == EntityType::Path);
-                Path mask = reinterpretItem<Path>(c2.first());
+                Path mask = brick::reinterpretEntity<Path>(c2.first());
                 Mat3f tmp2;
                 if (_transform)
                     tmp2 = mask.absoluteTransform() * tmp;
@@ -82,7 +82,7 @@ namespace paper
         }
         else if (et == EntityType::Path)
         {
-            Path p = reinterpretItem<Path>(_item);
+            Path p = brick::reinterpretEntity<Path>(_item);
             if (p.isVisible() && p.segments().count() > 1)
             {
                 ret = drawPath(p, _transform ? &tmp : nullptr);
@@ -90,7 +90,7 @@ namespace paper
         }
         else if (et == EntityType::PlacedSymbol)
         {
-            PlacedSymbol ps = reinterpretItem<PlacedSymbol>(_item);
+            PlacedSymbol ps = brick::reinterpretEntity<PlacedSymbol>(_item);
             drawItem(ps.symbol().item(), _transform ? &tmp : &ps.absoluteTransform());
         }
         return ret;

@@ -19,7 +19,7 @@ namespace paper
         STICK_ASSERT(isValid());
         STICK_ASSERT(hasComponent<comps::Doc>());
         Document doc = get<comps::Doc>();
-        PlacedSymbol ret = reinterpretItem<PlacedSymbol>(doc.hub().createEntity());
+        PlacedSymbol ret = brick::reinterpretEntity<PlacedSymbol>(doc.hub().createEntity());
         ret.set<comps::ReferencedSymbol>(*this);
         ret.set<comps::ItemType>(EntityType::PlacedSymbol);
         ret.set<comps::StrokeBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});

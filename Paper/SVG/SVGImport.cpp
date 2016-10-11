@@ -478,7 +478,7 @@ namespace paper
             Shrub & svg = shrubRes.get();
 
             Error err;
-            Group grp = reinterpretItem<Group>(recursivelyImportNode(svg, svg, err));
+            Group grp = brick::reinterpretEntity<Group>(recursivelyImportNode(svg, svg, err));
 
             auto mw = svg.child("width");
             auto mh = svg.child("height");
@@ -698,7 +698,7 @@ namespace paper
                     //check if we allready imported the clip path
                     if (it != m_namedItems.end())
                     {
-                        mask = reinterpretItem<Path>(it->value);
+                        mask = brick::reinterpretEntity<Path>(it->value);
                     }
                     else
                     {
@@ -725,7 +725,7 @@ namespace paper
                     {
                         if (_it.itemType() == EntityType::Group)
                         {
-                            Group grp = reinterpretItem<Group>(_it);
+                            Group grp = brick::reinterpretEntity<Group>(_it);
                             grp.setClipped(true);
                             if (grp.children().count())
                             {
@@ -786,7 +786,7 @@ namespace paper
                     Item item = recursivelyImportNode(child, _rootNode, _error);
                     if (_error) break;
                     //only add paths as children, ignore the rest (there should be no rest though, safety first :))
-                    if (Path p = itemCast<Path>(item))
+                    if (Path p = brick::entityCast<Path>(item))
                     {
                         ret.addChild(p);
                     }

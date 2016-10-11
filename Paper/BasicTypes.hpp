@@ -1,7 +1,7 @@
 #ifndef PAPER_BASICTYPES_HPP
 #define PAPER_BASICTYPES_HPP
 
-#include <Brick/Entity.hpp>
+#include <Brick/TypedEntity.hpp>
 #include <Stick/DynamicArray.hpp>
 #include <Stick/String.hpp>
 #include <Crunch/Vector2.hpp>
@@ -25,7 +25,6 @@ namespace paper
     using ColorRGBA = crunch::ColorRGBA;
     using ColorHSB = crunch::ColorHSB;
     using ColorHSBA = crunch::ColorHSBA;
-    using EntityArray = stick::DynamicArray<brick::Entity>;
     class Segment;
     class Curve;
     using SegmentArray = stick::DynamicArray<Segment>;

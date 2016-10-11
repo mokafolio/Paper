@@ -565,7 +565,7 @@ namespace paper
 
         for (auto & c : get<comps::Children>())
         {
-            Path p = reinterpretItem<Path>(c);
+            Path p = brick::reinterpretEntity<Path>(c);
             p.reverse();
         }
 
@@ -1273,6 +1273,6 @@ namespace paper
 
     Path Path::clone() const
     {
-        return reinterpretItem<Path>(Item::clone());
+        return brick::reinterpretEntity<Path>(Item::clone());
     }
 }

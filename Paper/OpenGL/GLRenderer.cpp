@@ -471,7 +471,7 @@ namespace paper
             for (auto & c : _path.children())
             {
                 STICK_ASSERT(c.itemType() == EntityType::Path);
-                recursivelyDrawEvenOddPath(reinterpretItem<Path>(c), _tp, _style, _bIsClipping);
+                recursivelyDrawEvenOddPath(reinterpretEntity<Path>(c), _tp, _style, _bIsClipping);
             }
             return cache;
         }
@@ -499,7 +499,7 @@ namespace paper
             for (auto & c : _path.children())
             {
                 STICK_ASSERT(c.itemType() == EntityType::Path);
-                recursivelyDrawNonZeroPath(reinterpretItem<Path>(c), _tp, _style, _bIsClipping);
+                recursivelyDrawNonZeroPath(reinterpretEntity<Path>(c), _tp, _style, _bIsClipping);
             }
             return cache;
         }
@@ -524,7 +524,7 @@ namespace paper
             for (auto & child : _path.children())
             {
                 STICK_ASSERT(child.itemType() == EntityType::Path);
-                ret = recursivelyDrawStroke(reinterpretItem<Path>(child), _tp, _style, _clippingPlaneToTestAgainst);
+                ret = recursivelyDrawStroke(reinterpretEntity<Path>(child), _tp, _style, _clippingPlaneToTestAgainst);
                 if (ret) return ret;
             }
             return ret;

@@ -16,11 +16,6 @@ namespace paper
 
     }
 
-    void Item::assignEntity(const brick::Entity & _e)
-    {
-        static_cast<brick::Entity *>(this)->operator=(_e);
-    }
-
     void Item::addChild(Item _e)
     {
         STICK_ASSERT(isValid());
@@ -41,8 +36,8 @@ namespace paper
             //for non zero winding rule we adjust the direction of the added path if needed
             if (windingRule() == WindingRule::NonZero)
             {
-                Path p = itemCast<Path>(_e);
-                Path tp = itemCast<Path>(*this);
+                Path p = brick::entityCast<Path>(_e);
+                Path tp = brick::entityCast<Path>(*this);
                 STICK_ASSERT(p.isValid() && tp.isValid());
                 p.setClockwise(!tp.isClockwise());
             }
@@ -374,7 +369,7 @@ namespace paper
         auto itemType = get<comps::ItemType>();
         if (itemType == EntityType::Path)
         {
-            Path p = itemCast<Path>(*this);
+            Path p = brick::entityCast<Path>(*this);
             p.applyTransform(_transform);
         }
 
@@ -546,7 +541,7 @@ namespace paper
         ret = {true, Rect(0, 0, 0, 0)};
         if (itemType == EntityType::Path)
         {
-            Path p = reinterpretItem<Path>(*this);
+            Path p = brick::reinterpretEntity<Path>(*this);
             if (_type == BoundsType::Fill)
                 ret = p.computeBounds(_bAbsolute ? &absoluteTransform() : _transform);
             else if (_type == BoundsType::Stroke)
@@ -557,7 +552,7 @@ namespace paper
         else if (itemType == EntityType::Group)
         {
             // early out if this is a clipped group
-            Group grp = reinterpretItem<Group>(*this);
+            Group grp = brick::reinterpretEntity<Group>(*this);
             if (grp.isClipped())
             {
                 if (grp.children().count())
@@ -570,7 +565,7 @@ namespace paper
         {
             //for placed symbols, compute the bounds of the referenced item
             //with the placed symbols transform.
-            PlacedSymbol s = reinterpretItem<PlacedSymbol>(*this);
+            PlacedSymbol s = brick::reinterpretEntity<PlacedSymbol>(*this);
             return s.symbol().item().computeBounds(_bAbsolute ? &s.absoluteTransform() : _transform, _type, false);
         }
 
@@ -990,7 +985,7 @@ namespace paper
 
     static Item cloneGroup(const Item & _grp)
     {
-        Group copy = reinterpretItem<Group>(_grp.cloneWithout<comps::Parent, comps::Children>());
+        Group copy = brick::reinterpretEntity<Group>(_grp.cloneWithout<comps::Parent, comps::Children>());
         for (Item child : _grp.children())
         {
             copy.addChild(child.clone());
@@ -1002,8 +997,8 @@ namespace paper
 
     static Item clonePath(const Item & _path)
     {
-        Path from = reinterpretItem<Path>(_path);
-        Path copy = reinterpretItem<Path>(from.cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
+        Path from = brick::reinterpretEntity<Path>(_path);
+        Path copy = brick::reinterpretEntity<Path>(from.cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
         STICK_ASSERT(!copy.hasComponent<comps::Parent>());
         STICK_ASSERT(!copy.hasComponent<comps::Segments>());
         STICK_ASSERT(!copy.hasComponent<comps::Curves>());
@@ -1053,7 +1048,7 @@ namespace paper
             item = item.parent();
         }
         STICK_ASSERT(item.get<comps::ItemType>() == EntityType::Document);
-        return reinterpretItem<Document>(item);
+        return brick::reinterpretEntity<Document>(item);
     }
 
     EntityType Item::itemType() const

@@ -20,6 +20,6 @@ namespace paper
 
     Group Group::clone() const
     {
-        return reinterpretItem<Group>(Item::clone());
+        return brick::reinterpretEntity<Group>(Item::clone());
     }
 }

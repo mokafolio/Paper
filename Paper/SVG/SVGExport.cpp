@@ -73,11 +73,11 @@ namespace paper
             auto it = _item.get<comps::ItemType>();
             if (it == EntityType::Group)
             {
-                exportGroup(reinterpretItem<Group>(_item), _parentTreeNode);
+                exportGroup(brick::reinterpretEntity<Group>(_item), _parentTreeNode);
             }
             else if (it == EntityType::Path)
             {
-                exportPath(reinterpretItem<Path>(_item), _parentTreeNode, _bIsClipMask, true);
+                exportPath(brick::reinterpretEntity<Path>(_item), _parentTreeNode, _bIsClipMask, true);
             }
         }
 
@@ -243,7 +243,7 @@ namespace paper
                 {
                     if (it != _path.children().begin())
                         pathsString.append(" ");
-                    addPathToPathData(reinterpretItem<Path>(*it), pathsString, true);
+                    addPathToPathData(brick::reinterpretEntity<Path>(*it), pathsString, true);
                 }
                 Shrub pathNode("path");
                 pathNode.set("d", pathsString, ValueHint::XMLAttribute);

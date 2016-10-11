@@ -41,7 +41,7 @@ namespace paper
     Group Document::createGroup(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
-        Group ret = reinterpretItem<Group>(hub->createEntity());
+        Group ret = brick::createEntity<Group>(*hub);
         addDefaultComponents(ret);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Group);
@@ -53,7 +53,7 @@ namespace paper
     Path Document::createPath(const String & _name)
     {
         brick::Hub * hub = get<comps::HubPointer>();
-        Path ret = reinterpretItem<Path>(hub->createEntity());
+        Path ret = brick::createEntity<Path>(*hub);
         addDefaultComponents(ret);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Path);
@@ -165,7 +165,7 @@ namespace paper
 
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
-        Document doc = reinterpretItem<Document>(_hub.createEntity());
+        Document doc = brick::createEntity<Document>(_hub);
         addDefaultComponents(doc);
         doc.set<comps::Name>(_name);
         doc.set<comps::ItemType>(EntityType::Document);
