@@ -46,6 +46,7 @@ namespace paper
 
     namespace detail
     {
+        //TODO: Adjust these for Float32 / Float64
         class PaperConstants
         {
         public:
@@ -59,7 +60,7 @@ namespace paper
 
             static Float tolerance()
             {
-                return static_cast<Float>(10e-6);
+                return static_cast<Float>(1e-4);
             }
 
             static Float epsilon()
@@ -69,27 +70,27 @@ namespace paper
 
             static Float curveTimeEpsilon()
             {
-                return static_cast<Float>(4e-7);
+                return static_cast<Float>(4e-5);
             }
 
             static Float geometricEpsilon()
             {
-                return static_cast<Float>(2e-7);
+                return static_cast<Float>(2e-5);
             }
 
             static Float windingEpsilon()
             {
-                return static_cast<Float>(2e-7);
+                return static_cast<Float>(2e-5);
             }
 
             static Float trigonometricEpsilon()
             {
-                return static_cast<Float>(1e-7);
+                return static_cast<Float>(1e-5);
             }
 
             static Float clippingEpsilon()
             {
-                return static_cast<Float>(1e-9);
+                return static_cast<Float>(1e-7);
             }
         };
     }

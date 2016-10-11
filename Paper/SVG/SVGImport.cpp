@@ -1015,8 +1015,12 @@ namespace paper
                         for (int i = 0; i < numbers.count(); i += 7)
                         {
                             last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
+                            
+                            Float rads = crunch::toRadians(numbers[i + 2]);
+                            printf("ARC MOTHERFUCKER %f %f %f %f %f %f %f\n", numbers[i + 0], numbers[i + 1], numbers[i + 2], numbers[i + 3], numbers[i + 4], numbers[i + 5], numbers[i + 6]);
+                            printf("LAST %f %f\n", last.x, last.y);
                             currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
-                                              crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 3], (bool)numbers[i + 4]);
+                                              crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
                             lastHandle = currentPath.segments().last().handleOutAbsolute();
                         }
                     }

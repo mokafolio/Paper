@@ -186,11 +186,13 @@ namespace paper
         }
 
         factor = (rxSq * rySq - rxSq * ySq - rySq * xSq) / (rxSq * ySq + rySq * xSq);
-        if (crunch::abs(factor) < detail::PaperConstants::epsilon())
+        if (crunch::abs(factor) < detail::PaperConstants::trigonometricEpsilon())
             factor = 0;
 
         if (factor < 0)
+        {
             return Error(ec::InvalidArgument, "Cannot create an arc with the given arguments", STICK_FILE, STICK_LINE);
+        }
 
         Vec2f center(rx * pt.y / ry, -ry * pt.x / rx);
         center = crunch::rotate(center * (_bLarge == _bClockwise ? -1 : 1 * std::sqrt(factor)), _rotation) + middle;
