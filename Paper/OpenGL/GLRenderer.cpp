@@ -510,6 +510,7 @@ namespace paper
             auto & cache = _style.bHasFill ? _path.get<RenderCache>() : updateRenderCache(_path, _style, false);
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
+            ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
             ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeVertices.count(), &cache.strokeVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(cache.strokeVertexDrawMode, 0, cache.strokeVertices.count()));

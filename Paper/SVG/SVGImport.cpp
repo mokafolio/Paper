@@ -686,7 +686,7 @@ namespace paper
             }
 
             if (item.isValid())
-            {
+            {   
                 // we take care of the clip-path attribute after parsing finished, as it might
                 // have us nest the item in a group that needs to be returned instead of the item
                 detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
@@ -757,7 +757,6 @@ namespace paper
 
         Group SVGImport::importGroup(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
-            printf("IMPORT GROUP\n");
             Group grp = m_document->createGroup();
             pushAttributes(_node, _rootNode, grp);
             for (auto & child : _node)
@@ -767,6 +766,10 @@ namespace paper
                     Item item = recursivelyImportNode(child, _rootNode, _error);
                     if (_error) break;
                     else grp.addChild(item);
+                    
+                    //set the default fill if none is inherited
+                    if(!item.hasFill())
+                        item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
             }
             popAttributes();
