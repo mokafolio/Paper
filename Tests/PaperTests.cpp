@@ -118,18 +118,18 @@ const Suite spec[] =
         EXPECT(!child.hasStroke());
         child.setFill(ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
         child.setStroke(ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
-        EXPECT(child.fill() == ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
-        EXPECT(child.stroke() == ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
+        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
+        EXPECT(reinterpretEntity<ColorPaint>(child.stroke()).color() == ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
         EXPECT(child.hasFill());
         EXPECT(child.hasStroke());
         Group grp = doc.createGroup();
         grp.addChild(child);
         grp.setFill(ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
-        EXPECT(grp.fill() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
-        EXPECT(child.fill() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(reinterpretEntity<ColorPaint>(grp.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
         child.removeFill();
         EXPECT(child.hasFill());
-        EXPECT(child.fill() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
         grp.removeFill();
         EXPECT(!child.hasFill());
         EXPECT(!grp.hasFill());
@@ -229,7 +229,7 @@ const Suite spec[] =
 
         Path p2 = p.clone();
         EXPECT(p2.name() == "yessaa");
-        EXPECT(p2.stroke() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
+        EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
         EXPECT(p2.parent() == grp);
         EXPECT(p2.segments().count() == 2);
         EXPECT(p2.curves().count() == 1);
@@ -301,11 +301,12 @@ const Suite spec[] =
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
             Path p = reinterpretEntity<Path>(svgdata.group().children()[0]);
-            EXPECT(p.fill() == ColorRGBA(1, 0, 0, 1));
+            EXPECT(reinterpretEntity<ColorPaint>(p.fill()).color() == ColorRGBA(1, 0, 0, 1));
             EXPECT(p.windingRule() == WindingRule::EvenOdd);
             Path p2 = reinterpretEntity<Path>(svgdata.group().children()[1]);
-            EXPECT(isClose(p2.fill().r, 66.0f / 255.0f) && isClose(p2.fill().g, 134.0f / 255.0f) && isClose(p2.fill().b, 244.0f / 255.0f));
-            EXPECT(p2.stroke() == ColorRGBA(0, 0, 0, 1));
+            auto & c2 = reinterpretEntity<ColorPaint>(p2.fill()).color();
+            EXPECT(isClose(c2.r, 66.0f / 255.0f) && isClose(c2.g, 134.0f / 255.0f) && isClose(c2.b, 244.0f / 255.0f));
+            EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(0, 0, 0, 1));
             EXPECT(p2.isScalingStroke() == false);
             EXPECT(isClose(p2.miterLimit(), 33.5f));
             EXPECT(isClose(p2.dashOffset(), 20.33f));

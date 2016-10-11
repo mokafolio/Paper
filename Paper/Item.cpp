@@ -140,11 +140,11 @@ namespace paper
 
     bool Item::removeChild(Item _item)
     {
-        if(hasComponent<comps::Children>())
+        if (hasComponent<comps::Children>())
         {
             auto & cs = get<comps::Children>();
             auto it = stick::find(cs.begin(), cs.end(), _item);
-            if(it != cs.end())
+            if (it != cs.end())
             {
                 _item.removeComponent<comps::Parent>();
                 cs.remove(it);
@@ -790,12 +790,22 @@ namespace paper
 
     bool Item::hasStroke() const
     {
-        return (bool)findComponent<comps::Stroke>() && get<comps::Stroke>().paintType() != PaintType::None;
+        auto maybe = findComponent<comps::Stroke>();
+        if(maybe)
+        {
+            return (*maybe).paintType() != PaintType::None;
+        }
+        return false;
     }
 
     bool Item::hasFill() const
-    {
-        return (bool)findComponent<comps::Fill>() && get<comps::Fill>().paintType() != PaintType::None;
+    {   
+        auto maybe = findComponent<comps::Fill>();
+        if(maybe)
+        {
+            return (*maybe).paintType() != PaintType::None;
+        }
+        return false;
     }
 
     StrokeJoin Item::strokeJoin() const

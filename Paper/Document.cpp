@@ -29,7 +29,9 @@ namespace paper
     NoPaint Document::createNoPaint()
     {
         brick::Hub * hub = get<comps::HubPointer>();
-        return brick::createEntity<NoPaint>(*hub);
+        NoPaint ret = brick::createEntity<NoPaint>(*hub);
+        ret.set<comps::PaintType>(PaintType::None);
+        return ret;
     }
 
     ColorPaint Document::createColorPaint(const ColorRGBA & _color)
@@ -37,6 +39,7 @@ namespace paper
         brick::Hub * hub = get<comps::HubPointer>();
         ColorPaint ret = brick::createEntity<ColorPaint>(*hub);
         ret.setColor(_color);
+        ret.set<comps::PaintType>(PaintType::Color);
         return ret;
     }
 
