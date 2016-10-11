@@ -507,7 +507,7 @@ namespace paper
         Error GLRenderer::recursivelyDrawStroke(const Path & _path, const Mat4f * _tp,
                                                 const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
         {
-            auto & cache = _path.get<RenderCache>();
+            auto & cache = _style.bHasFill ? _path.get<RenderCache>() : updateRenderCache(_path, _style, false);
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
             ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));

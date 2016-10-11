@@ -300,7 +300,7 @@ namespace paper
                         }
                         else
                         {
-                            tmp = Mat3f::rotation2D(numbers[0]);
+                            tmp = Mat3f::rotation2D(toRadians(numbers[0]));
                         }
                     }
                     else if (action == TransformAction::SkewX && numbers.count() == 1)
@@ -322,7 +322,7 @@ namespace paper
                 return ret;
             }
 
-            static ColorRGB parseColor(String::ConstIter _begin, String::ConstIter _end)
+            static stick::Maybe<ColorRGB> parseColor(String::ConstIter _begin, String::ConstIter _end)
             {
                 _begin = skipWhitespaceAndCommas(_begin, _end);
                 if (*_begin == '#')
@@ -356,9 +356,9 @@ namespace paper
                     auto it = svgColors.find(String(_begin, _end));
                     if (it != svgColors.end())
                         return it->value;
-                    //warn somehow?
-                    return ColorRGB(1, 0, 0);
                 }
+
+                return stick::Maybe<ColorRGB>();
             }
 
             class StringView
@@ -507,9 +507,13 @@ namespace paper
             {
                 printf("SETTING FILL!\n");
                 const String & str = _child.valueString();
-                auto col = toRGBA(detail::parseColor(str.begin(), str.end()));
-                _it.set<comps::Fill>(col);
-                attr.fillColor = col;
+                auto col = detail::parseColor(str.begin(), str.end());
+                if (col)
+                {
+                    auto c =toRGBA(*col);
+                    _it.set<comps::Fill>(c);
+                    attr.fillColor = c;
+                }
             });
             detail::findXMLAttrCB(_node, "fill-rule", _item, [&attr](Item & _it, const Shrub & _child)
             {
@@ -522,9 +526,15 @@ namespace paper
             detail::findXMLAttrCB(_node, "stroke", _item, [&attr](Item & _it, const Shrub & _child)
             {
                 const String & str = _child.valueString();
-                auto col = toRGBA(detail::parseColor(str.begin(), str.end()));
-                _it.set<comps::Stroke>(col);
-                attr.strokeColor = col;
+                auto col = detail::parseColor(str.begin(), str.end());
+                printf("SETTING DEM STROKE\n");
+                if (col)
+                {
+                    printf("DONE DEM STROKE\n");
+                    auto c = toRGBA(*col);
+                    _it.set<comps::Stroke>(c);
+                    attr.strokeColor = c;
+                }
             });
             detail::findXMLAttrCB(_node, "stroke-width", _item, [&attr](Item & _it, const Shrub & _child)
             {
@@ -663,7 +673,7 @@ namespace paper
             else if (_node.name() == "defs")
             {
                 item = importGroup(_node, _rootNode, _error);
-                if(!_error)
+                if (!_error)
                     m_tmpItems.append(item);
             }
             // else if (_node.name() == "symbol")
@@ -677,7 +687,7 @@ namespace paper
 
             if (item.isValid())
             {
-                // we take care of the clip-path attribute after parsing finished, as it might 
+                // we take care of the clip-path attribute after parsing finished, as it might
                 // have us nest the item in a group that needs to be returned instead of the item
                 detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
                 {
@@ -694,16 +704,16 @@ namespace paper
                     {
                         //if not, find it in the document and import it
                         auto maybe = _rootNode.find([&str](const Shrub & _s)
-                        { 
-                            for(auto & _c : _s)
+                        {
+                            for (auto & _c : _s)
                             {
-                                if(_c.valueHint() == ValueHint::XMLAttribute && _c.name() == "id" && _c.valueString() == str)
+                                if (_c.valueHint() == ValueHint::XMLAttribute && _c.name() == "id" && _c.valueString() == str)
                                     return true;
                             }
                             return false;
                         });
-                        
-                        if(maybe)
+
+                        if (maybe)
                         {
                             Error err;
                             mask = importClipPath(*maybe, _rootNode, err);
@@ -1015,7 +1025,7 @@ namespace paper
                         for (int i = 0; i < numbers.count(); i += 7)
                         {
                             last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
-                            
+
                             Float rads = crunch::toRadians(numbers[i + 2]);
                             printf("ARC MOTHERFUCKER %f %f %f %f %f %f %f\n", numbers[i + 0], numbers[i + 1], numbers[i + 2], numbers[i + 3], numbers[i + 4], numbers[i + 5], numbers[i + 6]);
                             printf("LAST %f %f\n", last.x, last.y);
@@ -1105,10 +1115,11 @@ namespace paper
             auto mry = _node.child("ry");
             if (mcx && mcy && mrx && mry)
             {
+                printf("MAKING ELLIPSE YOOOOO\n");
                 Path ret = m_document->createEllipse(Vec2f(coordinatePixels((*mcx).valueString().begin()),
                                                      coordinatePixels((*mcy).valueString().begin())),
-                                                     Vec2f(coordinatePixels((*mrx).valueString().begin()),
-                                                             coordinatePixels((*mry).valueString().begin())));
+                                                     Vec2f(coordinatePixels((*mrx).valueString().begin()) * 2,
+                                                             coordinatePixels((*mry).valueString().begin()) * 2));
                 pushAttributes(_node, _rootNode, ret);
                 popAttributes();
                 return ret;
