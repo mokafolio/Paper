@@ -17,6 +17,9 @@ namespace paper
     {
     public:
 
+        static constexpr EntityType itemType = EntityType::PlacedSymbol;
+
+
         PlacedSymbol();
 
         Symbol symbol() const;
