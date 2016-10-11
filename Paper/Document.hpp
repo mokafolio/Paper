@@ -22,7 +22,7 @@ namespace paper
     {
     public:
 
-        static constexpr EntityType ItemType = EntityType::Document;
+        static constexpr EntityType itemType = EntityType::Document;
 
         Document();
 

@@ -16,7 +16,7 @@ namespace paper
 
     public:
 
-        static constexpr EntityType ItemType = EntityType::Path;
+        static constexpr EntityType itemType = EntityType::Path;
 
         using SegmentIter = typename SegmentArray::Iter;
         using SegmentConstIter = typename SegmentArray::ConstIter;

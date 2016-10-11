@@ -271,7 +271,7 @@ namespace paper
     template<class T>
     inline T itemCast(const Item & _item)
     {
-        if(_item.itemType() == T::ItemType)
+        if(_item.itemType() == T::itemType)
         {
             return reinterpretItem<T>(_item);
         }

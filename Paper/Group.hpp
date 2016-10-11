@@ -14,7 +14,7 @@ namespace paper
 
     public:
 
-        static constexpr EntityType ItemType = EntityType::Group;
+        static constexpr EntityType itemType = EntityType::Group;
 
 
         Group();

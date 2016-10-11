@@ -15,6 +15,7 @@ Paper/Constants.hpp
 Paper/Curve.hpp
 Paper/CurveLocation.hpp
 Paper/Document.hpp
+Paper/Fill.hpp
 Paper/Group.hpp
 Paper/Item.hpp
 Paper/Path.hpp
@@ -32,6 +33,7 @@ set (PAPERSRC
 Paper/Curve.cpp
 Paper/CurveLocation.cpp
 Paper/Document.cpp
+Paper/Fill.cpp
 Paper/Group.cpp
 Paper/Item.cpp
 Paper/Path.cpp
