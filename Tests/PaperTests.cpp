@@ -297,11 +297,14 @@ const Suite spec[] =
             //test basic colors and attribute import
             Hub hub;
             Document doc = createDocument(hub);
-            String svg = "<svg><path d='M10 20 L100 20' fill='red'/><circle cx='100' cy='200' r='20' fill='#4286f4' fill-rule='nonzero' stroke='black' stroke-miterlimit='33.5' stroke-dasharray='1, 2,3 4 5' stroke-dashoffset='20.33' vector-effect='non-scaling-stroke' stroke-linejoin='miter' stroke-linecap='round'/></svg>";
+            String svg = "<svg><path d='M10 20 L100 20' fill='red' style='stroke: #333; stroke-width: 2px'/><circle cx='100' cy='200' r='20' fill='#4286f4' fill-rule='nonzero' stroke='black' stroke-miterlimit='33.5' stroke-dasharray='1, 2,3 4 5' stroke-dashoffset='20.33' vector-effect='non-scaling-stroke' stroke-linejoin='miter' stroke-linecap='round'/></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
             Path p = reinterpretEntity<Path>(svgdata.group().children()[0]);
             EXPECT(reinterpretEntity<ColorPaint>(p.fill()).color() == ColorRGBA(1, 0, 0, 1));
+            auto s = reinterpretEntity<ColorPaint>(p.stroke()).color();
+            EXPECT(isClose(s.r, 51.0f / 255.0f) && isClose(s.g, 51.0f / 255.0f) && isClose(s.b, 51.0f / 255.0f));
+            EXPECT(p.strokeWidth() == 2.0f);
             EXPECT(p.windingRule() == WindingRule::EvenOdd);
             Path p2 = reinterpretEntity<Path>(svgdata.group().children()[1]);
             auto & c2 = reinterpretEntity<ColorPaint>(p2.fill()).color();

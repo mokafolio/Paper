@@ -679,6 +679,7 @@ namespace paper
                 while(b != e && *b != ';') ++b;
                 right = String(ls, b);
                 parseAttribute(left, right, _attr, _item);
+                if(b != e) ++b;
             }
         }
 
