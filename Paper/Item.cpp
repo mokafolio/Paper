@@ -739,8 +739,6 @@ namespace paper
         {
             return *ret;
         }
-        // static ColorRGBA s_colorProxy(1.0, 1.0, 1.0, 1.0);
-        // return s_colorProxy;
         return Paint();
     }
 
@@ -791,7 +789,7 @@ namespace paper
     bool Item::hasStroke() const
     {
         auto maybe = findComponent<comps::Stroke>();
-        if(maybe)
+        if (maybe)
         {
             return (*maybe).paintType() != PaintType::None;
         }
@@ -799,9 +797,9 @@ namespace paper
     }
 
     bool Item::hasFill() const
-    {   
+    {
         auto maybe = findComponent<comps::Fill>();
-        if(maybe)
+        if (maybe)
         {
             return (*maybe).paintType() != PaintType::None;
         }
@@ -1068,8 +1066,21 @@ namespace paper
         {
             item = item.parent();
         }
-        STICK_ASSERT(item.get<comps::ItemType>() == EntityType::Document);
-        return brick::reinterpretEntity<Document>(item);
+
+        Document ret = brick::entityCast<Document>(item);
+        if (ret) return ret;
+
+        //if we reached the top, and its not the document, we are in a symbol
+        auto s = item.maybe<comps::ReferencedSymbol>();
+        if(s)
+        {
+            if((*s).isValid())
+            {
+                return (*s).get<comps::Doc>();
+            }
+        }
+
+        return Document();
     }
 
     EntityType Item::itemType() const

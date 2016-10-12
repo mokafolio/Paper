@@ -328,14 +328,34 @@ namespace paper
                 if (*_begin == '#')
                 {
                     ++_begin; //skip the pound sign
+                    // auto test = std::strtoul("33AAFF", NULL, 16);
+                    // auto test2 = std::strtoul("3AF", NULL, 16);
+                    // printf("test: %i %i\n", test, test2);
                     UInt32 hexCountPerChannel = _end - _begin <= 4 ? 1 : 2;
-                    String tmp(_begin, _begin + hexCountPerChannel);
-                    auto r = std::strtol(tmp.cString(), NULL, 16);
-                    tmp = String(_begin + hexCountPerChannel, _begin + hexCountPerChannel * 2);
-                    auto g = std::strtol(tmp.cString(), NULL, 16);
-                    tmp = String(_begin + hexCountPerChannel * 2, _begin + hexCountPerChannel * 3);
-                    auto b = std::strtol(tmp.cString(), NULL, 16);
-                    return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
+                    if (hexCountPerChannel == 2)
+                    {
+                        String tmp(_begin, _begin + 2);
+                        auto r = std::strtoul(tmp.cString(), NULL, 16);
+                        tmp = String(_begin + 2, _begin + 4);
+                        auto g = std::strtoul(tmp.cString(), NULL, 16);
+                        tmp = String(_begin + 4, _begin + 6);
+                        auto b = std::strtoul(tmp.cString(), NULL, 16);
+                        return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
+                    }
+                    else
+                    {
+                        printf("SMALL HEX VERSION\n");
+                        String tmp = String::concat(_begin[0], _begin[0]);
+                        printf("TMP %s\n", tmp.cString());
+                        auto r = std::strtoul(tmp.cString(), NULL, 16);
+                        tmp = String::concat(_begin[1], _begin[1]);
+                        printf("TMP %s\n", tmp.cString());
+                        auto g = std::strtoul(tmp.cString(), NULL, 16);
+                        tmp = String::concat(_begin[2], _begin[2]);
+                        printf("TMP %s\n", tmp.cString());
+                        auto b = std::strtoul(tmp.cString(), NULL, 16);
+                        return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
+                    }
                 }
                 else if (String(_begin, _begin + 3) == "rgb")
                 {
@@ -349,9 +369,12 @@ namespace paper
                     else
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                 }
+                else if(std::strncmp(_begin, "none", 4) == 0)
+                {
+                    
+                }
                 else
                 {
-                    printf("SVG COLOR\n");
                     //is this a named svg color?
                     auto it = svgColors.find(String(_begin, _end));
                     if (it != svgColors.end())
@@ -780,8 +803,8 @@ namespace paper
                     else grp.addChild(item);
 
                     //set the default fill if none is inherited
-                    if (!item.hasFill())
-                        item.setFill(ColorRGBA(0, 0, 0, 1));
+                    // if (!item.hasFill())
+                    //     item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
             }
             popAttributes();

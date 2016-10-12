@@ -3,6 +3,7 @@
 
 #include <Paper/RenderInterface.hpp>
 #include <Crunch/Matrix4.hpp>
+#include <Crunch/StringConversion.hpp>
 
 namespace paper
 {
@@ -45,14 +46,17 @@ namespace paper
                     {
                         Paint p = _item.fill();
                         if (p.paintType() == PaintType::Color)
+                        {
                             fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                            printf("GOT DA PAINT COLOR %s\n", crunch::toString(fillColor).cString());
+                        }
                     }
                     if (_item.hasStroke())
                     {
                         Paint p = _item.stroke();
                         if (p.paintType() == PaintType::Color)
                             strokeColor = brick::reinterpretEntity<ColorPaint>(p).color();
-                        
+
                         strokeWidth = _item.strokeWidth();
                         miterLimit = _item.miterLimit();
                         cap = _item.strokeCap();
