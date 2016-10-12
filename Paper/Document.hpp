@@ -51,6 +51,8 @@ namespace paper
 
         const Vec2f size() const;
 
+        NoPaint noPaint() const;
+
         brick::Hub & hub();
 
         svg::SVGImportResult parseSVG(const stick::String & _svg, stick::Size _dpi = 72);

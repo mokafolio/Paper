@@ -357,7 +357,7 @@ namespace paper
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                     }
                 }
-                else if (String(_begin, _begin + 3) == "rgb")
+                else if (std::strncmp(_begin, "rgb", 3) == 0)
                 {
                     //code adjusted from nanosvg: https://github.com/memononen/nanosvg/blob/master/src/nanosvg.h
                     Int32 r = -1, g = -1, b = -1;
@@ -369,9 +369,9 @@ namespace paper
                     else
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                 }
-                else if(std::strncmp(_begin, "none", 4) == 0)
+                else if (std::strncmp(_begin, "none", 4) == 0)
                 {
-                    
+
                 }
                 else
                 {
@@ -519,102 +519,109 @@ namespace paper
             return SVGImportResult(grp, w, h, err);
         }
 
-        void SVGImport::pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item)
+        void SVGImport::parseAttribute(const String & _name, const String & _value, SVGAttributes & _attr, Item & _item)
         {
-            SVGAttributes attr;
-            if (m_attributeStack.count()) attr = m_attributeStack.last();
-
-            //order is important to some degree
-            //setColorComponentFromXMLAttr<comps::Fill>(_node, "fill", _item);
-            detail::findXMLAttrCB(_node, "fill", _item, [&attr](Item & _it, const Shrub & _child)
+            if (_name == "fill")
             {
-                printf("SETTING FILL!\n");
-                const String & str = _child.valueString();
-                auto col = detail::parseColor(str.begin(), str.end());
-                if (col)
+                if (_value == "none")
                 {
-                    auto c = toRGBA(*col);
-                    _it.setFill(c);
-                    attr.fillColor = c;
+                    _item.setNoFill();
                 }
-            });
-            detail::findXMLAttrCB(_node, "fill-opacity", _item, [&attr](Item & _it, const Shrub & _child)
-            {
-                attr.fillColor.a = _child.value<Float>();
-                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.fill());
-                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.fillColor.a));
-            });
-            detail::findXMLAttrCB(_node, "fill-rule", _item, [&attr](Item & _it, const Shrub & _child)
-            {
-                if (_child.valueString() == "nonzero")
-                    attr.windingRule = WindingRule::NonZero;
-                else if (_child.valueString() == "evenodd")
-                    attr.windingRule = WindingRule::EvenOdd;
-                _it.setWindingRule(attr.windingRule);
-            });
-            detail::findXMLAttrCB(_node, "stroke", _item, [&attr](Item & _it, const Shrub & _child)
-            {
-                const String & str = _child.valueString();
-                auto col = detail::parseColor(str.begin(), str.end());
-                printf("SETTING DEM STROKE\n");
-                if (col)
+                else
                 {
-                    printf("DONE DEM STROKE\n");
-                    auto c = toRGBA(*col);
-                    _it.setStroke(c);
-                    attr.strokeColor = c;
+                    auto col = detail::parseColor(_value.begin(), _value.end());
+                    if (col)
+                    {
+                        auto c = toRGBA(*col);
+                        //we need to get the current alpha, as that might have been set allready
+                        c.a = _item.fillOpacity();
+                        _item.setFill(c);
+                        _attr.fillColor = c;
+                    }
                 }
-            });
-            detail::findXMLAttrCB(_node, "stroke-opacity", _item, [&attr](Item & _it, const Shrub & _child)
+            }
+            else if (_name == "fill-opacity")
             {
-                attr.strokeColor.a = _child.value<Float>();
-                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.stroke());
-                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.strokeColor.a));
-            });
-            detail::findXMLAttrCB(_node, "stroke-width", _item, [&attr](Item & _it, const Shrub & _child)
+                _attr.fillColor.a = toFloat32(_value);
+                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.fill());
+                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.fillColor.a));
+            }
+            else if (_name == "fill-rule")
             {
-                attr.strokeWidth = _child.value<Float>();
-                _it.setStrokeWidth(attr.strokeWidth);
-            });
-            detail::findXMLAttrCB(_node, "stroke-linecap", _item, [&attr](Item & _it, const Shrub & _child)
+                if (_value == "nonzero")
+                    _attr.windingRule = WindingRule::NonZero;
+                else if (_value == "evenodd")
+                    _attr.windingRule = WindingRule::EvenOdd;
+                _item.setWindingRule(_attr.windingRule);
+            }
+            else if (_name == "stroke")
             {
-                if (_child.valueString() == "butt")
-                    attr.strokeCap = StrokeCap::Butt;
-                else if (_child.valueString() == "round")
-                    attr.strokeCap = StrokeCap::Round;
-                else if (_child.valueString() == "square")
-                    attr.strokeCap = StrokeCap::Square;
+                if (_value == "none")
+                {
+                    _item.setNoStroke();
+                }
+                else
+                {
+                    auto col = detail::parseColor(_value.begin(), _value.end());
+                    if (col)
+                    {
+                        auto c = toRGBA(*col);
+                        //we need to get the current alpha, as that might have been set allready
+                        c.a = _item.strokeOpacity();
+                        _item.setStroke(c);
+                        _attr.strokeColor = c;
+                    }
+                }
+            }
+            else if (_name == "stroke-opacity")
+            {
+                _attr.strokeColor.a = toFloat32(_value);
+                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.stroke());
+                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.strokeColor.a));
+            }
+            else if (_name == "stroke-width")
+            {
+                _attr.strokeWidth = toFloat32(_value);
+                _item.setStrokeWidth(_attr.strokeWidth);
+            }
+            else if (_name == "stroke-linecap")
+            {
+                if (_value == "butt")
+                    _attr.strokeCap = StrokeCap::Butt;
+                else if (_value == "round")
+                    _attr.strokeCap = StrokeCap::Round;
+                else if (_value == "square")
+                    _attr.strokeCap = StrokeCap::Square;
 
-                _it.setStrokeCap(attr.strokeCap);
-            });
-            detail::findXMLAttrCB(_node, "stroke-linejoin", _item, [&attr](Item & _it, const Shrub & _child)
+                _item.setStrokeCap(_attr.strokeCap);
+            }
+            else if (_name == "stroke-linejoin")
             {
-                if (_child.valueString() == "miter")
-                    attr.strokeJoin = StrokeJoin::Miter;
-                else if (_child.valueString() == "round")
-                    attr.strokeJoin = StrokeJoin::Round;
-                else if (_child.valueString() == "bevel")
-                    attr.strokeJoin = StrokeJoin::Bevel;
+                if (_value == "miter")
+                    _attr.strokeJoin = StrokeJoin::Miter;
+                else if (_value == "round")
+                    _attr.strokeJoin = StrokeJoin::Round;
+                else if (_value == "bevel")
+                    _attr.strokeJoin = StrokeJoin::Bevel;
 
-                _it.setStrokeJoin(attr.strokeJoin);
-            });
-            detail::findXMLAttrCB(_node, "vector-effect", _item, [&attr](Item & _it, const Shrub & _child)
+                _item.setStrokeJoin(_attr.strokeJoin);
+            }
+            else if (_name == "stroke-miterlimit")
             {
-                attr.bScalingStroke = _child.valueString() != "non-scaling-stroke";
-                _it.setStrokeScaling(attr.bScalingStroke);
-            });
-            detail::findXMLAttrCB(_node, "stroke-miterlimit", _item, [&attr](Item & _it, const Shrub & _child)
+                _attr.miterLimit = toFloat32(_value);
+                _item.setMiterLimit(_attr.miterLimit);
+            }
+            else if (_name == "vector-effect")
             {
-                attr.miterLimit = _child.value<Float>();
-                _it.setMiterLimit(attr.miterLimit);
-            });
-            detail::findXMLAttrCB(_node, "stroke-dasharray", _item, [&](Item & _it, const Shrub & _child)
+                _attr.bScalingStroke = _value != "non-scaling-stroke";
+                _item.setStrokeScaling(_attr.bScalingStroke);
+            }
+            else if (_name == "stroke-dasharray")
             {
-                printf("SETTING DASH ARRAY\n");
-                attr.dashArray.clear();
+                _attr.dashArray.clear();
 
-                auto it = _child.valueString().begin();
-                auto end = _child.valueString().end();
+                auto it = _value.begin();
+                auto end = _value.end();
                 it = detail::skipWhitespaceAndCommas(it, end);
 
                 //handle none case
@@ -623,36 +630,192 @@ namespace paper
                     while (it != end)
                     {
                         //TODO take percentage start and length into account and pass it to toPixels
-                        attr.dashArray.append(coordinatePixels(it));
+                        _attr.dashArray.append(coordinatePixels(it));
                         while (it != end && !std::isspace(*it) && *it != ',') ++it;
                         it = detail::skipWhitespaceAndCommas(it, end);
                     }
                 }
 
-                _it.setDashArray(attr.dashArray);
-            });
-
-            detail::findXMLAttrCB(_node, "stroke-dashoffset", _item, [&attr](Item & _it, const Shrub & _child)
+                _item.setDashArray(_attr.dashArray);
+            }
+            else if (_name == "stroke-dashoffset")
             {
-                attr.dashOffset = _child.value<Float>();
-                _it.setDashOffset(attr.dashOffset);
-            });
-
-            detail::findXMLAttrCB(_node, "font-size", _item, [&attr](Item & _it, const Shrub & _child)
+                _attr.dashOffset = toFloat32(_value);
+                _item.setDashOffset(_attr.dashOffset);
+            }
+            else if (_name == "font-size")
             {
-                attr.fontSize = _child.value<Float>();
-            });
-
-            detail::findXMLAttrCB(_node, "transform", _item, [](Item & _it, const Shrub & _child)
+                _attr.fontSize = toFloat32(_value);
+            }
+            else if (_name == "transform")
             {
-                _it.setTransform(detail::parseTransform(_child.valueString().begin(), _child.valueString().end()));
-            });
-
-            detail::findXMLAttrCB(_node, "id", _item, [&](Item & _it, const Shrub & _child)
+                _item.setTransform(detail::parseTransform(_value.begin(), _value.end()));
+            }
+            else if (_name == "id")
             {
-                _it.setName(_child.valueString());
-                m_namedItems.insert(_child.valueString(), _item);
-            });
+                _item.setName(_value);
+                m_namedItems.insert(_value, _item);
+            }
+        }
+
+        void SVGImport::parseStyle(const String & _style, Item & _item)
+        {
+
+        }
+
+        void SVGImport::pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item)
+        {
+            SVGAttributes attr;
+            if (m_attributeStack.count()) attr = m_attributeStack.last();
+
+            for (const Shrub & c : _node)
+            {
+                if (c.valueHint() == ValueHint::XMLAttribute)
+                    parseAttribute(c.name(), c.valueString(), attr, _item);
+            }
+
+            // //order is important to some degree
+            // //setColorComponentFromXMLAttr<comps::Fill>(_node, "fill", _item);
+            // detail::findXMLAttrCB(_node, "fill", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     printf("SETTING FILL!\n");
+            //     const String & str = _child.valueString();
+            //     if (str == "none")
+            //     {
+            //         _it.setNoFill();
+            //     }
+            //     else
+            //     {
+            //         auto col = detail::parseColor(str.begin(), str.end());
+            //         if (col)
+            //         {
+            //             auto c = toRGBA(*col);
+            //             _it.setFill(c);
+            //             attr.fillColor = c;
+            //         }
+            //     }
+            // });
+            // detail::findXMLAttrCB(_node, "fill-opacity", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.fillColor.a = _child.value<Float>();
+            //     ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.fill());
+            //     col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.fillColor.a));
+            // });
+            // detail::findXMLAttrCB(_node, "fill-rule", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     if (_child.valueString() == "nonzero")
+            //         attr.windingRule = WindingRule::NonZero;
+            //     else if (_child.valueString() == "evenodd")
+            //         attr.windingRule = WindingRule::EvenOdd;
+            //     _it.setWindingRule(attr.windingRule);
+            // });
+            // detail::findXMLAttrCB(_node, "stroke", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     const String & str = _child.valueString();
+            //     if (str == "none")
+            //     {
+            //         _it.setNoStroke();
+            //     }
+            //     else
+            //     {
+            //         auto col = detail::parseColor(str.begin(), str.end());
+            //         if (col)
+            //         {
+            //             printf("DONE DEM STROKE\n");
+            //             auto c = toRGBA(*col);
+            //             _it.setStroke(c);
+            //             attr.strokeColor = c;
+            //         }
+            //     }
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-opacity", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.strokeColor.a = _child.value<Float>();
+            //     ColorPaint col = brick::reinterpretEntity<ColorPaint>(_it.stroke());
+            //     col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, attr.strokeColor.a));
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-width", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.strokeWidth = _child.value<Float>();
+            //     _it.setStrokeWidth(attr.strokeWidth);
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-linecap", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     if (_child.valueString() == "butt")
+            //         attr.strokeCap = StrokeCap::Butt;
+            //     else if (_child.valueString() == "round")
+            //         attr.strokeCap = StrokeCap::Round;
+            //     else if (_child.valueString() == "square")
+            //         attr.strokeCap = StrokeCap::Square;
+
+            //     _it.setStrokeCap(attr.strokeCap);
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-linejoin", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     if (_child.valueString() == "miter")
+            //         attr.strokeJoin = StrokeJoin::Miter;
+            //     else if (_child.valueString() == "round")
+            //         attr.strokeJoin = StrokeJoin::Round;
+            //     else if (_child.valueString() == "bevel")
+            //         attr.strokeJoin = StrokeJoin::Bevel;
+
+            //     _it.setStrokeJoin(attr.strokeJoin);
+            // });
+            // detail::findXMLAttrCB(_node, "vector-effect", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.bScalingStroke = _child.valueString() != "non-scaling-stroke";
+            //     _it.setStrokeScaling(attr.bScalingStroke);
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-miterlimit", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.miterLimit = _child.value<Float>();
+            //     _it.setMiterLimit(attr.miterLimit);
+            // });
+            // detail::findXMLAttrCB(_node, "stroke-dasharray", _item, [&](Item & _it, const Shrub & _child)
+            // {
+            //     printf("SETTING DASH ARRAY\n");
+            //     attr.dashArray.clear();
+
+            //     auto it = _child.valueString().begin();
+            //     auto end = _child.valueString().end();
+            //     it = detail::skipWhitespaceAndCommas(it, end);
+
+            //     //handle none case
+            //     if (it != end && *it != 'n')
+            //     {
+            //         while (it != end)
+            //         {
+            //             //TODO take percentage start and length into account and pass it to toPixels
+            //             attr.dashArray.append(coordinatePixels(it));
+            //             while (it != end && !std::isspace(*it) && *it != ',') ++it;
+            //             it = detail::skipWhitespaceAndCommas(it, end);
+            //         }
+            //     }
+
+            //     _it.setDashArray(attr.dashArray);
+            // });
+
+            // detail::findXMLAttrCB(_node, "stroke-dashoffset", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.dashOffset = _child.value<Float>();
+            //     _it.setDashOffset(attr.dashOffset);
+            // });
+
+            // detail::findXMLAttrCB(_node, "font-size", _item, [&attr](Item & _it, const Shrub & _child)
+            // {
+            //     attr.fontSize = _child.value<Float>();
+            // });
+
+            // detail::findXMLAttrCB(_node, "transform", _item, [](Item & _it, const Shrub & _child)
+            // {
+            //     _it.setTransform(detail::parseTransform(_child.valueString().begin(), _child.valueString().end()));
+            // });
+
+            // detail::findXMLAttrCB(_node, "id", _item, [&](Item & _it, const Shrub & _child)
+            // {
+            //     _it.setName(_child.valueString());
+            //     m_namedItems.insert(_child.valueString(), _item);
+            // });
 
             m_attributeStack.append(attr);
         }

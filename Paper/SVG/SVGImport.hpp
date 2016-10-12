@@ -100,6 +100,11 @@ namespace paper
 
             Float coordinatePixels(const char * _str, Float _start = 0.0, Float _length = 1.0);
 
+            void parseAttribute(const stick::String & _name, const stick::String & _value,
+                                SVGAttributes & _attr, Item & _item);
+
+            void parseStyle(const stick::String & _style, Item & _item);
+
             void pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item);
 
             void popAttributes();

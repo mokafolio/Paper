@@ -159,6 +159,8 @@ namespace paper
 
         void setStrokeScaling(bool _b);
 
+        void setNoStroke();
+
         void removeStroke();
 
         void setNoFill();
@@ -174,6 +176,10 @@ namespace paper
         StrokeJoin strokeJoin() const;
 
         StrokeCap strokeCap() const;
+
+        Float fillOpacity() const;
+
+        Float strokeOpacity() const;
 
         Float miterLimit() const;
 

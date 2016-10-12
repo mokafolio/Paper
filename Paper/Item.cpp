@@ -697,6 +697,12 @@ namespace paper
         return ret;
     }
 
+    void Item::setNoStroke()
+    {
+        set<comps::Stroke>(document().noPaint());
+        removeComponentFromChildren<comps::Stroke>(*this);
+    }
+
     void Item::removeStroke()
     {
         removeComponent<comps::Stroke>();
@@ -705,7 +711,8 @@ namespace paper
 
     void Item::setNoFill()
     {
-        //set<comps::Fill>
+        set<comps::Fill>(document().noPaint());
+        removeComponentFromChildren<comps::Fill>(*this);
     }
 
     Paint Item::setFill(const ColorRGBA & _color)
@@ -740,6 +747,22 @@ namespace paper
             return *ret;
         }
         return Paint();
+    }
+
+    Float Item::fillOpacity() const
+    {
+        Paint s = fill();
+        if(s && s.paintType() == PaintType::Color)
+            return brick::reinterpretEntity<ColorPaint>(s).color().a;
+        return 1.0; //should this be zero?
+    }
+
+    Float Item::strokeOpacity() const
+    {
+        Paint s = stroke();
+        if(s && s.paintType() == PaintType::Color)
+            return brick::reinterpretEntity<ColorPaint>(s).color().a;
+        return 1.0; //should this be zero?
     }
 
     Paint Item::stroke() const
@@ -1072,9 +1095,9 @@ namespace paper
 
         //if we reached the top, and its not the document, we are in a symbol
         auto s = item.maybe<comps::ReferencedSymbol>();
-        if(s)
+        if (s)
         {
-            if((*s).isValid())
+            if ((*s).isValid())
             {
                 return (*s).get<comps::Doc>();
             }

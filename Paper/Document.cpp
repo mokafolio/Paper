@@ -179,6 +179,16 @@ namespace paper
         return s_hub;
     }
 
+    namespace comps
+    {
+        using NoPaintHolder = brick::Component<ComponentName("NoPaintHolder"), NoPaint>;
+    }
+
+    NoPaint Document::noPaint() const
+    {
+        return get<comps::NoPaintHolder>();
+    }
+
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
         Document doc = brick::createEntity<Document>(_hub);
@@ -187,6 +197,7 @@ namespace paper
         doc.set<comps::ItemType>(EntityType::Document);
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
+        doc.set<comps::NoPaintHolder>(doc.createNoPaint());
         return doc;
     }
 }
