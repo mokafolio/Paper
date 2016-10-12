@@ -521,7 +521,11 @@ namespace paper
 
         void SVGImport::parseAttribute(const String & _name, const String & _value, SVGAttributes & _attr, Item & _item)
         {
-            if (_name == "fill")
+            if(_name == "style")
+            {
+                parseStyle(_value, _attr, _item);
+            }
+            else if (_name == "fill")
             {
                 if (_value == "none")
                 {
@@ -658,9 +662,24 @@ namespace paper
             }
         }
 
-        void SVGImport::parseStyle(const String & _style, Item & _item)
+        void SVGImport::parseStyle(const String & _style, SVGAttributes & _attr, Item & _item)
         {
-
+            auto b = _style.begin();
+            auto e = _style.end();
+            String left, right;
+            while(b != e)
+            {
+                while(b != e && std::isspace(*b)) ++b;
+                auto ls = b;
+                while(b != e && *b != ':') ++b;
+                left = String(ls, b);
+                ++b;
+                while(b != e && std::isspace(*b)) ++b;
+                ls = b;
+                while(b != e && *b != ';') ++b;
+                right = String(ls, b);
+                parseAttribute(left, right, _attr, _item);
+            }
         }
 
         void SVGImport::pushAttributes(const Shrub & _node, const Shrub & _rootNode, Item & _item)
