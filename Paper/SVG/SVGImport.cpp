@@ -277,9 +277,9 @@ namespace paper
 
                     if (action == TransformAction::Matrix && numbers.count() == 6)
                     {
-                        tmp = Mat3f(Vec3f(numbers[0], numbers[1], numbers[2]),
-                                    Vec3f(numbers[3], numbers[4], numbers[5]),
-                                    Vec3f(0, 0, 1));
+                        tmp = Mat3f(Vec3f(numbers[0], numbers[1], 0),
+                                    Vec3f(numbers[2], numbers[3], 0),
+                                    Vec3f(numbers[4], numbers[5], 1));
                     }
                     else if (action == TransformAction::Translate && numbers.count() >= 1)
                     {
@@ -317,7 +317,7 @@ namespace paper
                     }
 
                     //multiply with the current matrix (open gl style, right to left)
-                    ret = tmp * ret;
+                    ret = ret * tmp;
                 }
                 return ret;
             }
