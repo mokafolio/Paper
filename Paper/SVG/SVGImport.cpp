@@ -178,7 +178,6 @@ namespace paper
             static String::ConstIter parseNumbers(String::ConstIter _it, String::ConstIter _end, F _endCondition, DynamicArray<Float> & _outNumbers)
             {
                 _outNumbers.clear();
-                ++_it; //skip the command character
                 _it = skipWhitespaceAndCommas(_it, _end);
 
                 Float value;
@@ -186,7 +185,7 @@ namespace paper
                 {
                     std::sscanf(_it, "%f", &value);
                     String tmp(_it, _end);
-                    printf("VALUE %f %s\n", value, tmp.cString());
+                    printf("FOOCK VALUE %f %s\n", value, tmp.cString());
                     _outNumbers.append(value);
 
                     //skip the sign part
@@ -272,6 +271,7 @@ namespace paper
 
                     //advance to the opening bracket
                     while (_it != _end && *_it != '(') ++_it;
+                    ++_it;
                     _it = parseNumbers(_it, _end, [](char _c) { return _c == ')'; }, numbers);
                     if (_it != _end) ++_it; //skip ')'
 
@@ -1095,6 +1095,7 @@ namespace paper
                 {
                     char cmd = *it;
                     //auto tend = advanceToNextCommand(it + 1, end);
+                    ++it;
                     it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
@@ -1291,7 +1292,10 @@ namespace paper
                 detail::parseNumbers((*mpoints).valueString().begin(), (*mpoints).valueString().end(), [](char) { return false; }, numbers);
                 Path ret = m_document->createPath();
                 for (Size i = 0; i < numbers.count(); i += 2)
+                {
+                    printf("POS %f %f\n", numbers[i], numbers[i + 1]);
                     ret.addPoint(Vec2f(numbers[i], numbers[i + 1]));
+                }
 
                 if (_bIsPolygon)
                     ret.closePath();
