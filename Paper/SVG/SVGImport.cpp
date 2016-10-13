@@ -305,11 +305,11 @@ namespace paper
                     }
                     else if (action == TransformAction::SkewX && numbers.count() == 1)
                     {
-                        tmp = Mat3f::skewMatrix2D(Vec2f(numbers[0], 0));
+                        tmp = Mat3f::skewMatrix2D(Vec2f(toRadians(numbers[0]), 0));
                     }
                     else if (action == TransformAction::SkewY && numbers.count() == 1)
                     {
-                        tmp = Mat3f::skewMatrix2D(Vec2f(0, numbers[0]));
+                        tmp = Mat3f::skewMatrix2D(Vec2f(0, toRadians(numbers[0])));
                     }
                     else
                     {
