@@ -521,7 +521,7 @@ namespace paper
 
         void SVGImport::parseAttribute(const String & _name, const String & _value, SVGAttributes & _attr, Item & _item)
         {
-            if(_name == "style")
+            if (_name == "style")
             {
                 parseStyle(_value, _attr, _item);
             }
@@ -669,17 +669,17 @@ namespace paper
             String left, right;
             while(b != e)
             {
-                while(b != e && std::isspace(*b)) ++b;
+                while (b != e && std::isspace(*b)) ++b;
                 auto ls = b;
-                while(b != e && *b != ':') ++b;
+                while (b != e && *b != ':') ++b;
                 left = String(ls, b);
                 ++b;
-                while(b != e && std::isspace(*b)) ++b;
+                while (b != e && std::isspace(*b)) ++b;
                 ls = b;
-                while(b != e && *b != ';') ++b;
+                while (b != e && *b != ';') ++b;
                 right = String(ls, b);
                 parseAttribute(left, right, _attr, _item);
-                if(b != e) ++b;
+                if (b != e) ++b;
             }
         }
 
@@ -1316,10 +1316,11 @@ namespace paper
             auto mcx = _node.child("cx");
             auto mcy = _node.child("cy");
             auto mr = _node.child("r");
-            if (mcx && mcy && mr)
+            if (mr)
             {
-                Path ret = m_document->createCircle(Vec2f(coordinatePixels((*mcx).valueString().begin()),
-                                                    coordinatePixels((*mcy).valueString().begin())),
+                Float x = mcx ? coordinatePixels((*mcx).valueString().begin()) : 0;
+                Float y = mcy ? coordinatePixels((*mcy).valueString().begin()) : 0;
+                Path ret = m_document->createCircle(Vec2f(x, y),
                                                     coordinatePixels((*mr).valueString().begin()));
                 pushAttributes(_node, _rootNode, ret);
                 popAttributes();
@@ -1338,11 +1339,12 @@ namespace paper
             auto mcy = _node.child("cy");
             auto mrx = _node.child("rx");
             auto mry = _node.child("ry");
-            if (mcx && mcy && mrx && mry)
+            if (mrx && mry)
             {
                 printf("MAKING ELLIPSE YOOOOO\n");
-                Path ret = m_document->createEllipse(Vec2f(coordinatePixels((*mcx).valueString().begin()),
-                                                     coordinatePixels((*mcy).valueString().begin())),
+                Float x = mcx ? coordinatePixels((*mcx).valueString().begin()) : 0;
+                Float y = mcy ? coordinatePixels((*mcy).valueString().begin()) : 0;
+                Path ret = m_document->createEllipse(Vec2f(x, y),
                                                      Vec2f(coordinatePixels((*mrx).valueString().begin()) * 2,
                                                              coordinatePixels((*mry).valueString().begin()) * 2));
                 pushAttributes(_node, _rootNode, ret);
