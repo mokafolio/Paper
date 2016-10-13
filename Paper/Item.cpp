@@ -43,6 +43,9 @@ namespace paper
             }
         }
 
+        //mark the absolute transform dirty
+        _e.markAbsoluteTransformDirty();
+
         //possibly remove from previous parent
         Item e2 = _e;
         e2.removeFromParent();
