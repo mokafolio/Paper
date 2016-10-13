@@ -48,7 +48,6 @@ namespace paper
                         if (p.paintType() == PaintType::Color)
                         {
                             fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
-                            printf("GOT DA PAINT COLOR %s\n", crunch::toString(fillColor).cString());
                         }
                     }
                     if (_item.hasStroke())

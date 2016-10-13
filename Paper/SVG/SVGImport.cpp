@@ -585,7 +585,7 @@ namespace paper
             }
             else if (_name == "stroke-width")
             {
-                _attr.strokeWidth = toFloat32(_value);
+                _attr.strokeWidth = coordinatePixels(_value.cString());
                 _item.setStrokeWidth(_attr.strokeWidth);
             }
             else if (_name == "stroke-linecap")
@@ -612,7 +612,7 @@ namespace paper
             }
             else if (_name == "stroke-miterlimit")
             {
-                _attr.miterLimit = toFloat32(_value);
+                _attr.miterLimit = coordinatePixels(_value.cString());
                 _item.setMiterLimit(_attr.miterLimit);
             }
             else if (_name == "vector-effect")
@@ -644,12 +644,12 @@ namespace paper
             }
             else if (_name == "stroke-dashoffset")
             {
-                _attr.dashOffset = toFloat32(_value);
+                _attr.dashOffset = coordinatePixels(_value.cString());
                 _item.setDashOffset(_attr.dashOffset);
             }
             else if (_name == "font-size")
             {
-                _attr.fontSize = toFloat32(_value);
+                _attr.fontSize = coordinatePixels(_value.cString());
             }
             else if (_name == "transform")
             {

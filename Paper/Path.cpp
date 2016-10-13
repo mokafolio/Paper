@@ -172,6 +172,7 @@ namespace paper
         Vec2f pt = crunch::rotate(from - middle, -_rotation);
         Float rx = crunch::abs(_radii.x);
         Float ry = crunch::abs(_radii.y);
+        printf("RX, RY %f %f\n", rx, ry);
         Float rxSq = rx * rx;
         Float rySq = ry * ry;
         Float xSq = pt.x * pt.x;
@@ -179,15 +180,20 @@ namespace paper
         Float factor = std::sqrt(xSq / rxSq + ySq / rySq);
         if (factor > 1)
         {
+            printf("APPLY FACTOR\n");
             rx *= factor;
             ry *= factor;
             rxSq = rx * rx;
             rySq = ry * ry;
         }
+        printf("RX2, RY2 %f %f\n", rx, ry);
 
         factor = (rxSq * rySq - rxSq * ySq - rySq * xSq) / (rxSq * ySq + rySq * xSq);
         if (crunch::abs(factor) < detail::PaperConstants::trigonometricEpsilon())
+        {
+            printf("SET FACTOR TO 0\n");
             factor = 0;
+        }
 
         if (factor < 0)
         {
@@ -195,7 +201,7 @@ namespace paper
         }
 
         Vec2f center(rx * pt.y / ry, -ry * pt.x / rx);
-        center = crunch::rotate(center * (_bLarge == _bClockwise ? -1 : 1 * std::sqrt(factor)), _rotation) + middle;
+        center = crunch::rotate(center * ((_bLarge == _bClockwise ? -1 : 1) * std::sqrt(factor)), _rotation) + middle;
         // Now create a matrix that maps the unit circle to the ellipse,
         // for easier construction below.
         Mat3f matrix = Mat3f::translation2D(center);
