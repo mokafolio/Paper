@@ -185,7 +185,6 @@ namespace paper
                 {
                     std::sscanf(_it, "%f", &value);
                     String tmp(_it, _end);
-                    printf("FOOCK VALUE %f %s\n", value, tmp.cString());
                     _outNumbers.append(value);
 
                     //skip the sign part
@@ -212,8 +211,6 @@ namespace paper
                     if (_endCondition(*_it))
                         break;
                 }
-
-                printf("NUM NUMBERS %lu\n", _outNumbers.count());
 
                 //return advanceToNextCommand(_it, _end);
                 return _it;
@@ -328,9 +325,6 @@ namespace paper
                 if (*_begin == '#')
                 {
                     ++_begin; //skip the pound sign
-                    // auto test = std::strtoul("33AAFF", NULL, 16);
-                    // auto test2 = std::strtoul("3AF", NULL, 16);
-                    // printf("test: %i %i\n", test, test2);
                     UInt32 hexCountPerChannel = _end - _begin <= 4 ? 1 : 2;
                     if (hexCountPerChannel == 2)
                     {
@@ -340,22 +334,16 @@ namespace paper
                         auto g = std::strtoul(tmp.cString(), NULL, 16);
                         tmp = String(_begin + 4, _begin + 6);
                         auto b = std::strtoul(tmp.cString(), NULL, 16);
-                        printf("R G B %lu %lu %lu\n", r, g, b);
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                     }
                     else
                     {
-                        printf("SMALL HEX VERSION\n");
                         String tmp = String::concat(_begin[0], _begin[0]);
-                        printf("TMP %s\n", tmp.cString());
                         auto r = std::strtoul(tmp.cString(), NULL, 16);
                         tmp = String::concat(_begin[1], _begin[1]);
-                        printf("TMP %s\n", tmp.cString());
                         auto g = std::strtoul(tmp.cString(), NULL, 16);
                         tmp = String::concat(_begin[2], _begin[2]);
-                        printf("TMP %s\n", tmp.cString());
                         auto b = std::strtoul(tmp.cString(), NULL, 16);
-                        printf("R G B %lu %lu %lu\n", r, g, b);
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                     }
                 }
@@ -985,7 +973,6 @@ namespace paper
             //establish a new view based on the provided x,y,width,height (needed for viewbox calculation)
             if (_bSVGNode)
             {
-                printf("ESTABLISH SVG VIEW\n");
                 Float x, y, w, h;
                 auto mx = _node.maybe<Float>("x");
                 auto my = _node.maybe<Float>("y");
@@ -993,7 +980,6 @@ namespace paper
                 auto mh = _node.maybe<Float>("height");
                 if (mw && mh)
                 {
-                    printf("GOT SVG VIEW\n");
                     w = *mw;
                     h = *mh;
                     x = mx ? *mx : 0;
@@ -1021,18 +1007,14 @@ namespace paper
                 //if no view is esablished, ignore viewbox
                 if (m_viewStack.count())
                 {
-                    printf("GOT THE VIEWBOX MATE\n");
                     //TODO: take preserveAspectRatio attribute into account (argh NOOOOOOOOOO)
                     const Rect & r = m_viewStack.last();
-                    printf("LAST VIEW %f %f %f %f\n", r.min().x, r.min().y, r.width(), r.height());
                     stick::DynamicArray<Float> numbers;
                     numbers.reserve(4);
                     detail::parseNumbers(_child.valueString().begin(), _child.valueString().end(), [](char _c) { return false; }, numbers);
-                    printf("NUMBERS %f %f %f %f\n", numbers[0], numbers[1], numbers[2], numbers[3]);
                     Mat3f viewTransform = Mat3f::identity();
                     if (m_viewStack.count() > 1)
                     {
-                        printf("APPLY TRANSFORM\n");
                         viewTransform.translate2D(r.min());
                     }
                     Vec2f scale(r.width() / numbers[2], r.height() / numbers[3]);
@@ -1137,11 +1119,9 @@ namespace paper
 
         Path SVGImport::importPath(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
-            printf("IMPORT PATH\n");
             auto maybe = _node.child("d");
             if (maybe)
             {
-                printf("GOT DATA\n");
                 const String & val = (*maybe).valueString();
                 DynamicArray<Float> numbers;
                 auto end = val.end();
@@ -1160,7 +1140,6 @@ namespace paper
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
-                        printf("MOVE CMD\n");
                         if (currentPath.segments().count())
                         {
                             Path tmp = m_document->createPath();
@@ -1181,7 +1160,6 @@ namespace paper
                     }
                     else if (cmd == 'L' || cmd == 'l')
                     {
-                        printf("L CMD\n");
                         bool bRelative = cmd == 'l';
                         for (int i = 0; i < numbers.count(); i += 2)
                         {
@@ -1195,7 +1173,6 @@ namespace paper
                     }
                     else if (cmd == 'H' || cmd == 'h' || cmd == 'V' || cmd == 'v')
                     {
-                        printf("H CMD\n");
                         bool bRelative = cmd == 'h' || cmd == 'v';
                         bool bVert = cmd == 'V' || cmd == 'v';
                         for (int i = 0; i < numbers.count(); ++i)
@@ -1220,7 +1197,6 @@ namespace paper
                     }
                     else if (cmd == 'C' || cmd == 'c')
                     {
-                        printf("C CMD\n");
                         bool bRelative = cmd == 'c';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 6)
@@ -1245,7 +1221,6 @@ namespace paper
                     }
                     else if (cmd == 'S' || cmd == 's')
                     {
-                        printf("S CMD\n");
                         bool bRelative = cmd == 's';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 4)
@@ -1269,7 +1244,6 @@ namespace paper
                     }
                     else if (cmd == 'Q' || cmd == 'q')
                     {
-                        printf("Q CMD\n");
                         bool bRelative = cmd == 'q';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 4)
@@ -1289,7 +1263,6 @@ namespace paper
                     }
                     else if (cmd == 'T' || cmd == 't')
                     {
-                        printf("T CMD\n");
                         bool bRelative = cmd == 't';
                         Vec2f start = last;
                         for (int i = 0; i < numbers.count(); i += 2)
@@ -1302,15 +1275,12 @@ namespace paper
                     }
                     else if (cmd == 'A' || cmd == 'a')
                     {
-                        printf("A CMD\n");
                         bool bRelative = cmd == 'a';
                         for (int i = 0; i < numbers.count(); i += 7)
                         {
                             last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
 
                             Float rads = crunch::toRadians(numbers[i + 2]);
-                            printf("ARC MOTHERFUCKER %f %f %f %f %f %f %f\n", numbers[i + 0], numbers[i + 1], numbers[i + 2], numbers[i + 3], numbers[i + 4], numbers[i + 5], numbers[i + 6]);
-                            printf("LAST %f %f\n", last.x, last.y);
                             currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
                                               crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
                             lastHandle = currentPath.segments().last().handleOutAbsolute();
@@ -1318,7 +1288,6 @@ namespace paper
                     }
                     else if (cmd == 'Z' || cmd == 'z')
                     {
-                        printf("Z CMD\n");
                         currentPath.closePath();
                         last = currentPath.segments().last().position();
                         lastHandle = currentPath.segments().last().handleOutAbsolute();
@@ -1353,7 +1322,6 @@ namespace paper
                 Path ret = m_document->createPath();
                 for (Size i = 0; i < numbers.count(); i += 2)
                 {
-                    printf("POS %f %f\n", numbers[i], numbers[i + 1]);
                     ret.addPoint(Vec2f(numbers[i], numbers[i + 1]));
                 }
 
@@ -1401,7 +1369,6 @@ namespace paper
             auto mry = _node.child("ry");
             if (mrx && mry)
             {
-                printf("MAKING ELLIPSE YOOOOO\n");
                 Float x = mcx ? coordinatePixels((*mcx).valueString().begin()) : 0;
                 Float y = mcy ? coordinatePixels((*mcy).valueString().begin()) : 0;
                 Path ret = m_document->createEllipse(Vec2f(x, y),
