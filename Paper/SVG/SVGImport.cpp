@@ -1030,15 +1030,16 @@ namespace paper
                     detail::parseNumbers(_child.valueString().begin(), _child.valueString().end(), [](char _c) { return false; }, numbers);
                     printf("NUMBERS %f %f %f %f\n", numbers[0], numbers[1], numbers[2], numbers[3]);
                     Mat3f viewTransform = Mat3f::identity();
-                    viewTransform.scale2D(r.width() / numbers[2], r.height() / numbers[3]);
                     if (m_viewStack.count() > 1)
                     {
                         printf("APPLY TRANSFORM\n");
                         viewTransform.translate2D(r.min());
                     }
+                    Vec2f scale(r.width() / numbers[2], r.height() / numbers[3]);
+                    viewTransform.scale2D(scale);
                     _it.setTransform(viewTransform);
 
-                    auto mask = m_document->createRectangle(Vec2f(0, 0), r.size());
+                    auto mask = m_document->createRectangle(Vec2f(0, 0), r.size() * (Vec2f(1.0) / scale));
                     mask.insertBelow(grp.children().first());
                     //mask.setFill(ColorRGBA(0, 0, 1, 0.2));
                     grp.setClipped(true);
