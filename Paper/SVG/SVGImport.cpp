@@ -340,6 +340,7 @@ namespace paper
                         auto g = std::strtoul(tmp.cString(), NULL, 16);
                         tmp = String(_begin + 4, _begin + 6);
                         auto b = std::strtoul(tmp.cString(), NULL, 16);
+                        printf("R G B %lu %lu %lu\n", r, g, b);
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                     }
                     else
@@ -354,6 +355,7 @@ namespace paper
                         tmp = String::concat(_begin[2], _begin[2]);
                         printf("TMP %s\n", tmp.cString());
                         auto b = std::strtoul(tmp.cString(), NULL, 16);
+                        printf("R G B %lu %lu %lu\n", r, g, b);
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                     }
                 }
@@ -365,7 +367,7 @@ namespace paper
                     Int32 n = std::sscanf(_begin + 4, "%d%[%%, \t]%d%[%%, \t]%d", &r, s1, &g, s2, &b);
                     STICK_ASSERT(n == 5);
                     if (std::strchr(s1, '%'))
-                        return ColorRGB(r / 100.0, g / 100.0, b / 100);
+                        return ColorRGB(r / 100.0, g / 100.0, b / 100.0);
                     else
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                 }
@@ -663,10 +665,6 @@ namespace paper
                 _item.setName(_value);
                 m_namedItems.insert(_value, _item);
             }
-            else if (_name == "viewBox")
-            {
-
-            }
         }
 
         void SVGImport::parseStyle(const String & _style, SVGAttributes & _attr, Item & _item)
@@ -912,7 +910,7 @@ namespace paper
 
             if (item.isValid())
             {
-                // we take care of the clip-path attribute after parsing finished, as it might
+                // we take care of the clip-path / viewBox (as it might induce clipping, too) attribute after parsing finished, as it might
                 // have us nest the item in a group that needs to be returned instead of the item
                 detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
                 {
@@ -987,6 +985,7 @@ namespace paper
             //establish a new view based on the provided x,y,width,height (needed for viewbox calculation)
             if (_bSVGNode)
             {
+                printf("ESTABLISH SVG VIEW\n");
                 Float x, y, w, h;
                 auto mx = _node.maybe<Float>("x");
                 auto my = _node.maybe<Float>("y");
@@ -994,6 +993,7 @@ namespace paper
                 auto mh = _node.maybe<Float>("height");
                 if (mw && mh)
                 {
+                    printf("GOT SVG VIEW\n");
                     w = *mw;
                     h = *mh;
                     x = mx ? *mx : 0;
@@ -1015,6 +1015,36 @@ namespace paper
                     //     item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
             }
+
+            detail::findXMLAttrCB(_node, "viewBox", grp, [&](Item & _it, const Shrub & _child)
+            {
+                //if no view is esablished, ignore viewbox
+                if (m_viewStack.count())
+                {
+                    printf("GOT THE VIEWBOX MATE\n");
+                    //TODO: take preserveAspectRatio attribute into account (argh NOOOOOOOOOO)
+                    const Rect & r = m_viewStack.last();
+                    printf("LAST VIEW %f %f %f %f\n", r.min().x, r.min().y, r.width(), r.height());
+                    stick::DynamicArray<Float> numbers;
+                    numbers.reserve(4);
+                    detail::parseNumbers(_child.valueString().begin(), _child.valueString().end(), [](char _c) { return false; }, numbers);
+                    printf("NUMBERS %f %f %f %f\n", numbers[0], numbers[1], numbers[2], numbers[3]);
+                    Mat3f viewTransform = Mat3f::identity();
+                    viewTransform.scale2D(r.width() / numbers[2], r.height() / numbers[3]);
+                    if (m_viewStack.count() > 1)
+                    {
+                        printf("APPLY TRANSFORM\n");
+                        viewTransform.translate2D(r.min());
+                    }
+                    _it.setTransform(viewTransform);
+
+                    auto mask = m_document->createRectangle(Vec2f(0, 0), r.size());
+                    mask.insertBelow(grp.children().first());
+                    //mask.setFill(ColorRGBA(0, 0, 1, 0.2));
+                    grp.setClipped(true);
+                }
+            });
+
             if (_bSVGNode)
             {
                 m_viewStack.removeLast();
