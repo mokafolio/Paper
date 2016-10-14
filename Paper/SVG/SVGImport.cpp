@@ -369,10 +369,6 @@ namespace paper
                     else
                         return ColorRGB(r / 255.0, g / 255.0, b / 255.0);
                 }
-                else if (std::strncmp(_begin, "none", 4) == 0)
-                {
-
-                }
                 else
                 {
                     //is this a named svg color?
@@ -500,16 +496,23 @@ namespace paper
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
 
-            Error err;
-            Group grp = brick::reinterpretEntity<Group>(recursivelyImportNode(svg, svg, err));
-
+            auto mx = svg.child("x");
+            auto my = svg.child("y");
             auto mw = svg.child("width");
             auto mh = svg.child("height");
-            Float w, h;
+
+            Float x, y, w, h;
+            if (mx)
+                x = (*mx).value<Float>();
+            if (my)
+                y = (*my).value<Float>();
             if (mw)
                 w = (*mw).value<Float>();
             if (mh)
                 h = (*mh).value<Float>();
+
+            Error err;
+            Group grp = brick::reinterpretEntity<Group>(recursivelyImportNode(svg, svg, err));
 
             // remove all tmp items
             for (auto & item : m_tmpItems)
@@ -660,6 +663,10 @@ namespace paper
                 _item.setName(_value);
                 m_namedItems.insert(_value, _item);
             }
+            else if (_name == "viewBox")
+            {
+
+            }
         }
 
         void SVGImport::parseStyle(const String & _style, SVGAttributes & _attr, Item & _item)
@@ -667,7 +674,7 @@ namespace paper
             auto b = _style.begin();
             auto e = _style.end();
             String left, right;
-            while(b != e)
+            while (b != e)
             {
                 while (b != e && std::isspace(*b)) ++b;
                 auto ls = b;
@@ -850,11 +857,11 @@ namespace paper
             Item item;
             if (_node.name() == "svg")
             {
-                item = importGroup(_node, _rootNode, _error);
+                item = importGroup(_node, _rootNode, true, _error);
             }
             else if (_node.name() == "g")
             {
-                item = importGroup(_node, _rootNode, _error);
+                item = importGroup(_node, _rootNode, false, _error);
             }
             else if (_node.name() == "rect")
             {
@@ -890,7 +897,7 @@ namespace paper
             }
             else if (_node.name() == "defs")
             {
-                item = importGroup(_node, _rootNode, _error);
+                item = importGroup(_node, _rootNode, false, _error);
                 if (!_error)
                     m_tmpItems.append(item);
             }
@@ -973,9 +980,27 @@ namespace paper
             return item;
         }
 
-        Group SVGImport::importGroup(const Shrub & _node, const Shrub & _rootNode, Error & _error)
+        Group SVGImport::importGroup(const Shrub & _node, const Shrub & _rootNode, bool _bSVGNode, Error & _error)
         {
             Group grp = m_document->createGroup();
+
+            //establish a new view based on the provided x,y,width,height (needed for viewbox calculation)
+            if (_bSVGNode)
+            {
+                Float x, y, w, h;
+                auto mx = _node.maybe<Float>("x");
+                auto my = _node.maybe<Float>("y");
+                auto mw = _node.maybe<Float>("width");
+                auto mh = _node.maybe<Float>("height");
+                if (mw && mh)
+                {
+                    w = *mw;
+                    h = *mh;
+                    x = mx ? *mx : 0;
+                    y = my ? *my : 0;
+                    m_viewStack.append(Rect(x, y, x + w, y + h));
+                }
+            }
             pushAttributes(_node, _rootNode, grp);
             for (auto & child : _node)
             {
@@ -989,6 +1014,10 @@ namespace paper
                     // if (!item.hasFill())
                     //     item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
+            }
+            if (_bSVGNode)
+            {
+                m_viewStack.removeLast();
             }
             popAttributes();
             return grp;

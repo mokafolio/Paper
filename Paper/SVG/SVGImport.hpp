@@ -57,6 +57,12 @@ namespace paper
             Float value;
         };
 
+        struct STICK_LOCAL SVGView
+        {
+            Rect rectangle;
+            Mat3f viewBoxTransform;
+        };
+
         class STICK_LOCAL SVGImport
         {
         public:
@@ -69,7 +75,7 @@ namespace paper
 
             Item recursivelyImportNode(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
-            Group importGroup(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
+            Group importGroup(const Shrub & _node, const Shrub & _rootNode, bool _bSVGNode, stick::Error & _error);
 
             Path importClipPath(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
@@ -113,6 +119,7 @@ namespace paper
             Document * m_document;
             stick::Size m_dpi;
             stick::DynamicArray<SVGAttributes> m_attributeStack;
+            stick::DynamicArray<Rect> m_viewStack;
             // for items that are only temporary in the dom and should
             // be removed at the end of the import (i.e. clipping masks, defs nodes etc.)
             stick::DynamicArray<Item> m_tmpItems;
