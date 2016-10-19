@@ -32,19 +32,11 @@ namespace paper
 
             void exportGroup(const Group & _group, Shrub & _parentTreeNode);
 
-            void addCurveToPathData(const Curve & _curve, stick::String & _currentData, bool _bApplyTransform);
-
-            void addPathToPathData(const Path & _path, stick::String & _currentData, bool _bIsCompoundPath);
-
             void exportCurveData(const Path & _path, Shrub & _parentTreeNode, Shrub *& _pn);
 
             void exportPath(const Path & _path, Shrub & _parentTreeNode, bool _bIsClipPath, bool _bMatchShape);
 
             void applyStyle(const Item & _item, Shrub & _node);
-
-            static stick::String colorToHexCSSString(const crunch::ColorRGB & _color);
-
-            static stick::String toSVGPoint(const Vec2f & _p);
 
 
 

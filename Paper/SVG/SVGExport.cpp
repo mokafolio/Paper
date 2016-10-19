@@ -7,11 +7,106 @@
 #include <Crunch/Colors.hpp>
 #include <Crunch/CommonFunc.hpp>
 
+#include <Crunch/StringConversion.hpp>
+
 namespace paper
 {
     namespace svg
     {
         using namespace stick;
+
+        static String colorToHexCSSString(const crunch::ColorRGB & _color)
+        {
+            UInt32 r = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
+                                   static_cast<UInt32>(_color.r * 255)));
+            UInt32 g = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
+                                   static_cast<UInt32>(_color.g * 255)));
+            UInt32 b = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
+                                   static_cast<UInt32>(_color.b * 255)));
+
+            return String::concat("#", toHexString(r, 2), toHexString(g, 2), toHexString(b, 2));
+        }
+
+        static String toSVGPoint(const Vec2f & _p)
+        {
+            return String::concat(toString(_p.x), ",", toString(_p.y));
+        }
+
+        static void addCurveToPathData(const Curve & _curve, String & _currentData, bool _bApplyTransform)
+        {
+            if (_curve.isLinear())
+            {
+                Vec2f stp = _curve.segmentTwo().position();
+                Vec2f sop = _curve.segmentOne().position();
+
+                //this happens if the curve is part of a compound path
+                if (_bApplyTransform)
+                {
+                    Mat3f transform = _curve.path().transform();
+                    stp = transform * stp;
+                    sop = transform * sop;
+                }
+
+                //relative line to
+                _currentData.append(AppendVariadicFlag(), " l", toSVGPoint(stp - sop));
+            }
+            else
+            {
+                Vec2f stp = _curve.segmentTwo().position();
+                Vec2f sop = _curve.segmentOne().position();
+                Vec2f ho = _curve.handleOneAbsolute();
+                Vec2f ht = _curve.handleTwoAbsolute();
+
+                //this happens if the curve is part of a compound path
+                if (_bApplyTransform)
+                {
+                    Mat3f transform = _curve.path().transform();
+                    stp = transform * stp;
+                    sop = transform * sop;
+                    ho = transform * ho;
+                    ht = transform * ht;
+                }
+
+                //relative curve to
+                _currentData.append(AppendVariadicFlag(), " c", toSVGPoint(ho - sop), " ", toSVGPoint(ht - sop), " ", toSVGPoint(stp - sop));
+            }
+        }
+
+        static void addPathToPathData(const Path & _path, String & _currentData, bool _bIsCompoundPath)
+        {
+            const auto & curves = _path.curves();
+            if (curves.count())
+            {
+                Mat3f transform = _path.transform();
+                //absolute move to
+                Vec2f to = curves[0].segmentOne().position();
+                bool bApplyTransform = false;
+                //for compound paths we need to transform the segment vertices directly
+                if (transform != Mat3f::identity() && _bIsCompoundPath)
+                {
+                    bApplyTransform = true;
+                    to = transform * to;
+                }
+                _currentData.append(AppendVariadicFlag(), "M", toSVGPoint(to));
+
+                for (const auto & c : curves)
+                {
+                    addCurveToPathData(c, _currentData, bApplyTransform);
+                }
+            }
+        }
+
+        static void recursivelyAddPathToPathData(const Path & _path, String & _currentData, bool _bFirst)
+        {
+            addPathToPathData(_path, _currentData, _bFirst ? false : true);
+            auto it = _path.children().begin();
+            for (; it != _path.children().end(); ++it)
+            {
+                if (it != _path.children().begin())
+                    _currentData.append(" ");
+                addPathToPathData(brick::reinterpretEntity<Path>(*it), _currentData, true);
+            }
+        }
 
         SVGExport::SVGExport()
         {
@@ -44,11 +139,6 @@ namespace paper
                 exportItem(item, *parent, false);
             }
 
-            for (auto & child : m_tree)
-            {
-                printf("SCRUB CHILD: %s\n", child.name().cString());
-            }
-
             return exportXML(m_tree);
         }
 
@@ -69,7 +159,6 @@ namespace paper
 
         void SVGExport::exportItem(const Item & _item, Shrub & _parentTreeNode, bool _bIsClipMask)
         {
-            printf("EXPORT ITEM!!!\n");
             auto it = _item.get<comps::ItemType>();
             if (it == EntityType::Group)
             {
@@ -119,70 +208,6 @@ namespace paper
             }
             setTransform(_group, groupNode);
             _parentTreeNode.append(groupNode);
-        }
-
-        void SVGExport::addCurveToPathData(const Curve & _curve, String & _currentData, bool _bApplyTransform)
-        {
-            if (_curve.isLinear())
-            {
-                Vec2f stp = _curve.segmentTwo().position();
-                Vec2f sop = _curve.segmentOne().position();
-
-                //this happens if the curve is part of a compound path
-                if (_bApplyTransform)
-                {
-                    Mat3f transform = _curve.path().transform();
-                    stp = transform * stp;
-                    sop = transform * sop;
-                }
-
-                //relative line to
-                _currentData.append(AppendVariadicFlag(), " l", toSVGPoint(stp - sop));
-            }
-            else
-            {
-                Vec2f stp = _curve.segmentTwo().position();
-                Vec2f sop = _curve.segmentOne().position();
-                Vec2f ho = _curve.handleOneAbsolute();
-                Vec2f ht = _curve.handleTwoAbsolute();
-
-                //this happens if the curve is part of a compound path
-                if (_bApplyTransform)
-                {
-                    Mat3f transform = _curve.path().transform();
-                    stp = transform * stp;
-                    sop = transform * sop;
-                    ho = transform * ho;
-                    ht = transform * ht;
-                }
-
-                //relative curve to
-                _currentData.append(AppendVariadicFlag(), " c", toSVGPoint(ho - sop), " ", toSVGPoint(ht - sop), " ", toSVGPoint(stp - sop));
-            }
-        }
-
-        void SVGExport::addPathToPathData(const Path & _path, String & _currentData, bool _bIsCompoundPath)
-        {
-            const auto & curves = _path.curves();
-            if (curves.count())
-            {
-                Mat3f transform = _path.transform();
-                //absolute move to
-                Vec2f to = curves[0].segmentOne().position();
-                bool bApplyTransform = false;
-                //for compound paths we need to transform the segment vertices directly
-                if (transform != Mat3f::identity() && _bIsCompoundPath)
-                {
-                    bApplyTransform = true;
-                    to = transform * to;
-                }
-                _currentData.append(AppendVariadicFlag(), "M", toSVGPoint(to));
-
-                for (const auto & c : curves)
-                {
-                    addCurveToPathData(c, _currentData, bApplyTransform);
-                }
-            }
         }
 
         void SVGExport::exportCurveData(const Path & _path, Shrub & _parentTreeNode, Shrub *& _pn)
@@ -236,15 +261,8 @@ namespace paper
             bool bIsCompoundPath = _path.children().count();
             if (bIsCompoundPath)
             {
-                auto it = _path.children().begin();
                 String pathsString;
-                addPathToPathData(_path, pathsString, true);
-                for (; it != _path.children().end(); ++it)
-                {
-                    if (it != _path.children().begin())
-                        pathsString.append(" ");
-                    addPathToPathData(brick::reinterpretEntity<Path>(*it), pathsString, true);
-                }
+                recursivelyAddPathToPathData(_path, pathsString, true);
                 Shrub pathNode("path");
                 pathNode.set("d", pathsString, ValueHint::XMLAttribute);
                 pn = &_parentTreeNode.append(pathNode);
@@ -253,13 +271,11 @@ namespace paper
             {
                 if (_bMatchShape)
                 {
-                    printf("MATCH SHAPE!!!\n");
                     //this does shape matching
                     detail::Shape shape(_path);
                     detail::ShapeType shapeType = shape.shapeType();
                     if (shapeType == detail::ShapeType::Circle)
                     {
-                        printf("GOT CIRCLEEE\n");
                         Shrub & circleNode = _parentTreeNode.append("circle");
                         circleNode.set("cx", shape.circle().position.x, ValueHint::XMLAttribute);
                         circleNode.set("cy", shape.circle().position.y, ValueHint::XMLAttribute);
@@ -429,23 +445,6 @@ namespace paper
                     _node.set("vector-effect", "non-scaling-stroke", ValueHint::XMLAttribute);
                 }
             }
-        }
-
-        String SVGExport::colorToHexCSSString(const crunch::ColorRGB & _color)
-        {
-            UInt32 r = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
-                                   static_cast<UInt32>(_color.r * 255)));
-            UInt32 g = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
-                                   static_cast<UInt32>(_color.g * 255)));
-            UInt32 b = crunch::min(static_cast<UInt32>(255), crunch::max(static_cast<UInt32>(0),
-                                   static_cast<UInt32>(_color.b * 255)));
-
-            return String::concat("#", toHexString(r, 2), toHexString(g, 2), toHexString(b, 2));
-        }
-
-        String SVGExport::toSVGPoint(const Vec2f & _p)
-        {
-            return String::concat(toString(_p.x), ",", toString(_p.y));
         }
     }
 }

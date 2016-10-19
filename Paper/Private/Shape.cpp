@@ -57,10 +57,16 @@ namespace paper
             {
                 m_type = ShapeType::Rectangle;
                 m_data.rectangle.position = _path.localBounds().center();
-                m_data.rectangle.size = Vec2f(crunch::distance(segments[0].position(),
-                                              segments[1].position()),
-                                              crunch::distance(segments[1].position(),
-                                                      segments[2].position()));
+
+                Float w = crunch::distance(segments[0].position(),
+                                           segments[1].position());
+                Float h = crunch::distance(segments[1].position(),
+                                           segments[2].position());
+                if (!crunch::isClose(segments[0].position().y, segments[1].position().y))
+                {
+                    std::swap(w, h);
+                }
+                m_data.rectangle.size = Vec2f(w, h);
                 m_data.rectangle.cornerRadius = Vec2f(0);
             }
             else if (curves.count() == 8 &&
