@@ -31,7 +31,7 @@ namespace paper
 
         SVGImportResult::operator bool() const
         {
-            return static_cast<bool>(m_error);
+            return !static_cast<bool>(m_error);
         }
 
         Group SVGImportResult::group() const
