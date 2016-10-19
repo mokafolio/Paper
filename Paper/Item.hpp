@@ -230,6 +230,21 @@ namespace paper
 
         static Mat3f strokeTransform(const Mat3f * _transform, Float _strokeWidth, bool _bIsScalingStroke);
 
+
+        template<class C>
+        stick::Maybe<typename C::ValueType &> findComponent() const
+        {
+            Item i(*this);
+            while (i.isValid())
+            {
+                auto maybe = i.maybe<C>();
+                if (maybe)
+                    return maybe;
+                i = i.parent();
+            }
+            return stick::Maybe<typename C::ValueType &>();
+        }
+
     protected:
 
         void recursivePostTransform(bool _bIncludesScaling);
@@ -251,21 +266,6 @@ namespace paper
         };
 
         BoundsResult computeBounds(const Mat3f * _transform, BoundsType _type, bool _bAbsolute) const;
-
-
-        template<class C>
-        stick::Maybe<typename C::ValueType &> findComponent() const
-        {
-            Item i(*this);
-            while (i.isValid())
-            {
-                auto maybe = i.maybe<C>();
-                if (maybe)
-                    return maybe;
-                i = i.parent();
-            }
-            return stick::Maybe<typename C::ValueType &>();
-        }
     };
 }
 

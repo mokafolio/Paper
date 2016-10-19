@@ -184,7 +184,6 @@ namespace paper
                 while (_it != _end)
                 {
                     std::sscanf(_it, "%f", &value);
-                    String tmp(_it, _end);
                     _outNumbers.append(value);
 
                     //skip the sign part
@@ -481,7 +480,9 @@ namespace paper
 
             //TODO: It might be worthwhile to use pugixml directly to parse the svg
             //as that should be a lot faster as it would skip allocating the shrub tree etc.
+            printf("START\n");
             auto shrubRes = parseXML(_svg);
+            printf("PARSED XML\n");
             if (!shrubRes)
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
@@ -503,12 +504,14 @@ namespace paper
 
             Error err;
             Group grp = brick::reinterpretEntity<Group>(recursivelyImportNode(svg, svg, err));
+            printf("PARSED SVG\n");
 
             // remove all tmp items
             for (auto & item : m_tmpItems)
                 item.remove();
             m_tmpItems.clear();
 
+            printf("DONE\n");
             return SVGImportResult(grp, w, h, err);
         }
 
@@ -997,8 +1000,8 @@ namespace paper
                     else grp.addChild(item);
 
                     //set the default fill if none is inherited
-                    // if (!item.hasFill())
-                    //     item.setFill(ColorRGBA(0, 0, 0, 1));
+                    if (item.itemType() == EntityType::Path && !item.findComponent<comps::Fill>())
+                        item.setFill(ColorRGBA(0, 0, 0, 1));
                 }
             }
 
@@ -1137,6 +1140,7 @@ namespace paper
                     //auto tend = advanceToNextCommand(it + 1, end);
                     ++it;
                     it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
+                    
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
