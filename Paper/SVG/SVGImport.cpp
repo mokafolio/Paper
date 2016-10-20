@@ -901,6 +901,11 @@ namespace paper
 
             if (item.isValid())
             {
+                if(Path p = brick::entityCast<Path>(item))
+                {
+                    if(!p.findComponent<comps::WindingRule>())
+                        p.setWindingRule(WindingRule::NonZero);
+                }
                 // we take care of the clip-path / viewBox (as it might induce clipping, too) attribute after parsing finished, as it might
                 // have us nest the item in a group that needs to be returned instead of the item
                 detail::findXMLAttrCB(_node, "clip-path", item, [&](Item & _it, const Shrub & _child)
@@ -1140,7 +1145,7 @@ namespace paper
                     //auto tend = advanceToNextCommand(it + 1, end);
                     ++it;
                     it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
-                    
+
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
