@@ -116,7 +116,7 @@ namespace paper
 
                 const CurveArray & curves = _path.curves();
                 for (auto & c : curves)
-                    handleCurve(c.bezier(), data);
+                    handleCurve(c->bezier(), data);
 
                 // If the path is not closed, we need to join the end points with a
                 // straight line, just like how filling open paths works.
@@ -124,8 +124,8 @@ namespace paper
                 if (!_path.isClosed() && _path.segments().count() > 1)
                 {
                     auto & segs = _path.segments();
-                    Bezier tmp(segs.last().position(), segs.last().position(),
-                               segs.first().position(), segs.first().position());
+                    Bezier tmp(segs.last()->position(), segs.last()->position(),
+                               segs.first()->position(), segs.first()->position());
                     handleCurve(tmp, data);
                 }
 

@@ -79,7 +79,7 @@ namespace paper
             {
                 Mat3f transform = _path.transform();
                 //absolute move to
-                Vec2f to = curves[0].segmentOne().position();
+                Vec2f to = curves[0]->segmentOne().position();
                 bool bApplyTransform = false;
                 //for compound paths we need to transform the segment vertices directly
                 if (transform != Mat3f::identity() && _bIsCompoundPath)
@@ -91,7 +91,7 @@ namespace paper
 
                 for (const auto & c : curves)
                 {
-                    addCurveToPathData(c, _currentData, bApplyTransform);
+                    addCurveToPathData(*c, _currentData, bApplyTransform);
                 }
             }
         }
@@ -223,9 +223,9 @@ namespace paper
                     for (; it != _path.segments().end(); ++it)
                     {
                         if (it != _path.segments().end() - 1)
-                            points.append(AppendVariadicFlag(), toSVGPoint((*it).position()), " ");
+                            points.append(AppendVariadicFlag(), toSVGPoint((*it)->position()), " ");
                         else
-                            points.append(toSVGPoint((*it).position()));
+                            points.append(toSVGPoint((*it)->position()));
                     }
 
                     pathNode.set("points", points, ValueHint::XMLAttribute);
@@ -236,11 +236,11 @@ namespace paper
                     if (_path.segments().count() == 2)
                     {
                         Shrub pathNode("line");
-                        //pathNode.set("x1", String::concat(toSVGPoint(_path.segments()[0].position()), " ", toSVGPoint(_path.segments()[1].position())), ValueHint::XMLAttribute);
-                        pathNode.set("x1", toString(_path.segments()[0].position().x), ValueHint::XMLAttribute);
-                        pathNode.set("y1", toString(_path.segments()[0].position().y), ValueHint::XMLAttribute);
-                        pathNode.set("x2", toString(_path.segments()[1].position().x), ValueHint::XMLAttribute);
-                        pathNode.set("y2", toString(_path.segments()[1].position().y), ValueHint::XMLAttribute);
+                        //pathNode.set("x1", String::concat(toSVGPoint(_path.segments()[0]->position()), " ", toSVGPoint(_path.segments()[1]->position())), ValueHint::XMLAttribute);
+                        pathNode.set("x1", toString(_path.segments()[0]->position().x), ValueHint::XMLAttribute);
+                        pathNode.set("y1", toString(_path.segments()[0]->position().y), ValueHint::XMLAttribute);
+                        pathNode.set("x2", toString(_path.segments()[1]->position().x), ValueHint::XMLAttribute);
+                        pathNode.set("y2", toString(_path.segments()[1]->position().y), ValueHint::XMLAttribute);
                         _pn = &_parentTreeNode.append(pathNode);
                     }
                 }

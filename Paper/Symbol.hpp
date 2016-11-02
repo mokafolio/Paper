@@ -15,7 +15,6 @@ namespace paper
         //symbol components
         using ReferencedItem = brick::Component<ComponentName("ReferencedItem"), Item>;
         using PlacedSymbols = brick::Component<ComponentName("PlacedSymbols"), PlacedSymbolArray>;
-        using Doc = brick::Component<ComponentName("Doc"), Document>;
     }
 
     //Symbol is not an item as it lives outside of the DOM

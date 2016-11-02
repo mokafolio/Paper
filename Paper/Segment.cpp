@@ -72,11 +72,11 @@ namespace paper
             if (!m_path.isClosed())
                 return nullptr;
             else
-                return &m_path.curveArray().last();
+                return m_path.curveArray().last().get();
         }
         else
         {
-            return &m_path.curveArray()[m_index - 1];
+            return m_path.curveArray()[m_index - 1].get();
         }
         return nullptr;
     }
@@ -93,11 +93,11 @@ namespace paper
             if (!m_path.isClosed())
                 return nullptr;
             else
-                return &m_path.curveArray().last();
+                return m_path.curveArray().last().get();
         }
         else
         {
-            return &m_path.curveArray()[m_index];
+            return m_path.curveArray()[m_index].get();
         }
         return nullptr;
     }

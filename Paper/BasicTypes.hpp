@@ -4,6 +4,7 @@
 #include <Brick/TypedEntity.hpp>
 #include <Stick/DynamicArray.hpp>
 #include <Stick/String.hpp>
+#include <Stick/UniquePtr.hpp>
 #include <Crunch/Vector2.hpp>
 #include <Crunch/Line.hpp>
 #include <Crunch/Matrix3.hpp>
@@ -27,8 +28,8 @@ namespace paper
     using ColorHSBA = crunch::ColorHSBA;
     class Segment;
     class Curve;
-    using SegmentArray = stick::DynamicArray<Segment>;
-    using CurveArray = stick::DynamicArray<Curve>;
+    using SegmentArray = stick::DynamicArray<stick::UniquePtr<Segment>>;
+    using CurveArray = stick::DynamicArray<stick::UniquePtr<Curve>>;
     using DashArray = stick::DynamicArray<Float>;
 }
 

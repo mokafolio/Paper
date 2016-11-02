@@ -14,12 +14,14 @@ namespace paper
 
     }
 
-    void addDefaultComponents(brick::Entity & _e)
+    void addDefaultComponents(brick::Entity & _e, Document * _doc = nullptr)
     {
         //TODO: Only add these when they are used to save memory
         /*_e.set<comps::Transform>(Mat3f::identity());
         _e.set<comps::AbsoluteTransform>(Mat3f::identity());
         _e.set<comps::AbsoluteTransformDirtyFlag>(true);*/
+        if(_doc)
+            _e.set<comps::Doc>(*_doc);
         _e.set<comps::StrokeBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
         _e.set<comps::Bounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
         _e.set<comps::LocalBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
@@ -58,7 +60,7 @@ namespace paper
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Group ret = brick::createEntity<Group>(*hub);
-        addDefaultComponents(ret);
+        addDefaultComponents(ret, this);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Group);
         ret.set<comps::ClippedFlag>(false);
@@ -70,13 +72,12 @@ namespace paper
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Path ret = brick::createEntity<Path>(*hub);
-        addDefaultComponents(ret);
+        addDefaultComponents(ret, this);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Path);
         ret.set<comps::Segments>(SegmentArray());
         ret.set<comps::Curves>(CurveArray());
         ret.set<comps::ClosedFlag>(false);
-        //ret.set<comps::Children>(ItemArray());
         ret.set<comps::PathLength>((comps::PathLengthData) {true, 0.0});
         addChild(ret);
         return ret;

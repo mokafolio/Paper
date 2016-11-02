@@ -1052,7 +1052,7 @@ namespace paper
         copy.set<comps::Children>(ItemArray());
         for (const auto & seg : from.segments())
         {
-            copy.addSegment(seg.position(), seg.handleIn(), seg.handleOut());
+            copy.addSegment(seg->position(), seg->handleIn(), seg->handleOut());
         }
 
         if (from.isClosed())
@@ -1086,27 +1086,10 @@ namespace paper
 
     Document Item::document() const
     {
-        //the root of the item hierarchy is the document
-        Item item(*this);
-        while (item.parent().isValid())
-        {
-            item = item.parent();
-        }
-
-        Document ret = brick::entityCast<Document>(item);
-        if (ret) return ret;
-
-        //if we reached the top, and its not the document, we are in a symbol
-        auto s = item.maybe<comps::ReferencedSymbol>();
-        if (s)
-        {
-            if ((*s).isValid())
-            {
-                return (*s).get<comps::Doc>();
-            }
-        }
-
-        return Document();
+        //the only item without this component is the root, document object
+        if(!hasComponent<comps::Doc>())
+            return static_cast<const Document&>(*this);
+        return get<comps::Doc>();
     }
 
     EntityType Item::itemType() const

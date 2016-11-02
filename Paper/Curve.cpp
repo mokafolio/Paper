@@ -1,6 +1,7 @@
 #include <Paper/Curve.hpp>
 #include <Paper/Segment.hpp>
 #include <Paper/Constants.hpp>
+#include <Paper/Components.hpp>
 #include <Paper/CurveLocation.hpp>
 
 namespace paper
@@ -48,22 +49,22 @@ namespace paper
 
     Segment & Curve::segmentOne()
     {
-        return m_path.segmentArray()[m_segmentA];
+        return *m_path.segmentArray()[m_segmentA];
     }
 
     const Segment & Curve::segmentOne() const
     {
-        return m_path.segmentArray()[m_segmentA];
+        return *m_path.segmentArray()[m_segmentA];
     }
 
     Segment & Curve::segmentTwo()
     {
-        return m_path.segmentArray()[m_segmentB];
+        return *m_path.segmentArray()[m_segmentB];
     }
 
     const Segment & Curve::segmentTwo() const
     {
-        return m_path.segmentArray()[m_segmentB];
+        return *m_path.segmentArray()[m_segmentB];
     }
 
     const Vec2f & Curve::positionOne() const
@@ -121,9 +122,9 @@ namespace paper
         return m_curve.angleAt(parameterAtOffset(_offset));
     }
 
-    Curve & Curve::divideAt(Float _offset)
+    stick::Maybe<Curve &> Curve::divideAt(Float _offset)
     {
-
+        return divideAtParameter(parameterAtOffset(_offset));
     }
 
     Vec2f Curve::positionAtParameter(Float _t) const
@@ -151,9 +152,50 @@ namespace paper
         return m_curve.angleAt(_t);
     }
 
-    Curve & Curve::divideAtParameter(Float _t)
+    stick::Maybe<Curve &> Curve::divideAtParameter(Float _t)
     {
+        // if (_t >= 1 || _t <= 0)
+        //     return stick::Maybe<Curve &>();
 
+        // auto splitResult = m_curve.subdivide(_t);
+
+        // segmentOne().m_handleOut = splitResult.first.handleOne() - splitResult.first.positionOne();
+        // segmentTwo().m_handleIn = splitResult.second.handleTwo() - splitResult.second.positionTwo();
+        // segmentTwo().m_position = splitResult.second.positionTwo();
+        // Segment s(m_path, splitResult.first.positionTwo(),
+        //           splitResult.first.handleTwo() - splitResult.first.positionTwo(),
+        //           splitResult.second.handleOne() - splitResult.first.positionTwo(), segmentOne().m_index + 1);
+        // m_path.segments().insert(m_path.segments().begin() + m_segmentB, s);
+
+
+        // auto & segs = m_path.get<comps::Segments>();
+        // for (stick::Size i = s.m_index + 1; i < segs.count(); ++i)
+        // {
+        //     segs[i].m_index += 1;
+        //     printf("SEGMENT %lu\n", segs[i].m_index);
+        // }
+
+        // for (auto & seg : segs)
+        //     printf("SEGMENT: %lu\n", seg.m_index);
+
+        // printf("INDICES %lu %lu %lu\n", segmentOne().m_index, s.m_index, s.m_index + 1);
+        // //m_path.rebuildCurves();
+        // auto cit = m_path.curves().begin() + s.m_index + 1;
+        // auto rit = m_path.curves().insert(cit, Curve(m_path, s.m_index, s.m_index + 1));
+        // // printf("COUNTS %lu %lu\n", m_path.segments().count(), m_path.curves().count());
+
+        // auto & curves = m_path.curveArray();
+        // for (stick::Size i = m_segmentB; i < curves.count(); ++i)
+        // {
+        //     curves[i].m_segmentA += 1;
+        //     if(curves[i].m_segmentB != 0)
+        //         curves[i].m_segmentB += 1;
+        // }
+        // for (auto & c : curves)
+        //     printf("CURVE %lu %lu\n", c.m_segmentA, c.m_segmentB);
+
+        //m_path.markGeometryDirty();
+        //return curves[m_segmentB];
     }
 
     Float Curve::parameterAtOffset(Float _offset) const
@@ -180,10 +222,10 @@ namespace paper
     {
         //calculate the offset from the start to the curve location
         Float offset = 0;
-        for (const Curve & c : m_path.curves())
+        for (const auto & c : m_path.curves())
         {
-            if (&c != this)
-                offset += c.length();
+            if (c.get() != this)
+                offset += c->length();
             else
                 break;
         }

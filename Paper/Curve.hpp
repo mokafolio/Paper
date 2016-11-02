@@ -60,7 +60,7 @@ namespace paper
 
         Float angleAt(Float _offset) const;
 
-        Curve & divideAt(Float _offset);
+        stick::Maybe<Curve&> divideAt(Float _offset);
 
         Vec2f positionAtParameter(Float _t) const;
 
@@ -72,7 +72,7 @@ namespace paper
 
         Float angleAtParameter(Float _t) const;
 
-        Curve & divideAtParameter(Float _t);
+        stick::Maybe<Curve&> divideAtParameter(Float _t);
 
         Float parameterAtOffset(Float _offset) const;
 

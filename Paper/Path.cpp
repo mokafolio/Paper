@@ -1,9 +1,5 @@
-#include <Paper/Path.hpp>
-#include <Paper/Segment.hpp>
-#include <Paper/Curve.hpp>
+#include <Paper/Document.hpp>
 #include <Paper/CurveLocation.hpp>
-#include <Paper/Components.hpp>
-#include <Paper/Constants.hpp>
 #include <Paper/Private/BooleanOperations.hpp>
 #include <Paper/Private/JoinAndCap.hpp>
 #include <Paper/Private/PathFlattener.hpp>
@@ -28,7 +24,7 @@ namespace paper
     void Path::cubicCurveTo(const Vec2f & _handleOne, const Vec2f & _handleTwo, const Vec2f & _to)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
 
         //make relative
         current.setHandleOut(_handleOne - current.position());
@@ -38,7 +34,7 @@ namespace paper
     void Path::quadraticCurveTo(const Vec2f & _handle, const Vec2f & _to)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
 
         // Comment from paper.js Path.js:
         // This is exact:
@@ -53,7 +49,7 @@ namespace paper
     void Path::curveTo(const Vec2f & _through, const Vec2f & _to, Float32 _parameter)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
 
         Float t1 = 1 - _parameter;
         Float tt = _parameter * _parameter;
@@ -65,7 +61,7 @@ namespace paper
     Error Path::arcTo(const Vec2f & _through, const Vec2f & _to)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
 
         const Vec2f & from = current.position();
 
@@ -148,7 +144,7 @@ namespace paper
     Error Path::arcTo(const Vec2f & _to, bool _bClockwise)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
 
         const Vec2f & from = current.position();
 
@@ -167,7 +163,7 @@ namespace paper
             return Error();
         }
 
-        Vec2f from = segmentArray().last().position();
+        Vec2f from = segmentArray().last()->position();
         Vec2f middle = (from + _to) * 0.5;
         Vec2f pt = crunch::rotate(from - middle, -_rotation);
         Float rx = crunch::abs(_radii.x);
@@ -216,7 +212,7 @@ namespace paper
         else if (_bClockwise && extent < 0)
             extent += crunch::Constants<Float>::twoPi();
 
-        return arcHelper(crunch::toDegrees(extent), segmentArray().last(), vect, _to, center, &matrix);
+        return arcHelper(crunch::toDegrees(extent), *segmentArray().last(), vect, _to, center, &matrix);
     }
 
     Error Path::arcHelper(Float _extentDeg, Segment & _segment, const Vec2f & _direction, const Vec2f & _to, const Vec2f & _center, const Mat3f * _transform)
@@ -272,35 +268,35 @@ namespace paper
     void Path::cubicCurveBy(const Vec2f & _handleOne, const Vec2f & _handleTwo, const Vec2f & _by)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
         cubicCurveTo(current.position() + _handleOne, current.position() + _handleTwo, current.position() + _by);
     }
 
     void Path::quadraticCurveBy(const Vec2f & _handle, const Vec2f & _by)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
         quadraticCurveTo(current.position() + _handle, current.position() + _by);
     }
 
     void Path::curveBy(const Vec2f & _through, const Vec2f & _by, Float32 _parameter)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
         curveTo(current.position() + _through, current.position() + _by, _parameter);
     }
 
     Error Path::arcBy(const Vec2f & _through, const Vec2f & _by)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
         return arcTo(current.position() + _through, current.position() + _by);
     }
 
     Error Path::arcBy(const Vec2f & _to, bool _bClockwise)
     {
         STICK_ASSERT(segmentArray().count());
-        Segment & current = segmentArray().last();
+        Segment & current = *segmentArray().last();
         return arcTo(current.position() + _to, _bClockwise);
     }
 
@@ -311,18 +307,18 @@ namespace paper
 
         if (segmentArray().count() > 1)
         {
-            Segment & first = segmentArray()[0];
-            Segment & last = segmentArray().last();
+            Segment & first = *segmentArray()[0];
+            Segment & last = *segmentArray().last();
 
             if (crunch::isClose(first.position(), last.position(), detail::PaperConstants::tolerance()))
             {
                 first.setHandleIn(last.handleIn());
-                curveArray().last().m_segmentB = first.m_index;
+                curveArray().last()->m_segmentB = first.m_index;
                 segmentArray().removeLast();
             }
             else
             {
-                curveArray().append(Curve(*this, last.m_index, first.m_index));
+                curveArray().append(document().allocator().create<Curve>(*this, last.m_index, first.m_index));
             }
 
             set<comps::ClosedFlag>(true);
@@ -406,7 +402,7 @@ namespace paper
 
             for (Int64 i = 0, j = _from - paddingLeft; i <= n; i++, j++)
             {
-                knots[i] = segs[(j < 0 ? j + segs.count() : j) % segs.count()].position();
+                knots[i] = segs[(j < 0 ? j + segs.count() : j) % segs.count()]->position();
             }
 
             // In the algorithm we treat these 3 cases:
@@ -474,7 +470,7 @@ namespace paper
             for (Int64 i = paddingLeft, max = n - paddingRight, j = _from; i <= max; i++, j++)
             {
                 Int64 index = j < 0 ? j + segs.count() : j;
-                Segment & segment = segs[index];
+                Segment & segment = *segs[index];
                 Float hx = px[i] - segment.position().x;
                 Float hy = py[i] - segment.position().y;
                 if (bLoop || i < max)
@@ -543,15 +539,15 @@ namespace paper
     Segment & Path::createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut)
     {
         auto & segs = segmentArray();
-        segs.append(Segment(*this, _pos, _handleIn, _handleOut, segs.count()));
+        segs.append(document().allocator().create<Segment>(*this, _pos, _handleIn, _handleOut, segs.count()));
         if (segs.count() > 1)
         {
             auto & curves = curveArray();
-            curves.append(Curve(*this, segs.count() - 2, segs.count() - 1));
+            curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
         }
         markBoundsDirty(true);
         markGeometryDirty(true);
-        return segs.last();
+        return *segs.last();
     }
 
     void Path::reverse()
@@ -563,10 +559,10 @@ namespace paper
         Vec2f tmp;
         for (; i < segs.count(); ++i)
         {
-            segs[i].m_index = i;
-            tmp = segs[i].m_handleOut;
-            segs[i].m_handleOut = segs[i].m_handleIn;
-            segs[i].m_handleIn = tmp;
+            segs[i]->m_index = i;
+            tmp = segs[i]->m_handleOut;
+            segs[i]->m_handleOut = segs[i]->m_handleIn;
+            segs[i]->m_handleIn = tmp;
         }
 
         for (auto & c : get<comps::Children>())
@@ -595,7 +591,7 @@ namespace paper
 
         for (const auto & pos : newSegmentPositions)
         {
-            segs.append(Segment(*this, pos, Vec2f(0.0f), Vec2f(0.0f), segs.count()));
+            segs.append(document().allocator().create<Segment>(*this, pos, Vec2f(0.0f), Vec2f(0.0f), segs.count()));
         }
 
         //make sure to possibly remove duplicate closing segments again
@@ -642,7 +638,7 @@ namespace paper
         segs.clear();
         for (const Vec2f & p : tmp)
         {
-            segs.append(Segment(*this, p, Vec2f(0), Vec2f(0), segs.count()));
+            segs.append(document().allocator().create<Segment>(*this, p, Vec2f(0), Vec2f(0), segs.count()));
         }
 
         //printf("NUM NEW SEGS %lu\n", segs.count());
@@ -772,7 +768,7 @@ namespace paper
 
         for (; it != curveArray().end(); ++it)
         {
-            currentParameter = (*it).closestParameter(_point, currentDist);
+            currentParameter = (*it)->closestParameter(_point, currentDist);
             if (currentDist < minDist)
             {
                 minDist = currentDist;
@@ -784,7 +780,7 @@ namespace paper
         if (closestCurve != curveArray().end())
         {
             _outDistance = minDist;
-            return (*closestCurve).curveLocationAtParameter(closestParameter);
+            return (*closestCurve)->curveLocationAtParameter(closestParameter);
         }
 
         return CurveLocation();
@@ -806,12 +802,12 @@ namespace paper
         for (; it != curveArray().end(); ++it)
         {
             start = len;
-            len += (*it).length();
+            len += (*it)->length();
 
             //we found the curve
             if (len >= _offset)
             {
-                return (*it).curveLocationAt(_offset - start);
+                return (*it)->curveLocationAt(_offset - start);
             }
         }
 
@@ -820,7 +816,7 @@ namespace paper
         // of the curves was missed:
         if (_offset <= length())
         {
-            return curveArray().last().curveLocationAtParameter(1);
+            return curveArray().last()->curveLocationAtParameter(1);
         }
 
         return CurveLocation();
@@ -832,9 +828,9 @@ namespace paper
         if (lenData.bDirty)
         {
             lenData.length = 0;
-            for (const Curve & c : curveArray())
+            for (const auto & c : curveArray())
             {
-                lenData.length += c.length();
+                lenData.length += c->length();
             }
             lenData.bDirty = false;
         }
@@ -844,9 +840,9 @@ namespace paper
     Float Path::area() const
     {
         Float ret = 0;
-        for (const Curve & c : curveArray())
+        for (const auto & c : curveArray())
         {
-            ret += c.area();
+            ret += c->area();
         }
         return ret;
     }
@@ -858,9 +854,9 @@ namespace paper
 
     bool Path::isPolygon() const
     {
-        for (const Segment & seg : segmentArray())
+        for (const auto & seg : segmentArray())
         {
-            if (!seg.isLinear())
+            if (!seg->isLinear())
                 return false;
         }
         return true;
@@ -885,11 +881,11 @@ namespace paper
         Size s = segs.count();
         for (; i < s; ++i)
         {
-            Vec2f posA = segs[i].position();
-            Vec2f handleA = posA + segs[i].handleOut();
+            Vec2f posA = segs[i]->position();
+            Vec2f handleA = posA + segs[i]->handleOut();
             i2 = (i + 1) % s;
-            Vec2f posB = segs[i2].position();
-            Vec2f handleB = posB + segs[i2].handleIn();
+            Vec2f posB = segs[i2]->position();
+            Vec2f handleB = posB + segs[i2]->handleIn();
 
             sum += (posA.x - handleA.x) * (handleA.y + posA.y);
             sum += (handleA.x - handleB.x) * (handleB.y + handleA.y);
@@ -906,18 +902,18 @@ namespace paper
         auto & segs = segmentArray();
         for (Size i = 0; i < segs.count() - 1; ++i)
         {
-            curves.append(Curve(*this, i, i + 1));
+            curves.append(document().allocator().create<Curve>(*this, i, i + 1));
         }
 
         if (isClosed() && segs.count() > 1)
-            curves.append(Curve(*this, segs.count() - 1, 0));
+            curves.append(document().allocator().create<Curve>(*this, segs.count() - 1, 0));
     }
 
     void Path::updateSegmentIndices(Size _from, Size _to)
     {
         for (Size i = _from; i < _to && i < segmentArray().count(); ++i)
         {
-            segmentArray()[i].m_index = i;
+            segmentArray()[i]->m_index = i;
         }
     }
 
@@ -930,18 +926,18 @@ namespace paper
         if (_seg.m_index == 0)
         {
             //printf("SEGMENT CHANGED B\n");
-            curveArray()[0].markDirty();
+            curveArray()[0]->markDirty();
         }
         else if (_seg.m_index == segmentArray().count() - 1)
         {
             //printf("SEGMENT CHANGED C\n");
-            curveArray().last().markDirty();
+            curveArray().last()->markDirty();
         }
         else
         {
             //printf("SEGMENT CHANGED D\n");
-            curveArray()[_seg.m_index - 1].markDirty();
-            curveArray()[_seg.m_index].markDirty();
+            curveArray()[_seg.m_index - 1]->markDirty();
+            curveArray()[_seg.m_index]->markDirty();
         }
         markBoundsDirty(true);
         markGeometryDirty(true);
@@ -1092,7 +1088,7 @@ namespace paper
 
         if (segmentArray().count() == 1)
         {
-            Vec2f p = _transform ? *_transform * segmentArray()[0].position() : segmentArray()[0].position();
+            Vec2f p = _transform ? *_transform * segmentArray()[0]->position() : segmentArray()[0]->position();
             return {false, Rect(p, p)};
         }
 
@@ -1105,9 +1101,9 @@ namespace paper
             for (auto it = curves.begin(); it != curves.end(); ++it)
             {
                 if (it == curves.begin())
-                    ret = _padding > 0.0 ? (*it).bounds(_padding) : (*it).bounds();
+                    ret = _padding > 0.0 ? (*it)->bounds(_padding) : (*it)->bounds();
                 else
-                    ret = crunch::merge(ret, _padding > 0.0 ? (*it).bounds(_padding) : (*it).bounds());
+                    ret = crunch::merge(ret, _padding > 0.0 ? (*it)->bounds(_padding) : (*it)->bounds());
             }
         }
         else
@@ -1139,15 +1135,15 @@ namespace paper
             //once for each segment.
             auto & segs = segmentArray();
             auto it = segs.begin();
-            Vec2f lastPosition = *_transform * (*it).position();
+            Vec2f lastPosition = *_transform * (*it)->position();
             Vec2f firstPosition = lastPosition;
-            Vec2f lastHandle = *_transform * (*it).handleOutAbsolute();
+            Vec2f lastHandle = *_transform * (*it)->handleOutAbsolute();
             ++it;
             Vec2f currentPosition, handleIn;
             for (; it != segs.end(); ++it)
             {
-                handleIn = *_transform * (*it).handleInAbsolute();
-                currentPosition = *_transform * (*it).position();
+                handleIn = *_transform * (*it)->handleInAbsolute();
+                currentPosition = *_transform * (*it)->position();
 
                 Bezier bez(lastPosition, lastHandle, handleIn, currentPosition);
                 if (it == segs.begin() + 1)
@@ -1155,12 +1151,12 @@ namespace paper
                 else
                     ret = crunch::merge(ret, bez.bounds(_padding));
 
-                lastHandle = *_transform * (*it).handleOutAbsolute();
+                lastHandle = *_transform * (*it)->handleOutAbsolute();
                 lastPosition = currentPosition;
             }
             if (isClosed())
             {
-                Bezier bez(lastPosition, lastHandle, *_transform * segs.first().handleInAbsolute(), firstPosition);
+                Bezier bez(lastPosition, lastHandle, *_transform * segs.first()->handleInAbsolute(), firstPosition);
                 ret = crunch::merge(ret, bez.bounds(_padding));
             }
         }
@@ -1203,7 +1199,7 @@ namespace paper
         DynamicArray<detail::SegmentData> strokeSegs(segments.count());
         for (Size i = 0; i < strokeSegs.count(); ++i)
         {
-            strokeSegs[i] = {ismat * segments[i].position(), ismat * (segments[i].position() + segments[i].handleIn()), ismat * (segments[i].position() + segments[i].handleOut())};
+            strokeSegs[i] = {ismat * segments[i]->position(), ismat * (segments[i]->position() + segments[i]->handleIn()), ismat * (segments[i]->position() + segments[i]->handleOut())};
         }
 
         for (Size i = 1; i < segments.count(); ++i)
@@ -1241,8 +1237,8 @@ namespace paper
             auto & segs = segments();
             for (auto & seg : segs)
             {
-                ret.rect = crunch::merge(ret.rect, *_transform * seg.handleInAbsolute());
-                ret.rect = crunch::merge(ret.rect, *_transform * seg.handleOutAbsolute());
+                ret.rect = crunch::merge(ret.rect, *_transform * seg->handleInAbsolute());
+                ret.rect = crunch::merge(ret.rect, *_transform * seg->handleOutAbsolute());
             }
         }
         else
@@ -1250,8 +1246,8 @@ namespace paper
             auto & segs = segments();
             for (auto & seg : segs)
             {
-                ret.rect = crunch::merge(ret.rect, seg.handleInAbsolute());
-                ret.rect = crunch::merge(ret.rect, seg.handleOutAbsolute());
+                ret.rect = crunch::merge(ret.rect, seg->handleInAbsolute());
+                ret.rect = crunch::merge(ret.rect, seg->handleOutAbsolute());
             }
         }
 
@@ -1271,9 +1267,9 @@ namespace paper
 
     void Path::applyTransform(const Mat3f & _transform)
     {
-        for (Segment & s : get<comps::Segments>())
+        for (auto & s : segmentArray())
         {
-            s.transform(_transform);
+            s->transform(_transform);
         }
     }
 

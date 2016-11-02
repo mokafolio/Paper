@@ -74,15 +74,15 @@ const Suite spec[] =
         p.addPoint(Vec2f(100.0f, 30.0f));
         p.addPoint(Vec2f(200.0f, 30.0f));
         EXPECT(p.segments().count() == 2);
-        EXPECT(p.segments()[0].position() == Vec2f(100.0f, 30.0f));
-        EXPECT(p.segments()[1].position() == Vec2f(200.0f, 30.0f));
+        EXPECT(p.segments()[0]->position() == Vec2f(100.0f, 30.0f));
+        EXPECT(p.segments()[1]->position() == Vec2f(200.0f, 30.0f));
         EXPECT(p.isPolygon());
 
         p.addSegment(Vec2f(150.0f, 150.0f), Vec2f(-5.0f, -3.0f), Vec2f(5.0f, 3.0f));
         EXPECT(p.segments().count() == 3);
-        EXPECT(p.segments()[2].position() == Vec2f(150.0f, 150.0f));
-        EXPECT(p.segments()[2].handleIn() == Vec2f(-5.0f, -3.0f));
-        EXPECT(p.segments()[2].handleOut() == Vec2f(5.0f, 3.0f));
+        EXPECT(p.segments()[2]->position() == Vec2f(150.0f, 150.0f));
+        EXPECT(p.segments()[2]->handleIn() == Vec2f(-5.0f, -3.0f));
+        EXPECT(p.segments()[2]->handleOut() == Vec2f(5.0f, 3.0f));
 
         EXPECT(p.curves().count() == 2);
         EXPECT(!p.isPolygon());
@@ -94,20 +94,20 @@ const Suite spec[] =
             Vec2f(200.0f, 30.0f), Vec2f(0.0f, 0.0f), Vec2f(-5.0f, -3.0f), Vec2f(150.0f, 150.0f)
         };
         Size i = 0;
-        for (const Curve & c : p.curves())
+        for (const auto & c : p.curves())
         {
-            EXPECT(c.positionOne() == expectedCurves[i++]);
-            EXPECT(c.handleOne() == expectedCurves[i++]);
-            EXPECT(c.handleTwo() == expectedCurves[i++]);
-            EXPECT(c.positionTwo() == expectedCurves[i++]);
+            EXPECT(c->positionOne() == expectedCurves[i++]);
+            EXPECT(c->handleOne() == expectedCurves[i++]);
+            EXPECT(c->handleTwo() == expectedCurves[i++]);
+            EXPECT(c->positionTwo() == expectedCurves[i++]);
         }
 
         p.closePath();
         EXPECT(p.isClosed());
         EXPECT(p.curves().count() == 3);
-        EXPECT(p.curves().last().positionOne() == Vec2f(150.0f, 150.0f));
-        EXPECT(p.curves().last().handleOne() == Vec2f(5.0f, 3.0f));
-        EXPECT(p.curves().last().positionTwo() == Vec2f(100.0f, 30.0f));
+        EXPECT(p.curves().last()->positionOne() == Vec2f(150.0f, 150.0f));
+        EXPECT(p.curves().last()->handleOne() == Vec2f(5.0f, 3.0f));
+        EXPECT(p.curves().last()->positionTwo() == Vec2f(100.0f, 30.0f));
     },
     SUITE("Attribute Tests")
     {
@@ -227,14 +227,15 @@ const Suite spec[] =
         grp.setStrokeWidth(10.0);
         grp.setStrokeJoin(StrokeJoin::Round);
 
+        printf("WOOOP\n");
         Path p2 = p.clone();
         EXPECT(p2.name() == "yessaa");
         EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
         EXPECT(p2.parent() == grp);
         EXPECT(p2.segments().count() == 2);
         EXPECT(p2.curves().count() == 1);
-        EXPECT(p2.segments()[0].position() == Vec2f(100.0f, 30.0f));
-        EXPECT(p2.segments()[1].position() == Vec2f(200.0f, 30.0f));
+        EXPECT(p2.segments()[0]->position() == Vec2f(100.0f, 30.0f));
+        EXPECT(p2.segments()[1]->position() == Vec2f(200.0f, 30.0f));
         p2.set<comps::Name>("p2");
 
         Group grp2 = grp.clone();
@@ -275,9 +276,9 @@ const Suite spec[] =
             EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Path);
             Path p = reinterpretEntity<Path>(svgdata.group().children()[0]);
             EXPECT(p.segments().count() == 3);
-            EXPECT(isClose(p.segments()[0].position(), Vec2f(10, 20)));
-            EXPECT(isClose(p.segments()[1].position(), Vec2f(100, 20)));
-            EXPECT(isClose(p.segments()[2].position(), Vec2f(100, 120)));
+            EXPECT(isClose(p.segments()[0]->position(), Vec2f(10, 20)));
+            EXPECT(isClose(p.segments()[1]->position(), Vec2f(100, 20)));
+            EXPECT(isClose(p.segments()[2]->position(), Vec2f(100, 120)));
             EXPECT(p.isClosed());
         }
         {
@@ -305,7 +306,6 @@ const Suite spec[] =
             auto s = reinterpretEntity<ColorPaint>(p.stroke()).color();
             EXPECT(isClose(s.r, 51.0f / 255.0f) && isClose(s.g, 51.0f / 255.0f) && isClose(s.b, 51.0f / 255.0f));
             EXPECT(p.strokeWidth() == 2.0f);
-            EXPECT(p.windingRule() == WindingRule::EvenOdd);
             Path p2 = reinterpretEntity<Path>(svgdata.group().children()[1]);
             auto & c2 = reinterpretEntity<ColorPaint>(p2.fill()).color();
             EXPECT(isClose(c2.r, 66.0f / 255.0f) && isClose(c2.g, 134.0f / 255.0f) && isClose(c2.b, 244.0f / 255.0f));

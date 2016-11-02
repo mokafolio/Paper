@@ -31,7 +31,7 @@ namespace paper
             auto it = curves.begin();
             for (; it != curves.end(); ++it)
             {
-                flattenCurve((*it).bezier(), (*it).bezier(), _outPositions, _outJoins, _angleTolerance, _minDistance, 0, _maxRecursionDepth, _path.isClosed(), it == curves.end() - 1);
+                flattenCurve((*it)->bezier(), (*it)->bezier(), _outPositions, _outJoins, _angleTolerance, _minDistance, 0, _maxRecursionDepth, _path.isClosed(), it == curves.end() - 1);
             }
         }
 

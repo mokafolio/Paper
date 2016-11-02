@@ -14,6 +14,8 @@ namespace paper
         friend class Curve;
         
     public:
+        
+        Segment(const Path & _path, const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut, stick::Size _idx);
 
         void setPosition(const Vec2f & _pos);
 
@@ -45,8 +47,6 @@ namespace paper
 
 
     private:
-
-        Segment(const Path & _path, const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut, stick::Size _idx);
 
         void transform(const Mat3f & _transform);
 

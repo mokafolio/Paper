@@ -16,6 +16,7 @@ namespace paper
     {
         using ItemType = brick::Component<ComponentName("ItemType"), EntityType>;
         using HubPointer = brick::Component<ComponentName("HubPointer"), brick::Hub *>;
+        using Doc = brick::Component<ComponentName("Doc"), Document>;
         using Parent = brick::Component<ComponentName("Parent"), Item>;
         using Name = brick::Component<ComponentName("Name"), stick::String>;
         using Children = brick::Component<ComponentName("Children"), ItemArray>;

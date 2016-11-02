@@ -207,7 +207,6 @@ namespace paper
         //in the DOM.
         Item clone() const;
 
-        //returns the root of the DOM, which is the Document
         Document document() const;
 
         EntityType itemType() const;
