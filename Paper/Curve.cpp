@@ -222,7 +222,7 @@ namespace paper
     {
         //calculate the offset from the start to the curve location
         Float offset = 0;
-        for (const auto & c : m_path.curves())
+        for (const auto & c : m_path.curveArray())
         {
             if (c.get() != this)
                 offset += c->length();

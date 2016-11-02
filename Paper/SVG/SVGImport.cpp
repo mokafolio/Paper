@@ -1149,7 +1149,7 @@ namespace paper
                     // STICK_ASSERT(it == tend);
                     if (cmd == 'M' || cmd == 'm')
                     {
-                        if (currentPath.segments().count())
+                        if (currentPath.segmentArray().count())
                         {
                             Path tmp = m_document->createPath();
                             currentPath.addChild(tmp);
@@ -1292,14 +1292,14 @@ namespace paper
                             Float rads = crunch::toRadians(numbers[i + 2]);
                             currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
                                               crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
-                            lastHandle = currentPath.segments().last()->handleOutAbsolute();
+                            lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
                         }
                     }
                     else if (cmd == 'Z' || cmd == 'z')
                     {
                         currentPath.closePath();
-                        last = currentPath.segments().last()->position();
-                        lastHandle = currentPath.segments().last()->handleOutAbsolute();
+                        last = currentPath.segmentArray().last()->position();
+                        lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
                     }
                     else
                     {

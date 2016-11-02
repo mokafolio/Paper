@@ -3,6 +3,7 @@
 
 #include <Paper/Item.hpp>
 #include <Stick/Error.hpp>
+#include <Paper/Private/ContainerView.hpp>
 
 namespace paper
 {
@@ -18,11 +19,10 @@ namespace paper
 
         static constexpr EntityType itemType = EntityType::Path;
 
-        using SegmentIter = typename SegmentArray::Iter;
-        using SegmentConstIter = typename SegmentArray::ConstIter;
-        using CurveIter = typename CurveArray::Iter;
-        using CurveConstIter = typename CurveArray::ConstIter;
-
+        using SegmentView = detail::ContainerView<false, SegmentArray, Segment>;
+        using SegmentViewConst = detail::ContainerView<true, SegmentArray, Segment>;
+        using CurveView = detail::ContainerView<false, CurveArray, Curve>;
+        using CurveViewConst = detail::ContainerView<true, CurveArray, Curve>;
 
         Path();
 
@@ -74,13 +74,13 @@ namespace paper
 
         void removeSegments();
 
-        const SegmentArray & segments() const;
+        SegmentViewConst segments() const;
 
-        SegmentArray & segments();
+        SegmentView segments();
 
-        const CurveArray & curves() const;
+        CurveViewConst curves() const;
 
-        CurveArray & curves();
+        CurveView curves();
 
 
         Vec2f positionAt(Float _offset) const;
@@ -143,14 +143,6 @@ namespace paper
 
         Path clone() const;
 
-
-    private:
-
-        Segment & createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut);
-
-        //called from Segment
-        void segmentChanged(const Segment & _seg);
-
         SegmentArray & segmentArray();
 
         CurveArray & curveArray();
@@ -158,6 +150,14 @@ namespace paper
         const CurveArray & curveArray() const;
 
         const SegmentArray & segmentArray() const;
+
+
+    private:
+
+        Segment & createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut);
+
+        //called from Segment
+        void segmentChanged(const Segment & _seg);
 
         void rebuildCurves();
 

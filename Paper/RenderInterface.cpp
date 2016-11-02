@@ -83,7 +83,7 @@ namespace paper
         else if (et == EntityType::Path)
         {
             Path p = brick::reinterpretEntity<Path>(_item);
-            if (p.isVisible() && p.segments().count() > 1)
+            if (p.isVisible() && p.segmentArray().count() > 1)
             {
                 ret = drawPath(p, _transform ? &tmp : nullptr);
             }

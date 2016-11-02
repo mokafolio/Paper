@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (Paper)
-set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions")
+set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions -w")
 
 find_package(OpenGL REQUIRED)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include)
@@ -24,6 +24,12 @@ Paper/RenderInterface.hpp
 Paper/Segment.hpp
 Paper/Symbol.hpp
 Paper/OpenGL/GLRenderer.hpp
+Paper/Private/BooleanOperations.hpp
+Paper/Private/ContainerView.hpp
+Paper/Private/JoinAndCap.hpp
+Paper/Private/PathFlattener.hpp
+Paper/Private/Shape.hpp
+Paper/Private/StrokeTriangulator.hpp
 Paper/SVG/SVGExport.hpp
 Paper/SVG/SVGImport.hpp
 Paper/SVG/SVGImportResult.hpp

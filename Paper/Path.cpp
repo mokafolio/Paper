@@ -329,7 +329,7 @@ namespace paper
 
     void Path::smooth(Smoothing _type)
     {
-        smooth(0, segments().count() - 1, _type);
+        smooth(0, segmentArray().count() - 1, _type);
     }
 
     static Size smoothIndex(Int64 _idx, Int64 _length, bool _bClosed)
@@ -356,13 +356,13 @@ namespace paper
         // that use this algorithm: continuous and asymmetric. asymmetric
         // was the only approach available in v0.9.25 & below.
 
-        _from = smoothIndex(_from, segments().count(), isClosed());
-        _to = smoothIndex(_to, segments().count(), isClosed());
+        _from = smoothIndex(_from, segmentArray().count(), isClosed());
+        _to = smoothIndex(_to, segmentArray().count(), isClosed());
         if (_from > _to)
         {
             if (isClosed())
             {
-                _from -= segments().count();
+                _from -= segmentArray().count();
             }
             else
             {
@@ -668,28 +668,29 @@ namespace paper
         return regularOffsetAndSampleCount(_maxDistance).offset;
     }
 
-    const SegmentArray & Path::segments() const
+    Path::SegmentViewConst Path::segments() const
     {
         STICK_ASSERT(hasComponent<comps::Segments>());
-        return get<comps::Segments>();
+        return SegmentViewConst(segmentArray().begin(), segmentArray().end());
     }
 
-    SegmentArray & Path::segments()
+    Path::SegmentView Path::segments()
     {
         STICK_ASSERT(hasComponent<comps::Segments>());
-        return get<comps::Segments>();
+        //return get<comps::Segments>();
+        return SegmentView(segmentArray().begin(), segmentArray().end());
     }
 
-    const CurveArray & Path::curves() const
+    Path::CurveViewConst Path::curves() const
     {
         STICK_ASSERT(hasComponent<comps::Curves>());
-        return get<comps::Curves>();
+        return CurveViewConst(curveArray().begin(), curveArray().end());
     }
 
-    CurveArray & Path::curves()
+    Path::CurveView Path::curves()
     {
         STICK_ASSERT(hasComponent<comps::Curves>());
-        return get<comps::Curves>();
+        return CurveView(curveArray().begin(), curveArray().end());
     }
 
     SegmentArray & Path::segmentArray()
@@ -1234,7 +1235,7 @@ namespace paper
 
         if (_transform)
         {
-            auto & segs = segments();
+            auto & segs = segmentArray();
             for (auto & seg : segs)
             {
                 ret.rect = crunch::merge(ret.rect, *_transform * seg->handleInAbsolute());
@@ -1243,7 +1244,7 @@ namespace paper
         }
         else
         {
-            auto & segs = segments();
+            auto & segs = segmentArray();
             for (auto & seg : segs)
             {
                 ret.rect = crunch::merge(ret.rect, seg->handleInAbsolute());

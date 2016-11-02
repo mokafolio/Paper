@@ -3,6 +3,7 @@
 #include <Paper/Path.hpp>
 #include <Stick/Test.hpp>
 #include <Crunch/StringConversion.hpp>
+// #include <Paper/Private/ContainerView.hpp>
 
 using namespace stick;
 using namespace brick;
@@ -73,18 +74,25 @@ const Suite spec[] =
         Path p = doc.createPath("test");
         p.addPoint(Vec2f(100.0f, 30.0f));
         p.addPoint(Vec2f(200.0f, 30.0f));
-        EXPECT(p.segments().count() == 2);
-        EXPECT(p.segments()[0]->position() == Vec2f(100.0f, 30.0f));
-        EXPECT(p.segments()[1]->position() == Vec2f(200.0f, 30.0f));
+        EXPECT(p.segmentArray().count() == 2);
+        EXPECT(p.segmentArray()[0]->position() == Vec2f(100.0f, 30.0f));
+        EXPECT(p.segmentArray()[1]->position() == Vec2f(200.0f, 30.0f));
         EXPECT(p.isPolygon());
 
-        p.addSegment(Vec2f(150.0f, 150.0f), Vec2f(-5.0f, -3.0f), Vec2f(5.0f, 3.0f));
-        EXPECT(p.segments().count() == 3);
-        EXPECT(p.segments()[2]->position() == Vec2f(150.0f, 150.0f));
-        EXPECT(p.segments()[2]->handleIn() == Vec2f(-5.0f, -3.0f));
-        EXPECT(p.segments()[2]->handleOut() == Vec2f(5.0f, 3.0f));
+        // using SegmentView =  paper::detail::ContainerView<stick::DynamicArray<stick::UniquePtr<Segment>>, Segment>;
+        // SegmentView view(p.segmentArray().begin(), p.segmentArray().end());
+        // for(const Segment & seg : view)
+        // {
+        //     printf("Segment pos: %s\n", crunch::toString(seg.position()).cString());
+        // }
 
-        EXPECT(p.curves().count() == 2);
+        p.addSegment(Vec2f(150.0f, 150.0f), Vec2f(-5.0f, -3.0f), Vec2f(5.0f, 3.0f));
+        EXPECT(p.segmentArray().count() == 3);
+        EXPECT(p.segmentArray()[2]->position() == Vec2f(150.0f, 150.0f));
+        EXPECT(p.segmentArray()[2]->handleIn() == Vec2f(-5.0f, -3.0f));
+        EXPECT(p.segmentArray()[2]->handleOut() == Vec2f(5.0f, 3.0f));
+
+        EXPECT(p.curveArray().count() == 2);
         EXPECT(!p.isPolygon());
         EXPECT(!p.isClosed());
 
@@ -96,18 +104,18 @@ const Suite spec[] =
         Size i = 0;
         for (const auto & c : p.curves())
         {
-            EXPECT(c->positionOne() == expectedCurves[i++]);
-            EXPECT(c->handleOne() == expectedCurves[i++]);
-            EXPECT(c->handleTwo() == expectedCurves[i++]);
-            EXPECT(c->positionTwo() == expectedCurves[i++]);
+            EXPECT(c.positionOne() == expectedCurves[i++]);
+            EXPECT(c.handleOne() == expectedCurves[i++]);
+            EXPECT(c.handleTwo() == expectedCurves[i++]);
+            EXPECT(c.positionTwo() == expectedCurves[i++]);
         }
 
         p.closePath();
         EXPECT(p.isClosed());
-        EXPECT(p.curves().count() == 3);
-        EXPECT(p.curves().last()->positionOne() == Vec2f(150.0f, 150.0f));
-        EXPECT(p.curves().last()->handleOne() == Vec2f(5.0f, 3.0f));
-        EXPECT(p.curves().last()->positionTwo() == Vec2f(100.0f, 30.0f));
+        EXPECT(p.curveArray().count() == 3);
+        EXPECT(p.curveArray().last()->positionOne() == Vec2f(150.0f, 150.0f));
+        EXPECT(p.curveArray().last()->handleOne() == Vec2f(5.0f, 3.0f));
+        EXPECT(p.curveArray().last()->positionTwo() == Vec2f(100.0f, 30.0f));
     },
     SUITE("Attribute Tests")
     {
@@ -232,10 +240,10 @@ const Suite spec[] =
         EXPECT(p2.name() == "yessaa");
         EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
         EXPECT(p2.parent() == grp);
-        EXPECT(p2.segments().count() == 2);
-        EXPECT(p2.curves().count() == 1);
-        EXPECT(p2.segments()[0]->position() == Vec2f(100.0f, 30.0f));
-        EXPECT(p2.segments()[1]->position() == Vec2f(200.0f, 30.0f));
+        EXPECT(p2.segmentArray().count() == 2);
+        EXPECT(p2.curveArray().count() == 1);
+        EXPECT(p2.segmentArray()[0]->position() == Vec2f(100.0f, 30.0f));
+        EXPECT(p2.segmentArray()[1]->position() == Vec2f(200.0f, 30.0f));
         p2.set<comps::Name>("p2");
 
         Group grp2 = grp.clone();
@@ -275,10 +283,10 @@ const Suite spec[] =
             EXPECT(svgdata.group().children().count() == 1);
             EXPECT(Item(svgdata.group().children()[0]).itemType() == EntityType::Path);
             Path p = reinterpretEntity<Path>(svgdata.group().children()[0]);
-            EXPECT(p.segments().count() == 3);
-            EXPECT(isClose(p.segments()[0]->position(), Vec2f(10, 20)));
-            EXPECT(isClose(p.segments()[1]->position(), Vec2f(100, 20)));
-            EXPECT(isClose(p.segments()[2]->position(), Vec2f(100, 120)));
+            EXPECT(p.segmentArray().count() == 3);
+            EXPECT(isClose(p.segmentArray()[0]->position(), Vec2f(10, 20)));
+            EXPECT(isClose(p.segmentArray()[1]->position(), Vec2f(100, 20)));
+            EXPECT(isClose(p.segmentArray()[2]->position(), Vec2f(100, 120)));
             EXPECT(p.isClosed());
         }
         {

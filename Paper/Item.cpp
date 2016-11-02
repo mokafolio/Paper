@@ -1050,7 +1050,7 @@ namespace paper
         copy.set<comps::Segments>(SegmentArray());
         copy.set<comps::Curves>(CurveArray());
         copy.set<comps::Children>(ItemArray());
-        for (const auto & seg : from.segments())
+        for (const auto & seg : from.segmentArray())
         {
             copy.addSegment(seg->position(), seg->handleIn(), seg->handleOut());
         }

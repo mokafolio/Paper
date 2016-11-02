@@ -17,8 +17,8 @@ namespace paper
         Shape::Shape(const Path & _path) :
             m_type(ShapeType::None)
         {
-            const auto & curves = _path.curves();
-            const auto & segments = _path.segments();
+            const auto & curves = _path.curveArray();
+            const auto & segments = _path.segmentArray();
             if (curves.count() == 4 &&
                     curves[0]->isArc() &&
                     curves[1]->isArc() &&
