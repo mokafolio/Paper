@@ -33,7 +33,9 @@ const Suite spec[] =
         Group grp3 = doc.createGroup("Group3");
         Group grp4 = doc.createGroup("Group4");
         grp.addChild(grp4);
+        printf("PRE DEATH\n");
         grp3.insertBelow(grp2);
+        printf("POST DEATH\n");
         EXPECT(grp.children().count() == 3);
         EXPECT(grp.children()[0] == grp3);
         EXPECT(grp.children()[1] == grp2);

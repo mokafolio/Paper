@@ -926,17 +926,21 @@ namespace paper
 
         if (_seg.m_index == 0)
         {
-            //printf("SEGMENT CHANGED B\n");
-            curveArray()[0]->markDirty();
+            printf("SEGMENT CHANGED B\n");
+            curveArray().first()->markDirty();
+            if(isClosed())
+                curveArray().last()->markDirty();
         }
         else if (_seg.m_index == segmentArray().count() - 1)
         {
-            //printf("SEGMENT CHANGED C\n");
+            printf("SEGMENT CHANGED C\n");
             curveArray().last()->markDirty();
+            if(isClosed())
+                curveArray().first()->markDirty();
         }
         else
         {
-            //printf("SEGMENT CHANGED D\n");
+            printf("SEGMENT CHANGED D\n");
             curveArray()[_seg.m_index - 1]->markDirty();
             curveArray()[_seg.m_index]->markDirty();
         }

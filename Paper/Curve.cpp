@@ -1,8 +1,7 @@
-#include <Paper/Curve.hpp>
-#include <Paper/Segment.hpp>
-#include <Paper/Constants.hpp>
-#include <Paper/Components.hpp>
+#include <Paper/Document.hpp>
 #include <Paper/CurveLocation.hpp>
+
+#include <Crunch/StringConversion.hpp>
 
 namespace paper
 {
@@ -154,48 +153,64 @@ namespace paper
 
     stick::Maybe<Curve &> Curve::divideAtParameter(Float _t)
     {
-        // if (_t >= 1 || _t <= 0)
-        //     return stick::Maybe<Curve &>();
+        // return empty maybe if _t is out of range
+        if (_t >= 1 || _t <= 0)
+            return stick::Maybe<Curve &>();
 
-        // auto splitResult = m_curve.subdivide(_t);
+        // split the bezier
+        auto splitResult = m_curve.subdivide(_t);
 
-        // segmentOne().m_handleOut = splitResult.first.handleOne() - splitResult.first.positionOne();
-        // segmentTwo().m_handleIn = splitResult.second.handleTwo() - splitResult.second.positionTwo();
-        // segmentTwo().m_position = splitResult.second.positionTwo();
-        // Segment s(m_path, splitResult.first.positionTwo(),
-        //           splitResult.first.handleTwo() - splitResult.first.positionTwo(),
-        //           splitResult.second.handleOne() - splitResult.first.positionTwo(), segmentOne().m_index + 1);
-        // m_path.segments().insert(m_path.segments().begin() + m_segmentB, s);
+        //adjust the exiting segments of this curve
+        segmentOne().m_handleOut = splitResult.first.handleOne() - splitResult.first.positionOne();
+        segmentTwo().m_handleIn = splitResult.second.handleTwo() - splitResult.second.positionTwo();
+        segmentTwo().m_position = splitResult.second.positionTwo();
+
+        // create the new segment
+        stick::Size sindex = segmentOne().m_index + 1;
+        auto it = m_segmentB != 0 ? m_path.segmentArray().begin() + m_segmentB : m_path.segmentArray().end();
+        m_path.segmentArray().insert(it,
+                                     stick::UniquePtr<Segment>(m_path.document().allocator().create<Segment>(m_path, splitResult.first.positionTwo(),
+                                             /*splitResult.first.handleTwo() - splitResult.first.positionTwo()*/ Vec2f(0),
+                                             /*splitResult.second.handleOne() - splitResult.second.positionOne()*/Vec2f(0), sindex)));
 
 
-        // auto & segs = m_path.get<comps::Segments>();
-        // for (stick::Size i = s.m_index + 1; i < segs.count(); ++i)
-        // {
-        //     segs[i].m_index += 1;
-        //     printf("SEGMENT %lu\n", segs[i].m_index);
-        // }
+        // adjust the segment indices
+        auto & segs = m_path.get<comps::Segments>();
+        for (stick::Size i = sindex + 1; i < segs.count(); ++i)
+        {
+            segs[i]->m_index += 1;
+        }
 
-        // for (auto & seg : segs)
-        //     printf("SEGMENT: %lu\n", seg.m_index);
+        // create the new curve in the correct index
+        auto cit = sindex < m_path.curveArray().count() ? m_path.curveArray().begin() + sindex : m_path.curveArray().end();
+        stick::Size sindex2 = cit == m_path.curveArray().end() ? 0 : sindex + 1;
+        Curve * c = m_path.document().allocator().create<Curve>(m_path, sindex, sindex2);
+        auto rit = m_path.curveArray().insert(cit, stick::UniquePtr<Curve>(c));
 
-        // printf("INDICES %lu %lu %lu\n", segmentOne().m_index, s.m_index, s.m_index + 1);
-        // //m_path.rebuildCurves();
-        // auto cit = m_path.curves().begin() + s.m_index + 1;
-        // auto rit = m_path.curves().insert(cit, Curve(m_path, s.m_index, s.m_index + 1));
-        // // printf("COUNTS %lu %lu\n", m_path.segments().count(), m_path.curves().count());
+        // update curve segment indices
+        auto & curves = m_path.curveArray();
+        if (sindex2 != 0)
+        {
+            for (stick::Size i = m_segmentB + 1; i < curves.count(); ++i)
+            {
+                curves[i]->m_segmentA += 1;
+                if (curves[i]->m_segmentB != 0 || i < curves.count() - 1)
+                    curves[i]->m_segmentB = curves[i]->m_segmentA + 1;
+            }
+        }
+        else
+        {
+            //only update the previous closing curves indices
+            curves[curves.count() - 2]->m_segmentB = sindex;
+        }
 
-        // auto & curves = m_path.curveArray();
-        // for (stick::Size i = m_segmentB; i < curves.count(); ++i)
-        // {
-        //     curves[i].m_segmentA += 1;
-        //     if(curves[i].m_segmentB != 0)
-        //         curves[i].m_segmentB += 1;
-        // }
-        // for (auto & c : curves)
-        //     printf("CURVE %lu %lu\n", c.m_segmentA, c.m_segmentB);
+        //mark the affected curves dirty
+        m_segmentB = sindex;
+        markDirty();
+        c->markDirty();
 
-        //m_path.markGeometryDirty();
-        //return curves[m_segmentB];
+        // return the new curve
+        return *c;
     }
 
     Float Curve::parameterAtOffset(Float _offset) const
