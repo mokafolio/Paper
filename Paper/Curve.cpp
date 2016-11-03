@@ -170,8 +170,8 @@ namespace paper
         auto it = m_segmentB != 0 ? m_path.segmentArray().begin() + m_segmentB : m_path.segmentArray().end();
         m_path.segmentArray().insert(it,
                                      stick::UniquePtr<Segment>(m_path.document().allocator().create<Segment>(m_path, splitResult.first.positionTwo(),
-                                             /*splitResult.first.handleTwo() - splitResult.first.positionTwo()*/ Vec2f(0),
-                                             /*splitResult.second.handleOne() - splitResult.second.positionOne()*/Vec2f(0), sindex)));
+                                             splitResult.first.handleTwo() - splitResult.first.positionTwo(),
+                                             splitResult.second.handleOne() - splitResult.second.positionOne(), sindex)));
 
 
         // adjust the segment indices
