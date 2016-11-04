@@ -105,6 +105,10 @@ namespace paper
 
         const Segment & segment(stick::Size _index) const;
 
+        stick::Size curveCount() const;
+        
+        stick::Size segmentCount() const;
+
         //NOTE: This function is slightly different from paper.js
         //The paper.js version takes a maxDistance and spaces the resulting
         //segments evenly based on that max distance. This version takes a minDistance

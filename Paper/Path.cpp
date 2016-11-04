@@ -1302,4 +1302,14 @@ namespace paper
     {
         return *segmentArray()[_index];
     }
+
+    stick::Size Path::curveCount() const
+    {
+        return curveArray().count();
+    }
+
+    stick::Size Path::segmentCount() const
+    {
+        return segmentArray().count();
+    }
 }
