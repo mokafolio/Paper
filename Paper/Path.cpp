@@ -15,7 +15,7 @@ namespace paper
     {
 
     }
-    
+
     void Path::addPoint(const Vec2f & _to)
     {
         createSegment(_to, Vec2f(0.0), Vec2f(0.0));
@@ -928,14 +928,14 @@ namespace paper
         {
             printf("SEGMENT CHANGED B\n");
             curveArray().first()->markDirty();
-            if(isClosed())
+            if (isClosed())
                 curveArray().last()->markDirty();
         }
         else if (_seg.m_index == segmentArray().count() - 1)
         {
             printf("SEGMENT CHANGED C\n");
             curveArray().last()->markDirty();
-            if(isClosed())
+            if (isClosed())
                 curveArray().first()->markDirty();
         }
         else
@@ -1281,5 +1281,25 @@ namespace paper
     Path Path::clone() const
     {
         return brick::reinterpretEntity<Path>(Item::clone());
+    }
+
+    Curve & Path::curve(stick::Size _index)
+    {
+        return *curveArray()[_index];
+    }
+
+    const Curve & Path::curve(stick::Size _index) const
+    {
+        return *curveArray()[_index];
+    }
+
+    Segment & Path::segment(stick::Size _index)
+    {
+        return *segmentArray()[_index];
+    }
+
+    const Segment & Path::segment(stick::Size _index) const
+    {
+        return *segmentArray()[_index];
     }
 }

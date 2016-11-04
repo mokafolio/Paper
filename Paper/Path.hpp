@@ -97,6 +97,14 @@ namespace paper
 
         void setClockwise(bool _b);
 
+        Curve & curve(stick::Size _index);
+
+        const Curve & curve(stick::Size _index) const;
+
+        Segment & segment(stick::Size _index);
+
+        const Segment & segment(stick::Size _index) const;
+
         //NOTE: This function is slightly different from paper.js
         //The paper.js version takes a maxDistance and spaces the resulting
         //segments evenly based on that max distance. This version takes a minDistance
