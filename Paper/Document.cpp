@@ -20,7 +20,7 @@ namespace paper
         /*_e.set<comps::Transform>(Mat3f::identity());
         _e.set<comps::AbsoluteTransform>(Mat3f::identity());
         _e.set<comps::AbsoluteTransformDirtyFlag>(true);*/
-        if(_doc)
+        if (_doc)
             _e.set<comps::Doc>(*_doc);
         _e.set<comps::StrokeBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
         _e.set<comps::Bounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
@@ -110,10 +110,10 @@ namespace paper
     {
         Path ret = createPath(_name);
 
-        ret.addPoint(_from);
         ret.addPoint(Vec2f(_to.x, _from.y));
         ret.addPoint(_to);
         ret.addPoint(Vec2f(_from.x, _to.y));
+        ret.addPoint(_from);
         ret.closePath();
 
         return ret;
