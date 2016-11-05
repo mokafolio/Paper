@@ -27,6 +27,7 @@ Paper/OpenGL/GLRenderer.hpp
 Paper/Private/BooleanOperations.hpp
 Paper/Private/ContainerView.hpp
 Paper/Private/JoinAndCap.hpp
+Paper/Private/PathFitter.hpp
 Paper/Private/PathFlattener.hpp
 Paper/Private/Shape.hpp
 Paper/Private/StrokeTriangulator.hpp
@@ -50,6 +51,7 @@ Paper/Symbol.cpp
 Paper/OpenGL/GLRenderer.cpp
 Paper/Private/BooleanOperations.cpp
 Paper/Private/JoinAndCap.cpp
+Paper/Private/PathFitter.cpp
 Paper/Private/PathFlattener.cpp
 Paper/Private/Shape.cpp
 Paper/Private/StrokeTriangulator.cpp
