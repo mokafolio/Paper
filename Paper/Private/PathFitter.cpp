@@ -1,7 +1,7 @@
 #include <Paper/Private/PathFitter.hpp>
 #include <Paper/Segment.hpp>
 #include <Paper/Constants.hpp>
-#include <Crunch/Matrix2.hpp>
+#include <Paper/Components.hpp>
 
 namespace paper
 {
@@ -47,22 +47,26 @@ namespace paper
                          crunch::normalize(m_positions[1] - m_positions[0]),
                          // Right Tangent
                          crunch::normalize(m_positions[m_positions.count() - 2] - m_positions[m_positions.count() - 1]));
-
             }
 
             stick::Size i = 0;
             stick::Size count = m_newSegments.count();
+            bool bReclose = false;
             if (m_path.isClosed())
             {
                 i++;
                 count--;
+                bReclose = true;
+                m_path.set<comps::ClosedFlag>(false);
             }
-            m_path.removeSegments();
 
-            for (stick::Size i = 0; i < count; ++i)
+            m_path.removeSegments();
+            for (i; i < count; ++i)
             {
                 m_path.addSegment(m_newSegments[i].position, m_newSegments[i].handleIn, m_newSegments[i].handleOut);
             }
+            if (bReclose)
+                m_path.closePath();
         }
 
         void PathFitter::fitCubic(stick::Size _first, stick::Size _last, const Vec2f & _tan1, const Vec2f & _tan2)
@@ -108,9 +112,10 @@ namespace paper
             }
 
             // Fitting failed -- split at max error point and fit recursively
-            Vec2f v1 = m_positions[split - 1] - m_positions[split];
-            Vec2f v2 = m_positions[split] - m_positions[split + 1];
-            Vec2f tanCenter = crunch::normalize((v1 + v2) * 0.5);
+            // Vec2f v1 = m_positions[split - 1] - m_positions[split];
+            // Vec2f v2 = m_positions[split] - m_positions[split + 1];
+            // Vec2f tanCenter = crunch::normalize((v1 + v2) * 0.5);
+            Vec2f tanCenter = crunch::normalize(m_positions[split - 1] - m_positions[split + 1]);
             fitCubic(_first, split, _tan1, tanCenter);
             fitCubic(split, _last, -tanCenter, _tan2);
         }
@@ -127,7 +132,6 @@ namespace paper
                                           const Vec2f & _tan1, const Vec2f & _tan2)
         {
             static const Float s_epsilon = detail::PaperConstants::epsilon();
-            typedef crunch::Matrix2<Float> MatrixType;
 
             const Vec2f & pt1 = m_positions[_first];
             const Vec2f & pt2 = m_positions[_last];
@@ -198,19 +202,37 @@ namespace paper
             // divide by zero in any subsequent NewtonRaphsonRootFind() call.
             Float segLength = crunch::distance(pt1, pt2);
             Float epsilon = s_epsilon * segLength;
+            Vec2f handleOne, handleTwo;
             if (alpha1 < epsilon || alpha2 < epsilon)
             {
                 // fall back on standard (probably inaccurate) formula,
                 // and subdivide further if needed.
                 alpha1 = alpha2 = segLength / 3.0;
             }
+            else
+            {
+                // Check if the found control points are in the right order when
+                // projected onto the line through pt1 and pt2.
+                Vec2f line = pt2 - pt1;
+
+                handleOne = _tan1 * alpha1;
+                handleTwo = _tan2 * alpha2;
+
+                if (crunch::dot(handleOne, line) - crunch::dot(handleTwo, line) > segLength * segLength)
+                {
+                    // Fall back to the Wu/Barsky heuristic above.
+                    alpha1 = alpha2 = segLength / 3.0;
+                    handleOne = _tan1 * alpha1;
+                    handleTwo = _tan2 * alpha2;
+                }
+            }
 
             // First and last control points of the Bezier curve are
             // positioned exactly at the first and last data points
             // Control points 1 and 2 are positioned an alpha distance out
             // on the tangent vectors, left and right, respectively
-            return Bezier(pt1, pt1 + _tan1 * alpha1,
-                              pt2 + _tan2 * alpha2, pt2);
+            return Bezier(pt1, pt1 + handleOne,
+                          pt2 + handleTwo, pt2);
         }
 
         Vec2f PathFitter::evaluate(stick::Int32 _degree, const Bezier & _curve, Float _t)

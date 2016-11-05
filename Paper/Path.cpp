@@ -3,6 +3,7 @@
 #include <Paper/Private/BooleanOperations.hpp>
 #include <Paper/Private/JoinAndCap.hpp>
 #include <Paper/Private/PathFlattener.hpp>
+#include <Paper/Private/PathFitter.hpp>
 #include <Crunch/Line.hpp>
 #include <Crunch/StringConversion.hpp>
 #include <Crunch/MatrixFunc.hpp>
@@ -491,7 +492,8 @@ namespace paper
 
     void Path::simplify(Float _tolerance)
     {
-
+        detail::PathFitter fitter(*this, _tolerance);
+        fitter.fit();
     }
 
     void Path::addSegment(const Vec2f & _point, const Vec2f & _handleIn, const Vec2f & _handleOut)
