@@ -118,6 +118,30 @@ const Suite spec[] =
         EXPECT(p.curveArray().last()->positionOne() == Vec2f(150.0f, 150.0f));
         EXPECT(p.curveArray().last()->handleOne() == Vec2f(5.0f, 3.0f));
         EXPECT(p.curveArray().last()->positionTwo() == Vec2f(100.0f, 30.0f));
+
+        //test insertion
+        p.insertSegment(1, Vec2f(100, 75.0));
+        EXPECT(p.segmentArray()[0]->position() == Vec2f(100.0f, 30.0f));
+        EXPECT(p.segmentArray()[1]->position() == Vec2f(100.0f, 75.0f));
+        EXPECT(p.segmentArray()[2]->position() == Vec2f(200.0f, 30.0f));
+
+        EXPECT(p.curveArray().count() == 4);
+        stick::DynamicArray<Vec2f> expectedCurves2 =
+        {
+            Vec2f(100.0f, 30.0f), Vec2f(0.0f, 0.0f), Vec2f(0.0f, 0.0f), Vec2f(100.0f, 75.0f),
+            Vec2f(100.0f, 75.0f), Vec2f(0.0f, 0.0f), Vec2f(0.0f, 0.0f), Vec2f(200.0f, 30.0f),
+            Vec2f(200.0f, 30.0f), Vec2f(0.0f, 0.0f), Vec2f(-5.0f, -3.0f), Vec2f(150.0f, 150.0f),
+            Vec2f(150.0f, 150.0f), Vec2f(5.0f, 3.0f), Vec2f(0.0f, 0.0f), Vec2f(100.0f, 30.0f),
+        };
+        i = 0;
+        for (const auto & c : p.curves())
+        {
+            EXPECT(c.positionOne() == expectedCurves2[i++]);
+            EXPECT(c.handleOne() == expectedCurves2[i++]);
+            EXPECT(c.handleTwo() == expectedCurves2[i++]);
+            EXPECT(c.positionTwo() == expectedCurves2[i++]);
+        }
+
     },
     SUITE("Attribute Tests")
     {

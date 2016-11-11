@@ -501,6 +501,54 @@ namespace paper
         createSegment(_point, _handleIn, _handleOut);
     }
 
+    Segment & Path::insertSegment(Size _index, const Vec2f & _pos,
+                                  const Vec2f & _handleIn,
+                                  const Vec2f & _handleOut)
+    {
+        auto & segs = segmentArray();
+        auto seg = document().allocator().create<Segment>(*this, _pos, _handleIn, _handleOut, _index);
+        //append case
+        if (_index >= segs.count())
+        {
+            segs.append(std::move(seg));
+            if (segs.count() > 1)
+            {
+                auto & curves = curveArray();
+                curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
+                if (isClosed())
+                    curves.append(document().allocator().create<Curve>(*this, segs.count() - 1, 0));
+            }
+        }
+        //insert case
+        else
+        {
+            auto sit = segs.insert(segs.begin() + _index, std::move(seg));
+
+            //insert the new curve created by due to the segment insertion
+            auto & curves = curveArray();
+            auto cit = curves.begin() + _index;
+            cit = curves.insert(cit, document().allocator().create<Curve>(*this, seg->m_index , seg->m_index + 1));
+
+            //iterate over all the segments after the new one and update their indices
+            ++sit;
+            for (; sit != segs.end(); ++sit)
+            {
+                (*sit)->m_index++;
+            }
+            ++cit;
+            for (; cit != curves.end(); ++cit)
+            {
+                (*cit)->m_segmentA++;
+                if ((*cit)->m_segmentB != 0)
+                    (*cit)->m_segmentB++;
+            }
+        }
+
+        markBoundsDirty(true);
+        markGeometryDirty(true);
+        return * * (segs.begin() + _index);
+    }
+
     void Path::removeSegment(Size _index)
     {
         auto & segs = segmentArray();
@@ -540,16 +588,7 @@ namespace paper
 
     Segment & Path::createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut)
     {
-        auto & segs = segmentArray();
-        segs.append(document().allocator().create<Segment>(*this, _pos, _handleIn, _handleOut, segs.count()));
-        if (segs.count() > 1)
-        {
-            auto & curves = curveArray();
-            curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
-        }
-        markBoundsDirty(true);
-        markGeometryDirty(true);
-        return *segs.last();
+        return insertSegment(segmentArray().count(), _pos, _handleIn, _handleOut);
     }
 
     void Path::reverse()
@@ -1285,32 +1324,32 @@ namespace paper
         return brick::reinterpretEntity<Path>(Item::clone());
     }
 
-    Curve & Path::curve(stick::Size _index)
+    Curve & Path::curve(Size _index)
     {
         return *curveArray()[_index];
     }
 
-    const Curve & Path::curve(stick::Size _index) const
+    const Curve & Path::curve(Size _index) const
     {
         return *curveArray()[_index];
     }
 
-    Segment & Path::segment(stick::Size _index)
+    Segment & Path::segment(Size _index)
     {
         return *segmentArray()[_index];
     }
 
-    const Segment & Path::segment(stick::Size _index) const
+    const Segment & Path::segment(Size _index) const
     {
         return *segmentArray()[_index];
     }
 
-    stick::Size Path::curveCount() const
+    Size Path::curveCount() const
     {
         return curveArray().count();
     }
 
-    stick::Size Path::segmentCount() const
+    Size Path::segmentCount() const
     {
         return segmentArray().count();
     }

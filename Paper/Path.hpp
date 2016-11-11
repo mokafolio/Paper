@@ -66,6 +66,10 @@ namespace paper
 
         void addSegment(const Vec2f & _point, const Vec2f & _handleIn, const Vec2f & _handleOut);
 
+        Segment & insertSegment(stick::Size _index, const Vec2f & _point,
+                                const Vec2f & _handleIn = Vec2f(0.0),
+                                const Vec2f & _handleOut = Vec2f(0.0));
+
         void removeSegment(stick::Size _index);
 
         void removeSegments(stick::Size _from);
@@ -106,7 +110,7 @@ namespace paper
         const Segment & segment(stick::Size _index) const;
 
         stick::Size curveCount() const;
-        
+
         stick::Size segmentCount() const;
 
         //NOTE: This function is slightly different from paper.js
