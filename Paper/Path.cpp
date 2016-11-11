@@ -546,7 +546,7 @@ namespace paper
 
         markBoundsDirty(true);
         markGeometryDirty(true);
-        return * * (segs.begin() + _index);
+        return *seg;
     }
 
     void Path::removeSegment(Size _index)
