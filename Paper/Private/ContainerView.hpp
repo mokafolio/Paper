@@ -52,6 +52,8 @@ namespace paper
             struct IterT
             {
                 using ValueType = VT;
+                using ReferenceType = ContainerView::ReferenceType;
+                using PointerType = ContainerView::PointerType;
 
                 IterT()
                 {
