@@ -18,7 +18,7 @@ namespace paper
     }
 
     //Symbol is not an item as it lives outside of the DOM
-    class STICK_API Symbol : public brick::TypedEntityT<Symbol>
+    class STICK_API Symbol : public brick::TypedEntity
     {
     public:
 

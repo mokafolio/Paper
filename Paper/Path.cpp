@@ -514,7 +514,15 @@ namespace paper
             if (segs.count() > 1)
             {
                 auto & curves = curveArray();
+
+                // possibly remove the last closing curve
+                if (isClosed() && curves.count() && curves.last()->m_segmentB == 0)
+                    curves.removeLast();
+
+                // add the new curve 
                 curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
+
+                // possibly add the new closing curve
                 if (isClosed())
                     curves.append(document().allocator().create<Curve>(*this, segs.count() - 1, 0));
             }
@@ -538,12 +546,14 @@ namespace paper
             ++cit;
             for (; cit != curves.end(); ++cit)
             {
+                (*cit)->markDirty();
                 (*cit)->m_segmentA++;
                 if ((*cit)->m_segmentB != 0)
                     (*cit)->m_segmentB++;
             }
         }
 
+        //rebuildCurves();
         markBoundsDirty(true);
         markGeometryDirty(true);
         return *seg;
@@ -967,21 +977,21 @@ namespace paper
 
         if (_seg.m_index == 0)
         {
-            printf("SEGMENT CHANGED B\n");
+            // printf("SEGMENT CHANGED B\n");
             curveArray().first()->markDirty();
             if (isClosed())
                 curveArray().last()->markDirty();
         }
         else if (_seg.m_index == segmentArray().count() - 1)
         {
-            printf("SEGMENT CHANGED C\n");
+            // printf("SEGMENT CHANGED C\n");
             curveArray().last()->markDirty();
             if (isClosed())
                 curveArray().first()->markDirty();
         }
         else
         {
-            printf("SEGMENT CHANGED D\n");
+            // printf("SEGMENT CHANGED D\n");
             curveArray()[_seg.m_index - 1]->markDirty();
             curveArray()[_seg.m_index]->markDirty();
         }

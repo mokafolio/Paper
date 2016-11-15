@@ -694,8 +694,16 @@ namespace paper
             markStrokeBoundsDirty(true);
         }
 
-        Paint ret = document().createColorPaint(_color);
-        set<comps::Stroke>(ret);
+        Paint ret = stroke();
+        if (ret.isValid() && ret.paintType() == PaintType::Color)
+        {
+            brick::reinterpretEntity<ColorPaint>(ret).setColor(_color);
+        }
+        else
+        {
+            ret = document().createColorPaint(_color);
+            set<comps::Stroke>(ret);
+        }
         removeComponentFromChildren<comps::Stroke>(*this);
         return ret;
     }
@@ -720,9 +728,18 @@ namespace paper
 
     Paint Item::setFill(const ColorRGBA & _color)
     {
-        Paint ret = document().createColorPaint(_color);
-        set<comps::Fill>(ret);
+        Paint ret = fill();
+        if (ret.isValid() && ret.paintType() == PaintType::Color)
+        {
+            brick::reinterpretEntity<ColorPaint>(ret).setColor(_color);
+        }
+        else
+        {
+            ret = document().createColorPaint(_color);
+            set<comps::Fill>(ret);
+        }
         removeComponentFromChildren<comps::Fill>(*this);
+        //printf("RET PAINT %lu\n", ret.referenceCount());
         return ret;
     }
 
@@ -755,7 +772,7 @@ namespace paper
     Float Item::fillOpacity() const
     {
         Paint s = fill();
-        if(s && s.paintType() == PaintType::Color)
+        if (s && s.paintType() == PaintType::Color)
             return brick::reinterpretEntity<ColorPaint>(s).color().a;
         return 1.0; //should this be zero?
     }
@@ -763,7 +780,7 @@ namespace paper
     Float Item::strokeOpacity() const
     {
         Paint s = stroke();
-        if(s && s.paintType() == PaintType::Color)
+        if (s && s.paintType() == PaintType::Color)
             return brick::reinterpretEntity<ColorPaint>(s).color().a;
         return 1.0; //should this be zero?
     }
@@ -827,6 +844,7 @@ namespace paper
         auto maybe = findComponent<comps::Fill>();
         if (maybe)
         {
+            STICK_ASSERT((*maybe).isValid());
             return (*maybe).paintType() != PaintType::None;
         }
         return false;
@@ -1087,8 +1105,8 @@ namespace paper
     Document Item::document() const
     {
         //the only item without this component is the root, document object
-        if(!hasComponent<comps::Doc>())
-            return static_cast<const Document&>(*this);
+        if (!hasComponent<comps::Doc>())
+            return static_cast<const Document &>(*this);
         return get<comps::Doc>();
     }
 

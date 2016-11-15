@@ -14,10 +14,10 @@ namespace paper
         using PaintType = brick::Component<ComponentName("PaintType"), PaintType>;
     }
 
-    class STICK_API Paint : public brick::TypedEntityT<Paint>
+    class STICK_API Paint : public brick::SharedTypedEntity
     {
     public:
-
+        
         Paint clone() const;
 
         PaintType paintType() const;
@@ -34,7 +34,6 @@ namespace paper
     public:
 
         static constexpr PaintType paintType = PaintType::None;
-
 
         NoPaint clone() const;
     };

@@ -198,7 +198,8 @@ namespace paper
         doc.set<comps::ItemType>(EntityType::Document);
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
-        doc.set<comps::NoPaintHolder>(doc.createNoPaint());
+        doc.createNoPaint();
+        //doc.set<comps::NoPaintHolder>(doc.createNoPaint());
         return doc;
     }
 }

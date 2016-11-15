@@ -12,7 +12,7 @@ namespace paper
 
     class Paint;
 
-    class Item : public brick::TypedEntityT<Item>
+    class Item : public brick::TypedEntity
     {
     public:
 
