@@ -52,8 +52,6 @@ namespace paper
             struct IterT
             {
                 using ValueType = VT;
-                using ReferenceType = ReferenceType;
-                using PointerType = PointerType;
 
                 IterT()
                 {
