@@ -1,0 +1,12 @@
+[submodule "Submodules/Stick"]
+	path = Submodules/Stick
+	url = https://github.com/mokafolio/Stick.git
+[submodule "Submodules/Crunch"]
+	path = Submodules/Crunch
+	url = https://github.com/mokafolio/Crunch.git
+[submodule "Submodules/Brick"]
+	path = Submodules/Brick
+	url = https://github.com/mokafolio/Brick.git
+[submodule "Submodules/Scrub"]
+	path = Submodules/Scrub
+	url = https://github.com/mokafolio/Scrub.git

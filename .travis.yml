@@ -1,0 +1,16 @@
+# Ubuntu 14.04 Trusty support
+sudo: required
+dist: trusty
+language: cpp
+compiler: 
+    - clang
+    - gcc
+before_install:
+    - sudo apt-get update
+    - sudo apt-get install freeglut3-dev
+before_script:
+    - mkdir build
+    - cd build
+    - cmake -DBuildSubmodules=On ..
+
+script: make check

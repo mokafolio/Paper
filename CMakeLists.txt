@@ -2,8 +2,17 @@ cmake_minimum_required (VERSION 2.8.11)
 project (Paper)
 set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions -w")
 
+option(BuildSubmodules "BuildSubmodules" OFF)
+option(AddTests "AddTests" ON)
+
 find_package(OpenGL REQUIRED)
-include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include)
+
+if(BuildSubmodules)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Stick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Crunch ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Brick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Scrub)
+else()
+    include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include)
+endif()
+
 link_directories(/usr/local/lib ${CMAKE_INSTALL_PREFIX}/lib)
 
 set (PAPERDEPS Stick Brick Scrub ${OPENGL_LIBRARIES})
@@ -60,6 +69,17 @@ Paper/SVG/SVGImport.cpp
 Paper/SVG/SVGImportResult.cpp
 )
 
+if(BuildSubmodules)
+    set(PrevAddTests ${AddTests})
+    set(AddTests OFF)
+    set(BuildSubmodules OFF) #we don't want to build submodules of submodules
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Stick)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Crunch)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Brick)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Scrub)
+    set(AddTests ${PrevAddTests})
+endif()
+
 add_library (Paper SHARED ${PAPERSRC})
 add_library (PaperStatic STATIC ${PAPERSRC})
 target_link_libraries(Paper ${PAPERDEPS})
@@ -69,4 +89,6 @@ foreach ( file ${PAPERINC} )
     get_filename_component( dir ${file} DIRECTORY )
     install( FILES ${file} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${dir} )
 endforeach()
-add_subdirectory (Tests)
+if(AddTests)
+    add_subdirectory (Tests)
+endif()
