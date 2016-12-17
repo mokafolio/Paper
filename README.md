@@ -1,4 +1,4 @@
-Paper
+Paper [![Build Status](https://travis-ci.org/mokafolio/Paper.svg?branch=master)](https://travis-ci.org/mokafolio/Paper)
 ==========
 
 Overview
