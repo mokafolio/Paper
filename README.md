@@ -41,6 +41,7 @@ If you want to install the dependencies through the git submodules, do this:
 ```
 git submodule init  
 git submodule update  
+mkdir build  
 cd build  
 cmake -DBuildSubmodules=On ..  
 make install
