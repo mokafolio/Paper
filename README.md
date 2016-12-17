@@ -29,7 +29,8 @@ Since we are still in pre alpha, the brew tap does not get updated that often, w
 You will most likely get the best experience/stability and features out of simply cloning the current master branch at this point.
 If you manually installed the dependencies you can simply build and install *Paper* by doing:
 
-```mkdir build  
+```
+mkdir build  
 cd build  
 cmake ..  
 make install
@@ -37,7 +38,8 @@ make install
 
 If you want to install the dependencies through the git submodules, do this:
 
-```git submodule init  
+```
+git submodule init  
 git submodule update  
 cd build  
 cmake -DBuildSubmodules=On ..  
