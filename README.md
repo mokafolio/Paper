@@ -32,7 +32,8 @@ If you manually installed the dependencies you can simply build and install *Pap
 ```mkdir build  
 cd build  
 cmake ..  
-make install```
+make install
+```
 
 If you want to install the dependencies through the git submodules, do this:
 
@@ -40,7 +41,8 @@ If you want to install the dependencies through the git submodules, do this:
 git submodule update  
 cd build  
 cmake -DBuildSubmodules=On ..  
-make install```
+make install
+```
 
 
 ###OS X
