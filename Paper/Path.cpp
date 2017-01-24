@@ -67,15 +67,13 @@ namespace paper
         const Vec2f & from = current.position();
 
         Vec2f lineOneStart = (from + _through) * 0.5;
-        Vec2f lineOneEnd = lineOneStart + crunch::rotate(_through - from, crunch::Constants<Float>::halfPi());
-        crunch::Line<Vec2f> lineOne(lineOneStart, lineOneEnd);
+        crunch::Line<Vec2f> lineOne(lineOneStart, crunch::rotate(_through - from, crunch::Constants<Float>::halfPi()));
 
         Vec2f lineTwoStart = (_through + _to) * 0.5;
-        Vec2f lineTwoEnd = lineTwoStart + crunch::rotate(_to - _through, crunch::Constants<Float>::halfPi());
-        crunch::Line<Vec2f> lineTwo(lineTwoStart, lineTwoEnd);
+        crunch::Line<Vec2f> lineTwo(lineTwoStart, crunch::rotate(_to - _through, crunch::Constants<Float>::halfPi()));
 
         crunch::IntersectionResult<Vec2f> result = crunch::intersect(lineOne, lineTwo);
-        crunch::Line<Vec2f> line(from, _to);
+        crunch::Line<Vec2f> line(from, from - _to);
         Int32 throughSide = line.side(_through);
 
         if (!result)
@@ -96,6 +94,7 @@ namespace paper
         Vec2f vec =  from - result.intersections()[0];
         Float extent = crunch::toDegrees(crunch::directedAngle(vec, _to - result.intersections()[0]));
         Int32 centerSide = line.side(result.intersections()[0]);
+
         if (centerSide == 0)
         {
             // If the center is lying on the line, we might have gotten the
@@ -169,7 +168,7 @@ namespace paper
         Vec2f pt = crunch::rotate(from - middle, -_rotation);
         Float rx = crunch::abs(_radii.x);
         Float ry = crunch::abs(_radii.y);
-        printf("RX, RY %f %f\n", rx, ry);
+        //printf("RX, RY %f %f\n", rx, ry);
         Float rxSq = rx * rx;
         Float rySq = ry * ry;
         Float xSq = pt.x * pt.x;
@@ -177,18 +176,18 @@ namespace paper
         Float factor = std::sqrt(xSq / rxSq + ySq / rySq);
         if (factor > 1)
         {
-            printf("APPLY FACTOR\n");
+            //printf("APPLY FACTOR\n");
             rx *= factor;
             ry *= factor;
             rxSq = rx * rx;
             rySq = ry * ry;
         }
-        printf("RX2, RY2 %f %f\n", rx, ry);
+        //printf("RX2, RY2 %f %f\n", rx, ry);
 
         factor = (rxSq * rySq - rxSq * ySq - rySq * xSq) / (rxSq * ySq + rySq * xSq);
         if (crunch::abs(factor) < detail::PaperConstants::trigonometricEpsilon())
         {
-            printf("SET FACTOR TO 0\n");
+            //printf("SET FACTOR TO 0\n");
             factor = 0;
         }
 
