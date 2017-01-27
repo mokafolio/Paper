@@ -73,7 +73,7 @@ namespace paper
         crunch::Line<Vec2f> lineTwo(lineTwoStart, crunch::rotate(_to - _through, crunch::Constants<Float>::halfPi()));
 
         crunch::IntersectionResult<Vec2f> result = crunch::intersect(lineOne, lineTwo);
-        crunch::Line<Vec2f> line(from, from - _to);
+        crunch::Line<Vec2f> line(from, _to - from);
         Int32 throughSide = line.side(_through);
 
         if (!result)
