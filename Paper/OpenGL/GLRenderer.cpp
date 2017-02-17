@@ -465,6 +465,7 @@ namespace paper
         const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
         {
             auto & cache = updateRenderCache(_path, _style, _bIsClipping);
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.fillVertices.count(), &cache.fillVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_FAN, 0, cache.fillVertices.count()));
@@ -487,6 +488,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glCullFace(GL_BACK));
             ASSERT_NO_GL_ERROR(glFrontFace(GL_CCW));
 
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.fillVertices.count(), &cache.fillVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_FAN, 0, cache.fillVertices.count()));
@@ -511,6 +513,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeVertices.count(), &cache.strokeVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(cache.strokeVertexDrawMode, 0, cache.strokeVertices.count()));
@@ -518,6 +521,7 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilFunc(GL_EQUAL, 0, detail::StrokeRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeBoundsVertices.count(), &cache.strokeBoundsVertices[0].x, GL_DYNAMIC_DRAW));
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.strokeColor.ptr()));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
             Error ret;
@@ -552,8 +556,10 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilMask(detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
+            //@TODO: Cache the uniform loc
             if (_path.children().count())
                 ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, !_tp ? cache.transformProjection.ptr() : _tp->ptr()));
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
             ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
@@ -584,6 +590,7 @@ namespace paper
                 ASSERT_NO_GL_ERROR(glStencilFunc(GL_NOTEQUAL, 0, detail::FillRasterStencilPlane));
                 ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
 
+                //@TODO: Cache the uniform loc
                 if (_path.children().count())
                     ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
 
@@ -601,7 +608,9 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilMask(detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
+            //@TODO: Cache the uniform loc
             ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
+            //@TODO: Cache the uniform loc
             if (_path.children().count())
                 ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
             ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
