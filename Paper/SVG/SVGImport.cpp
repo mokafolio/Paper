@@ -10,12 +10,7 @@ namespace paper
         using namespace crunch;
 
         namespace detail
-        {
-            static ColorRGB rgb(UInt8 _r, UInt8 _g, UInt8 _b)
-            {
-                return ColorRGB(_r / 255.0, _g / 255.0, _b / 255.0);
-            }
-            
+        {   
             static String::ConstIter skipWhitespaceAndCommas(String::ConstIter _it, String::ConstIter _end)
             {
                 while (_it != _end && (std::isspace(*_it) || *_it == ','))
@@ -210,6 +205,9 @@ namespace paper
                 else
                 {
                     //is this a named svg color?
+                    printf("SVG COLOR DUDE %s\n", String(_begin, _end).cString());
+                    auto col = crunch::svgColor<ColorRGB>(String(_begin, _end));
+                    printf("COL: %f %f %f\n", col.r, col.g, col.b);
                     return crunch::svgColor<ColorRGB>(String(_begin, _end));
                 }
 
