@@ -153,6 +153,8 @@ namespace paper
 
         Paint setStroke(const ColorRGBA & _color);
 
+        Paint setStroke(const stick::String & _svgName);
+
         void setDashArray(const DashArray & _arr);
 
         void setDashOffset(Float _f);
@@ -166,6 +168,8 @@ namespace paper
         void setNoFill();
 
         Paint setFill(const ColorRGBA & _color);
+
+        Paint setFill(const stick::String & _svgName);
 
         void setRemeshOnTransformChange(bool _b);
 

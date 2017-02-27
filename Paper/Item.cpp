@@ -708,6 +708,11 @@ namespace paper
         return ret;
     }
 
+    Paint Item::setStroke(const stick::String & _name)
+    {
+        return setStroke(crunch::svgColor<ColorRGBA>(_name));
+    }
+
     void Item::setNoStroke()
     {
         set<comps::Stroke>(document().noPaint());
@@ -739,8 +744,12 @@ namespace paper
             set<comps::Fill>(ret);
         }
         removeComponentFromChildren<comps::Fill>(*this);
-        //printf("RET PAINT %lu\n", ret.referenceCount());
         return ret;
+    }
+
+    Paint Item::setFill(const stick::String & _name)
+    {
+        return setFill(crunch::svgColor<ColorRGBA>(_name));
     }
 
     void Item::removeFill()
