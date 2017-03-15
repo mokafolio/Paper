@@ -86,7 +86,7 @@ namespace paper
 
         void peaks(stick::DynamicArray<Float> & _peaks) const;
 
-        void extrema2D(stick::DynamicArray<Float> & _extrema) const;
+        void extrema(stick::DynamicArray<Float> & _extrema) const;
 
 
         CurveLocation closestCurveLocation(const Vec2f & _point) const;

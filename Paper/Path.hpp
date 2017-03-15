@@ -145,7 +145,9 @@ namespace paper
 
         void peaks(stick::DynamicArray<CurveLocation> & _peaks) const;
 
-        void extrema2D(stick::DynamicArray<CurveLocation> & _extrema) const;
+        void extrema(stick::DynamicArray<CurveLocation> & _extrema) const;
+
+        stick::DynamicArray<CurveLocation> extrema() const;
 
 
         Float length() const;

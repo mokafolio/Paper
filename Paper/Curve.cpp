@@ -387,7 +387,7 @@ namespace paper
             _peaks.append(peaks.values[i]);
     }
 
-    void Curve::extrema2D(stick::DynamicArray<Float> & _extrema) const
+    void Curve::extrema(stick::DynamicArray<Float> & _extrema) const
     {
         auto ex = m_curve.extrema2D();
         for (stick::Int32 i = 0; i < ex.count; ++i)

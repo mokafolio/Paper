@@ -904,18 +904,25 @@ namespace paper
         }
     }
 
-    void Path::extrema2D(stick::DynamicArray<CurveLocation> & _extrema) const
+    void Path::extrema(stick::DynamicArray<CurveLocation> & _extrema) const
     {
         auto & curves = curveArray();
         stick::DynamicArray<Float> tmp(document().allocator());
         for (auto & curve : curves)
         {
-            curve->extrema2D(tmp);
+            curve->extrema(tmp);
             for (auto p : tmp)
             {
                 _extrema.append(curve->curveLocationAtParameter(p));
             }
         }
+    }
+
+    stick::DynamicArray<CurveLocation> Path::extrema() const
+    {
+        stick::DynamicArray<CurveLocation> ret;
+        extrema(ret);
+        return ret;
     }
 
     Float Path::area() const
