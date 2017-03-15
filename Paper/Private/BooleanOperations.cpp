@@ -72,25 +72,24 @@ namespace paper
                 Float tMin = detail::PaperConstants::curveTimeEpsilon();
                 Float tMax = 1 - tMin;
 
-                stick::DynamicArray<Float> roots;
                 // Keep then range to 0 .. 1 (excluding) in the search for y
                 // extrema.
-                auto n = crunch::solveQuadratic(a, b, c, roots, tMin, tMax);
-                if (n == 0)
+                auto res = crunch::solveQuadratic(a, b, c, tMin, tMax);
+                if (res.count == 0)
                 {
                     insertCurve(_c, _target);
                 }
                 else
                 {
-                    std::sort(roots.begin(), roots.end());
-                    Float t = roots[0];
+                    std::sort(&res.values[0], &res.values[res.count]);
+                    Float t = res.values[0];
                     auto curves = _c.subdivide(t);
                     insertCurve(curves.first, _target);
-                    if (roots.count() > 1)
+                    if (res.count > 1)
                     {
                         // If there are two extrema, renormalize t to the range
                         // of the second range and split again.
-                        t = (roots[1] - t) / (1 - t);
+                        t = (res.values[1] - t) / (1 - t);
                         // Since we already processed curves.first, we can override
                         // the parts array with the new pair now.
                         curves = curves.second.subdivide(t);
@@ -106,7 +105,7 @@ namespace paper
             if (!_path.hasComponent<comps::MonoCurves>())
             {
                 MonoCurveLoop data;
-                if(_path.absoluteTransform() != Mat3f::identity())
+                if (_path.absoluteTransform() != Mat3f::identity())
                 {
                     data.bTransformed = true;
                     data.inverseTransform = crunch::inverse(_path.absoluteTransform());
@@ -133,8 +132,8 @@ namespace paper
                 loops.append(data);
 
                 // If this is a compound path, get the child mono curves and append them
-                for(const Item & c : _path.children())
-                {   
+                for (const Item & c : _path.children())
+                {
                     Path p = brick::reinterpretEntity<Path>(c);
                     const MonoCurveLoopArray & cc = monoCurves(p);
 
@@ -159,7 +158,6 @@ namespace paper
             Float epsilon = detail::PaperConstants::windingEpsilon();
             Int32 windingLeft = 0;
             Int32 windingRight = 0;
-            stick::DynamicArray<Float> roots;
 
             // Horizontal curves may return wrong results, since the curves are
             // monotonic in y direction and this is an indeterminate state.
@@ -170,7 +168,7 @@ namespace paper
                 Float yBefore;
                 Float yAfter;
 
-                for(const MonoCurveLoop & loop : _loops)
+                for (const MonoCurveLoop & loop : _loops)
                 {
                     Vec2f p = loop.bTransformed ? loop.inverseTransform * _point : _point;
                     yBefore = p.y - epsilon;
@@ -178,10 +176,10 @@ namespace paper
                     // Find the closest top and bottom intercepts for the vertical line.
                     for (const MonoCurve & c : loop.monoCurves)
                     {
-                        Int32 count = c.bezier.solveCubic(p.x, roots, true, 0, 1);
-                        for (Int32 j = count - 1; j >= 0; j--)
+                        auto result = c.bezier.solveCubic(p.x, true, 0, 1);
+                        for (Int32 j = result.count - 1; j >= 0; j--)
                         {
-                            Float y = c.bezier.positionAt(roots[j]).y;
+                            Float y = c.bezier.positionAt(result.values[j]).y;
                             if (y < yBefore && y > yTop)
                             {
                                 yTop = y;
@@ -214,7 +212,7 @@ namespace paper
                 Int32 windLeftOnCurve = 0;
                 Int32 windRightOnCurve = 0;
 
-                for(const MonoCurveLoop & loop : _loops)
+                for (const MonoCurveLoop & loop : _loops)
                 {
                     Vec2f p = loop.bTransformed ? loop.inverseTransform * _point : _point;
                     xBefore = p.x - epsilon;;
@@ -244,8 +242,6 @@ namespace paper
                         {
                             if (winding != 0)
                             {
-                                roots.clear();
-
                                 // Calculate the x value for the ray's intersection.
                                 Float x;
                                 bool bGotX = true;
@@ -257,13 +253,17 @@ namespace paper
                                 {
                                     x = curve.bezier.positionTwo().x;
                                 }
-                                else if (curve.bezier.solveCubic(p.y, roots , false, 0, 1) == 1)
-                                {
-                                    x = curve.bezier.positionAt(roots[0]).x;
-                                }
                                 else
                                 {
-                                    bGotX = false;
+                                    auto roots = curve.bezier.solveCubic(p.y, false, 0, 1);
+                                    if (roots.count == 1)
+                                    {
+                                        x = curve.bezier.positionAt(roots.values[0]).x;
+                                    }
+                                    else
+                                    {
+                                        bGotX = false;
+                                    }
                                 }
 
                                 if (bGotX)

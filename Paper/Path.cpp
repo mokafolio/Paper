@@ -518,7 +518,7 @@ namespace paper
                 if (isClosed() && curves.count() && curves.last()->m_segmentB == 0)
                     curves.removeLast();
 
-                // add the new curve 
+                // add the new curve
                 curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
 
                 // possibly add the new closing curve
@@ -894,12 +894,26 @@ namespace paper
     {
         auto & curves = curveArray();
         stick::DynamicArray<Float> tmp(document().allocator());
-        for(auto & curve : curves)
+        for (auto & curve : curves)
         {
             curve->peaks(tmp);
-            for(auto p : tmp)
+            for (auto p : tmp)
             {
                 _peaks.append(curve->curveLocationAtParameter(p));
+            }
+        }
+    }
+
+    void Path::extrema2D(stick::DynamicArray<CurveLocation> & _extrema) const
+    {
+        auto & curves = curveArray();
+        stick::DynamicArray<Float> tmp(document().allocator());
+        for (auto & curve : curves)
+        {
+            curve->extrema2D(tmp);
+            for (auto p : tmp)
+            {
+                _extrema.append(curve->curveLocationAtParameter(p));
             }
         }
     }
