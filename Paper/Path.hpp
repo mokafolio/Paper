@@ -143,6 +143,8 @@ namespace paper
 
         CurveLocation curveLocationAt(Float _offset) const;
 
+        void peaks(stick::DynamicArray<CurveLocation> & _peaks) const;
+
 
         Float length() const;
 

@@ -84,6 +84,8 @@ namespace paper
 
         Float pathOffset() const;
 
+        void peaks(stick::DynamicArray<Float> & _peaks) const;
+
 
         CurveLocation closestCurveLocation(const Vec2f & _point) const;
 

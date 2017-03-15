@@ -797,11 +797,13 @@ namespace paper
         return loc.angle();
     }
 
+    //@TODO: BIG FAT TODO
     Path Path::splitAt(Float _offset)
     {
 
     }
 
+    //@TODO: BIG FAT TODO
     Path Path::splitAt(const CurveLocation & _loc)
     {
 
@@ -886,6 +888,20 @@ namespace paper
             lenData.bDirty = false;
         }
         return lenData.length;
+    }
+
+    void Path::peaks(stick::DynamicArray<CurveLocation> & _peaks) const
+    {
+        auto & curves = curveArray();
+        stick::DynamicArray<Float> tmp(document().allocator());
+        for(auto & curve : curves)
+        {
+            curve->peaks(tmp);
+            for(auto p : tmp)
+            {
+                _peaks.append(curve->curveLocationAtParameter(p));
+            }
+        }
     }
 
     Float Path::area() const

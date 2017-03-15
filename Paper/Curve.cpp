@@ -379,4 +379,9 @@ namespace paper
     {
         return m_curve;
     }
+
+    void Curve::peaks(stick::DynamicArray<Float> & _peaks) const
+    {
+        m_curve.peaks(_peaks);
+    }
 }
