@@ -81,8 +81,9 @@ namespace paper
                 }
                 else
                 {
-                    std::sort(&res.values[0], &res.values[res.count]);
+                    std::sort(&res.values[0], &res.values[0] + res.count);
                     Float t = res.values[0];
+
                     auto curves = _c.subdivide(t);
                     insertCurve(curves.first, _target);
                     if (res.count > 1)
@@ -153,6 +154,7 @@ namespace paper
             return _path.get<comps::MonoCurves>();
         }
 
+        //@TODO: Update this to the changed implementation (apparently more stable) from paper.js develop
         Int32 winding(const Vec2f & _point, const MonoCurveLoopArray & _loops, bool _bHorizontal)
         {
             Float epsilon = detail::PaperConstants::windingEpsilon();
@@ -215,7 +217,7 @@ namespace paper
                 for (const MonoCurveLoop & loop : _loops)
                 {
                     Vec2f p = loop.bTransformed ? loop.inverseTransform * _point : _point;
-                    xBefore = p.x - epsilon;;
+                    xBefore = p.x - epsilon;
                     xAfter = p.x + epsilon;
                     for (Size i = 0; i < loop.monoCurves.count(); ++i)
                     {
@@ -268,7 +270,6 @@ namespace paper
 
                                 if (bGotX)
                                 {
-                                    //printf("GOT X\n");
                                     // Test if the point is on the current mono-curve.
                                     if (x >= xBefore && x <= xAfter)
                                     {

@@ -913,6 +913,7 @@ namespace paper
             curve->extrema(tmp);
             for (auto p : tmp)
             {
+                printf("EXTREMA MAN %f\n", p);
                 _extrema.append(curve->curveLocationAtParameter(p));
             }
         }
