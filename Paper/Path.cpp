@@ -933,6 +933,14 @@ namespace paper
         {
             ret += c->area();
         }
+
+        // take children into account
+        for (auto & c : get<comps::Children>())
+        {
+            Path p = brick::reinterpretEntity<Path>(c);
+            ret += p.area();
+        }
+
         return ret;
     }
 

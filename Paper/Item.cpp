@@ -31,6 +31,8 @@ namespace paper
         if (get<comps::ItemType>() == EntityType::Path)
         {
             //assert that the child we add is a path too
+            //@TODO:Should this be not an assert but a regular check?
+            //or a regular check in addition to the assert?
             STICK_ASSERT(_e.get<comps::ItemType>() == EntityType::Path);
 
             //for non zero winding rule we adjust the direction of the added path if needed
