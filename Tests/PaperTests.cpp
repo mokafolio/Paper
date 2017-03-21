@@ -176,6 +176,19 @@ const Suite spec[] =
         p.addPoint(Vec2f(200.0f, 200.0f));
         EXPECT(isClose(p.length(), 400.0f));
     },
+    SUITE("Path Orientation Tests")
+    {
+        Hub hub;
+        Document doc = createDocument(hub);
+        Path p = doc.createPath();
+        p.addPoint(Vec2f(0.0f, 0.0f));
+        p.addPoint(Vec2f(200.0f, 0.0f));
+        p.addPoint(Vec2f(200.0f, 200.0f));
+        p.addPoint(Vec2f(0.0f, 200.0f));
+        EXPECT(p.isClockwise());
+        p.reverse();
+        EXPECT(!p.isClockwise());
+    },
     SUITE("Path Bounds Tests")
     {
         Hub hub;
