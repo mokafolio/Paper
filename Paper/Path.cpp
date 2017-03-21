@@ -962,26 +962,28 @@ namespace paper
         // telling you whether it's mostly clockwise
         // TODO: Check if this works correctly for all open paths.
 
-        Float sum = 0;
+        // Float sum = 0;
 
-        Size i = 0;
-        Size i2;
-        auto & segs = segmentArray();
-        Size s = segs.count();
-        for (; i < s; ++i)
-        {
-            Vec2f posA = segs[i]->position();
-            Vec2f handleA = posA + segs[i]->handleOut();
-            i2 = (i + 1) % s;
-            Vec2f posB = segs[i2]->position();
-            Vec2f handleB = posB + segs[i2]->handleIn();
+        // Size i = 0;
+        // Size i2;
+        // auto & segs = segmentArray();
+        // Size s = segs.count();
+        // for (; i < s; ++i)
+        // {
+        //     Vec2f posA = segs[i]->position();
+        //     Vec2f handleA = posA + segs[i]->handleOut();
+        //     i2 = (i + 1) % s;
+        //     Vec2f posB = segs[i2]->position();
+        //     Vec2f handleB = posB + segs[i2]->handleIn();
 
-            sum += (posA.x - handleA.x) * (handleA.y + posA.y);
-            sum += (handleA.x - handleB.x) * (handleB.y + handleA.y);
-            sum += (handleB.x - posB.x) * (posB.y + handleB.y);
-        }
+        //     sum += (posA.x - handleA.x) * (handleA.y + posA.y);
+        //     sum += (handleA.x - handleB.x) * (handleB.y + handleA.y);
+        //     sum += (handleB.x - posB.x) * (posB.y + handleB.y);
+        // }
 
-        return sum > 0;
+        // return sum > 0;
+
+        return area() >= 0;
     }
 
     void Path::rebuildCurves()
