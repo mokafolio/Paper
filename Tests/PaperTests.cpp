@@ -175,6 +175,12 @@ const Suite spec[] =
         p.addPoint(Vec2f(200.0f, 0.0f));
         p.addPoint(Vec2f(200.0f, 200.0f));
         EXPECT(isClose(p.length(), 400.0f));
+
+        Float rad = 100;
+        Path p2 = doc.createCircle(Vec2f(0.0f, 0.0f), rad);
+        Float circumference = Constants<Float>::pi() * rad * 2;
+        printf("%f %f\n", p2.length(), circumference);
+        EXPECT(isClose(p2.length(), circumference, 0.1f));
     },
     SUITE("Path Orientation Tests")
     {
