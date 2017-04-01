@@ -104,7 +104,7 @@ namespace paper
 
         bool isOrthogonal(const Curve & _other) const;
 
-        bool isColinear(const Curve & _other) const;
+        bool isCollinear(const Curve & _other) const;
 
         Float length() const;
 

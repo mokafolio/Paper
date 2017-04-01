@@ -43,6 +43,12 @@ namespace paper
         Float m_parameter;
         Float m_offset;
     };
+
+    struct Intersection
+    {
+        CurveLocation location;
+        Vec2f position;
+    };
 }
 
 #endif //PAPER_CURVELOCATION_HPP

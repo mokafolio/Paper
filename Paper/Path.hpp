@@ -8,6 +8,9 @@
 namespace paper
 {
     class CurveLocation;
+    struct Intersection;
+    
+    using IntersectionArray = stick::DynamicArray<Intersection>;
 
     class Path : public Item
     {
@@ -172,6 +175,11 @@ namespace paper
         const CurveArray & curveArray() const;
 
         const SegmentArray & segmentArray() const;
+
+
+        IntersectionArray intersections() const;
+
+        IntersectionArray intersections(Path _other) const;
 
 
     private:

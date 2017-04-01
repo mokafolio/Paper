@@ -1410,4 +1410,30 @@ namespace paper
     {
         return segmentArray().count();
     }
+
+    IntersectionArray Path::intersections() const
+    {
+
+    }
+
+    IntersectionArray Path::intersections(Path _other) const
+    {
+        IntersectionArray ret;
+        auto & myCurves = curveArray();
+        auto & otherCurves = _other.curveArray();
+        for (auto & a : myCurves)
+        {
+            for (auto & b : otherCurves)
+            {
+                auto intersections = a->bezier().intersections(b->bezier());
+                for (stick::Int32 i = 0; i < intersections.count; ++i)
+                {
+                    ret.append({a->curveLocationAtParameter(intersections.values[i].parameterOne),
+                                intersections.values[i].position
+                               });
+                }
+            }
+        }
+        return ret;
+    }
 }

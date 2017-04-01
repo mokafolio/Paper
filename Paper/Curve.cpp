@@ -280,7 +280,7 @@ namespace paper
         if (crunch::isClose(line, Vec2f(0)))
             return false;
 
-        if (crunch::isColinear(handleOne(), line) && crunch::isColinear(handleTwo(), line))
+        if (crunch::isCollinear(handleOne(), line) && crunch::isCollinear(handleTwo(), line))
         {
             // Collinear handles. Project them onto line to see if they are
             // within the line's range:
@@ -328,11 +328,11 @@ namespace paper
         return false;
     }
 
-    bool Curve::isColinear(const Curve & _other) const
+    bool Curve::isCollinear(const Curve & _other) const
     {
         if (isLinear() && _other.isLinear())
         {
-            if (crunch::isColinear(positionOne() - positionTwo(), _other.positionOne() - _other.positionTwo(), detail::PaperConstants::tolerance()))
+            if (crunch::isCollinear(positionOne() - positionTwo(), _other.positionOne() - _other.positionTwo(), detail::PaperConstants::tolerance()))
                 return true;
         }
         return false;

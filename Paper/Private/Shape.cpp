@@ -51,8 +51,8 @@ namespace paper
             }
             else if (_path.isPolygon() &&
                      curves.count() == 4 &&
-                     curves[0]->isColinear(*curves[2]) &&
-                     curves[1]->isColinear(*curves[3]) &&
+                     curves[0]->isCollinear(*curves[2]) &&
+                     curves[1]->isCollinear(*curves[3]) &&
                      curves[1]->isOrthogonal(*curves[0]))
             {
                 m_type = ShapeType::Rectangle;
@@ -74,8 +74,8 @@ namespace paper
                      curves[3]->isArc() &&
                      curves[5]->isArc() &&
                      curves[7]->isArc() &&
-                     curves[0]->isColinear(*curves[4]) &&
-                     curves[2]->isColinear(*curves[6]))
+                     curves[0]->isCollinear(*curves[4]) &&
+                     curves[2]->isCollinear(*curves[6]))
             {
 
                 //rounded rect

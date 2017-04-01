@@ -54,7 +54,7 @@ namespace paper
 
     namespace detail
     {
-        //TODO: Adjust these for Float32 / Float64
+        //@TODO: Adjust these for Float32 / Float64
         class PaperConstants
         {
         public:
