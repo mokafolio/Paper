@@ -1411,28 +1411,44 @@ namespace paper
         return segmentArray().count();
     }
 
+    namespace detail
+    {
+        inline void recursivelyIntersect(const CurveArray & _curves, const Path & _other, IntersectionArray & _intersections)
+        {
+            auto & otherCurves = _other.curveArray();
+            for (auto & a : _curves)
+            {
+                for (auto & b : otherCurves)
+                {
+                    auto intersections = a->bezier().intersections(b->bezier());
+                    for (stick::Int32 i = 0; i < intersections.count; ++i)
+                    {
+                        _intersections.append({a->curveLocationAtParameter(intersections.values[i].parameterOne),
+                                               intersections.values[i].position
+                                              });
+                    }
+                }
+            }
+            for (auto & c : _other.children())
+            {
+                recursivelyIntersect(_curves, brick::reinterpretEntity<Path>(c), _intersections);
+            }
+        }
+    }
+
     IntersectionArray Path::intersections() const
     {
 
     }
 
-    IntersectionArray Path::intersections(Path _other) const
+    IntersectionArray Path::intersections(const Path & _other) const
     {
         IntersectionArray ret;
         auto & myCurves = curveArray();
-        auto & otherCurves = _other.curveArray();
-        for (auto & a : myCurves)
+        detail::recursivelyIntersect(myCurves, _other, ret);
+        for (auto & c : children())
         {
-            for (auto & b : otherCurves)
-            {
-                auto intersections = a->bezier().intersections(b->bezier());
-                for (stick::Int32 i = 0; i < intersections.count; ++i)
-                {
-                    ret.append({a->curveLocationAtParameter(intersections.values[i].parameterOne),
-                                intersections.values[i].position
-                               });
-                }
-            }
+            brick::reinterpretEntity<Path>(c).intersections(_other);
         }
         return ret;
     }

@@ -179,7 +179,7 @@ namespace paper
 
         IntersectionArray intersections() const;
 
-        IntersectionArray intersections(Path _other) const;
+        IntersectionArray intersections(const Path & _other) const;
 
 
     private:
