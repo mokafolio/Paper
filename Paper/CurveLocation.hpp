@@ -7,7 +7,7 @@ namespace paper
 {
     class Curve;
 
-    class CurveLocation
+    class STICK_API CurveLocation
     {
         friend class Curve;
 

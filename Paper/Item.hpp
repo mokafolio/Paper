@@ -12,7 +12,7 @@ namespace paper
 
     class Paint;
 
-    class Item : public brick::TypedEntity
+    class STICK_API Item : public brick::TypedEntity
     {
     public:
 

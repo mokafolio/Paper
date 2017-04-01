@@ -8,7 +8,7 @@ namespace paper
 {
     class Document;
 
-    class Group : public Item
+    class STICK_API Group : public Item
     {
         friend class Item;
 

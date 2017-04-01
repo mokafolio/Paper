@@ -8,7 +8,7 @@ namespace paper
     class CurveLocation;
     class Segment;
 
-    class Curve
+    class STICK_API Curve
     {
         friend class Path;
         friend class Segment;

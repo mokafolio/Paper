@@ -12,7 +12,7 @@ namespace paper
     
     using IntersectionArray = stick::DynamicArray<Intersection>;
 
-    class Path : public Item
+    class STICK_API Path : public Item
     {
         friend class Curve;
         friend class Segment;
