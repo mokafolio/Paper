@@ -140,6 +140,10 @@ namespace paper
 
         Path splitAt(const CurveLocation & _loc);
 
+        Path slice(Float _from, Float _to) const;
+
+        Path slice(const CurveLocation & _from, const CurveLocation & _to) const;
+
         CurveLocation closestCurveLocation(const Vec2f & _point, Float & _outDistance) const;
 
         CurveLocation closestCurveLocation(const Vec2f & _point) const;

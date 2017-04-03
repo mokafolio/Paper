@@ -809,6 +809,39 @@ namespace paper
 
     }
 
+    Path Path::slice(Float _from, Float _to) const
+    {
+        return slice(curveLocationAt(_from), curveLocationAt(_to));
+    }
+
+    Path Path::slice(const CurveLocation & _from, const CurveLocation & _to) const
+    {
+        STICK_ASSERT(_from.isValid());
+        STICK_ASSERT(_to.isValid());
+        STICK_ASSERT(_from.curve().path() == _to.curve().path());
+        Path ret = brick::reinterpretEntity<Path>(this->cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
+
+        //add the first segment based on the start curve location
+        auto bez = _from.curve().bezier().slice(_from.parameter(), 1);
+        ret.addSegment(bez.positionOne(), Vec2f(0.0), bez.handleOne() - bez.positionOne());
+
+        //add all the segments inbetween
+        auto & segs = segmentArray();
+        for (stick::Size i = _from.curve().segmentTwo().m_index; i < _to.curve().segmentOne().m_index; ++i)
+        {
+            auto & seg = segs[i];
+            ret.addSegment(seg->position(),
+                           seg->handleIn(),
+                           seg->handleOut());
+        }
+
+        //add the last segment based on the end curve location
+        bez = _to.curve().bezier().slice(0, _to.parameter());
+        ret.addSegment(bez.positionTwo(), bez.handleTwo() - bez.positionTwo(), Vec2f(0.0f));
+        ret.insertAbove(*this);
+        return ret;
+    }
+
     CurveLocation Path::closestCurveLocation(const Vec2f & _point, Float & _outDistance) const
     {
         Float minDist = std::numeric_limits<Float>::infinity();
@@ -1413,6 +1446,7 @@ namespace paper
 
     namespace detail
     {
+        // helper to recursively intersect paths and its children (compound path)
         inline void recursivelyIntersect(const CurveArray & _curves, const Path & _other, IntersectionArray & _intersections)
         {
             auto & otherCurves = _other.curveArray();
@@ -1438,7 +1472,8 @@ namespace paper
 
     IntersectionArray Path::intersections() const
     {
-
+        //@TODO: Self intersections are slightly more involved as we need to make sure
+        //to remove the false intersections between adjacent curves (where start and end touch).
     }
 
     IntersectionArray Path::intersections(const Path & _other) const
