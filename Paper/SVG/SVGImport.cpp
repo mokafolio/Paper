@@ -10,7 +10,7 @@ namespace paper
         using namespace crunch;
 
         namespace detail
-        {   
+        {
             static String::ConstIter skipWhitespaceAndCommas(String::ConstIter _it, String::ConstIter _end)
             {
                 while (_it != _end && (std::isspace(*_it) || *_it == ','))
@@ -388,8 +388,10 @@ namespace paper
             else if (_name == "fill-opacity")
             {
                 _attr.fillColor.a = toFloat32(_value);
+                printf("PRE DEATH\n");
                 ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.fill());
                 col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.fillColor.a));
+                printf("DEATH\n");
             }
             else if (_name == "fill-rule")
             {
@@ -421,8 +423,10 @@ namespace paper
             else if (_name == "stroke-opacity")
             {
                 _attr.strokeColor.a = toFloat32(_value);
+                printf("PRE DEATH 2\n");
                 ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.stroke());
                 col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.strokeColor.a));
+                printf("DEATH 2\n");
             }
             else if (_name == "stroke-width")
             {

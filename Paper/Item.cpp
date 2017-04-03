@@ -730,7 +730,7 @@ namespace paper
 
     Paint Item::setFill(const ColorRGBA & _color)
     {
-        Paint ret = ret = document().createColorPaint(_color);
+        Paint ret = document().createColorPaint(_color);
         set<comps::Fill>(ret);
         removeComponentFromChildren<comps::Fill>(*this);
         return ret;
