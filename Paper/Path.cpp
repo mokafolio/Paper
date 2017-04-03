@@ -819,25 +819,49 @@ namespace paper
         STICK_ASSERT(_from.isValid());
         STICK_ASSERT(_to.isValid());
         STICK_ASSERT(_from.curve().path() == _to.curve().path());
-        Path ret = brick::reinterpretEntity<Path>(this->cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
+
+        // Path ret = brick::reinterpretEntity<Path>(this->cloneWithout<comps::Parent, comps::Segments, comps::Curves, comps::ClosedFlag>());
+        // ret.set<comps::Segments>(SegmentArray());
+        // ret.set<comps::Curves>(CurveArray());
+        // ret.set<comps::Children>(ItemArray());
+        // ret.set<comps::ClosedFlag>(false);
+        Path ret = document().createPath();
 
         //add the first segment based on the start curve location
+        const SegmentArray & segs = this->segmentArray();
         auto bez = _from.curve().bezier().slice(_from.parameter(), 1);
+        auto bez2 = _to.curve().bezier().slice(0, _to.parameter());
         ret.addSegment(bez.positionOne(), Vec2f(0.0), bez.handleOne() - bez.positionOne());
 
         //add all the segments inbetween
-        auto & segs = segmentArray();
-        for (stick::Size i = _from.curve().segmentTwo().m_index; i < _to.curve().segmentOne().m_index; ++i)
+        for (stick::Size i = _from.curve().segmentTwo().m_index; i <= _to.curve().segmentOne().m_index; ++i)
         {
             auto & seg = segs[i];
+            Vec2f handleIn = seg->handleIn();
+            Vec2f handleOut = seg->handleOut();
+
+            if (i == _from.curve().segmentTwo().m_index && i == _to.curve().segmentOne().m_index)
+            {
+                handleIn = bez.handleTwo() - bez.positionTwo();
+                handleOut = bez2.handleOne() - bez2.positionOne();
+            }
+            else if (i == _from.curve().segmentTwo().m_index)
+            {
+                handleIn = bez.handleTwo() - bez.positionTwo();
+            }
+            else if (i == _to.curve().segmentOne().m_index)
+            {
+                handleOut = bez2.handleOne() - bez2.positionOne();
+            }
+
             ret.addSegment(seg->position(),
-                           seg->handleIn(),
-                           seg->handleOut());
+                           handleIn,
+                           handleOut);
         }
 
         //add the last segment based on the end curve location
-        bez = _to.curve().bezier().slice(0, _to.parameter());
-        ret.addSegment(bez.positionTwo(), bez.handleTwo() - bez.positionTwo(), Vec2f(0.0f));
+        ret.addSegment(bez2.positionTwo(), bez2.handleTwo() - bez2.positionTwo(), Vec2f(0.0f));
+
         ret.insertAbove(*this);
         return ret;
     }
