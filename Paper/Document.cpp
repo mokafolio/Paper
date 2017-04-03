@@ -14,20 +14,6 @@ namespace paper
 
     }
 
-    void addDefaultComponents(brick::Entity & _e, Document * _doc = nullptr)
-    {
-        //TODO: Only add these when they are used to save memory
-        /*_e.set<comps::Transform>(Mat3f::identity());
-        _e.set<comps::AbsoluteTransform>(Mat3f::identity());
-        _e.set<comps::AbsoluteTransformDirtyFlag>(true);*/
-        if (_doc)
-            _e.set<comps::Doc>(*_doc);
-        _e.set<comps::StrokeBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
-        _e.set<comps::Bounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
-        _e.set<comps::LocalBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
-        _e.set<comps::HandleBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
-    }
-
     NoPaint Document::createNoPaint()
     {
         brick::Hub * hub = get<comps::HubPointer>();
@@ -60,7 +46,7 @@ namespace paper
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Group ret = brick::createEntity<Group>(*hub);
-        addDefaultComponents(ret, this);
+        Item::addDefaultComponents(ret, this);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Group);
         ret.set<comps::ClippedFlag>(false);
@@ -72,7 +58,7 @@ namespace paper
     {
         brick::Hub * hub = get<comps::HubPointer>();
         Path ret = brick::createEntity<Path>(*hub);
-        addDefaultComponents(ret, this);
+        Item::addDefaultComponents(ret, this);
         ret.set<comps::Name>(_name);
         ret.set<comps::ItemType>(EntityType::Path);
         ret.set<comps::Segments>(SegmentArray());
@@ -193,7 +179,7 @@ namespace paper
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
         Document doc = brick::createEntity<Document>(_hub);
-        addDefaultComponents(doc);
+        Item::addDefaultComponents(doc, nullptr);
         doc.set<comps::Name>(_name);
         doc.set<comps::ItemType>(EntityType::Document);
         doc.set<comps::HubPointer>(&_hub);

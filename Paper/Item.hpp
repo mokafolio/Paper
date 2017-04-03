@@ -248,6 +248,8 @@ namespace paper
             return stick::Maybe<typename C::ValueType &>();
         }
 
+        static void addDefaultComponents(Item _item, Document * _doc);
+
     protected:
 
         void recursivePostTransform(bool _bIncludesScaling);

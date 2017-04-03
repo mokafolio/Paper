@@ -267,7 +267,7 @@ namespace paper
         {
             Path p(_path);
             if (!p.hasComponent<RenderCache>())
-            {
+            {   
                 p.set<RenderCache>(RenderCacheData());
             }
 
@@ -378,7 +378,7 @@ namespace paper
 
             Mat4f * tp = nullptr;
             Mat4f ttp;
-            if(_transform)
+            if (_transform)
             {
                 ttp = m_transformProjection * to3DTransform(*_transform);
                 tp = &ttp;

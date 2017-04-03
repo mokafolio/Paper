@@ -825,7 +825,11 @@ namespace paper
         // ret.set<comps::Curves>(CurveArray());
         // ret.set<comps::Children>(ItemArray());
         // ret.set<comps::ClosedFlag>(false);
-        Path ret = document().createPath();
+        //Path ret = document().createPath();
+
+        Path ret = clone();
+        ret.set<comps::ClosedFlag>(false);
+        ret.removeSegments();
 
         //add the first segment based on the start curve location
         const SegmentArray & segs = this->segmentArray();

@@ -5,6 +5,9 @@
 #include <Paper/Document.hpp>
 #include <Paper/PlacedSymbol.hpp>
 #include <Paper/Private/BooleanOperations.hpp> //for removing the mono curve component in markGeometryDirty
+
+#include <Paper/OpenGL/GLRenderer.hpp>
+
 #include <Crunch/MatrixFunc.hpp>
 
 #include <Crunch/StringConversion.hpp>
@@ -696,16 +699,8 @@ namespace paper
             markStrokeBoundsDirty(true);
         }
 
-        Paint ret = stroke();
-        if (ret.isValid() && ret.paintType() == PaintType::Color)
-        {
-            brick::reinterpretEntity<ColorPaint>(ret).setColor(_color);
-        }
-        else
-        {
-            ret = document().createColorPaint(_color);
-            set<comps::Stroke>(ret);
-        }
+        Paint ret = document().createColorPaint(_color);
+        set<comps::Stroke>(ret);
         removeComponentFromChildren<comps::Stroke>(*this);
         return ret;
     }
@@ -735,16 +730,8 @@ namespace paper
 
     Paint Item::setFill(const ColorRGBA & _color)
     {
-        Paint ret = fill();
-        if (ret.isValid() && ret.paintType() == PaintType::Color)
-        {
-            brick::reinterpretEntity<ColorPaint>(ret).setColor(_color);
-        }
-        else
-        {
-            ret = document().createColorPaint(_color);
-            set<comps::Fill>(ret);
-        }
+        Paint ret = ret = document().createColorPaint(_color);
+        set<comps::Fill>(ret);
         removeComponentFromChildren<comps::Fill>(*this);
         return ret;
     }
@@ -1057,6 +1044,24 @@ namespace paper
             set<comps::PathLength>((comps::PathLengthData) {true, 0.0f});
     }
 
+    static void cloneItemComponents(const Item & _from, Item _to)
+    {
+        // _to.cloneComponents<comps::ItemType,
+        // comps::HubPointer,
+        // comps::Doc,
+        // comps::Name,
+        // comps::Fill,
+        // comps::Stroke,
+        // comps::StrokeWidth,
+        // comps::StrokeJoin,
+        // comps::StrokeCap,
+        // comps::ScalingStrokeFlag,
+        // comps::MiterLimit,
+        // comps::DashArray,
+        // comps::DashOffset,
+        // comps::WindingRule>
+    }
+
     static Item cloneGroup(const Item & _grp)
     {
         Group copy = brick::reinterpretEntity<Group>(_grp.cloneWithout<comps::Parent, comps::Children>());
@@ -1072,13 +1077,18 @@ namespace paper
     static Item clonePath(const Item & _path)
     {
         Path from = brick::reinterpretEntity<Path>(_path);
-        Path copy = brick::reinterpretEntity<Path>(from.cloneWithout<comps::Parent, comps::Segments, comps::Curves>());
-        STICK_ASSERT(!copy.hasComponent<comps::Parent>());
-        STICK_ASSERT(!copy.hasComponent<comps::Segments>());
-        STICK_ASSERT(!copy.hasComponent<comps::Curves>());
+        Path copy = brick::reinterpretEntity<Path>(from.cloneWithout<comps::Parent,
+                    comps::Segments,
+                    comps::Curves,
+                    comps::ClosedFlag>());
+
+        // @TODO: Move this default comp stuff for path into a separate function
+        // shared with createPath().
         copy.set<comps::Segments>(SegmentArray());
         copy.set<comps::Curves>(CurveArray());
         copy.set<comps::Children>(ItemArray());
+        copy.set<comps::ClosedFlag>(false);
+
         for (const auto & seg : from.segmentArray())
         {
             copy.addSegment(seg->position(), seg->handleIn(), seg->handleOut());
@@ -1086,7 +1096,6 @@ namespace paper
 
         if (from.isClosed())
         {
-            copy.set<comps::ClosedFlag>(false);
             copy.closePath();
         }
 
@@ -1097,11 +1106,14 @@ namespace paper
             copy.addChild(child.clone());
         }
 
+        copy.markGeometryDirty(false);
+
         return copy;
     }
 
     Item Item::clone() const
     {
+        //@TODO: add clone functions for symbols and documents
         if (get<comps::ItemType>() == EntityType::Group)
         {
             return cloneGroup(*this);
@@ -1124,5 +1136,15 @@ namespace paper
     EntityType Item::itemType() const
     {
         return get<comps::ItemType>();
+    }
+
+    void Item::addDefaultComponents(Item _item, Document * _doc)
+    {
+        if (_doc)
+            _item.set<comps::Doc>(*_doc);
+        _item.set<comps::StrokeBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
+        _item.set<comps::Bounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
+        _item.set<comps::LocalBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
+        _item.set<comps::HandleBounds>(comps::BoundsData{true, Rect(0, 0, 0, 0)});
     }
 }
