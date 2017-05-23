@@ -57,6 +57,8 @@ namespace paper
 
         svg::SVGImportResult parseSVG(const stick::String & _svg, stick::Size _dpi = 72);
 
+        svg::SVGImportResult loadSVG(const stick::URI & _uri, stick::Size _dpi = 72);
+
         stick::Allocator & allocator() const;
 
         stick::TextResult exportSVG() const;

@@ -820,13 +820,7 @@ namespace paper
         STICK_ASSERT(_to.isValid());
         STICK_ASSERT(_from.curve().path() == _to.curve().path());
 
-        // Path ret = brick::reinterpretEntity<Path>(this->cloneWithout<comps::Parent, comps::Segments, comps::Curves, comps::ClosedFlag>());
-        // ret.set<comps::Segments>(SegmentArray());
-        // ret.set<comps::Curves>(CurveArray());
-        // ret.set<comps::Children>(ItemArray());
-        // ret.set<comps::ClosedFlag>(false);
-        //Path ret = document().createPath();
-
+        //@TODO: is this cloning good enough?
         Path ret = clone();
         ret.set<comps::ClosedFlag>(false);
         ret.removeSegments();

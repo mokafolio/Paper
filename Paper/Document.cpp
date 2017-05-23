@@ -145,6 +145,13 @@ namespace paper
         return importer.parse(_svg, _dpi);
     }
 
+    svg::SVGImportResult Document::loadSVG(const URI & _uri, Size _dpi)
+    {
+        auto result = loadTextFile(_uri);
+        if(!result) return result.error();
+        return parseSVG(result.get(), _dpi);
+    }
+
     TextResult Document::exportSVG() const
     {
         STICK_ASSERT(isValid());
