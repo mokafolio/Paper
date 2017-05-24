@@ -205,9 +205,7 @@ namespace paper
                 else
                 {
                     //is this a named svg color?
-                    printf("SVG COLOR DUDE %s\n", String(_begin, _end).cString());
                     auto col = crunch::svgColor<ColorRGB>(String(_begin, _end));
-                    printf("COL: %f %f %f\n", col.r, col.g, col.b);
                     return crunch::svgColor<ColorRGB>(String(_begin, _end));
                 }
 
@@ -325,9 +323,7 @@ namespace paper
 
             //TODO: It might be worthwhile to use pugixml directly to parse the svg
             //as that should be a lot faster as it would skip allocating the shrub tree etc.
-            printf("START\n");
             auto shrubRes = parseXML(_svg);
-            printf("PARSED XML\n");
             if (!shrubRes)
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
@@ -349,14 +345,12 @@ namespace paper
 
             Error err;
             Group grp = brick::reinterpretEntity<Group>(recursivelyImportNode(svg, svg, err));
-            printf("PARSED SVG\n");
 
             // remove all tmp items
             for (auto & item : m_tmpItems)
                 item.remove();
             m_tmpItems.clear();
 
-            printf("DONE\n");
             return SVGImportResult(grp, w, h, err);
         }
 
@@ -388,10 +382,8 @@ namespace paper
             else if (_name == "fill-opacity")
             {
                 _attr.fillColor.a = toFloat32(_value);
-                printf("PRE DEATH\n");
                 ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.fill());
                 col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.fillColor.a));
-                printf("DEATH\n");
             }
             else if (_name == "fill-rule")
             {
@@ -423,10 +415,8 @@ namespace paper
             else if (_name == "stroke-opacity")
             {
                 _attr.strokeColor.a = toFloat32(_value);
-                printf("PRE DEATH 2\n");
                 ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.stroke());
                 col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.strokeColor.a));
-                printf("DEATH 2\n");
             }
             else if (_name == "stroke-width")
             {

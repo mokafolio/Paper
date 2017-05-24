@@ -64,7 +64,6 @@ namespace paper
     void Item::insertAbove(Item _e)
     {
         removeFromParent();
-
         STICK_ASSERT(_e.hasComponent<comps::Parent>());
         Item p = _e.get<comps::Parent>();
         STICK_ASSERT(p.isValid());
@@ -81,7 +80,6 @@ namespace paper
     void Item::insertBelow(Item _e)
     {
         removeFromParent();
-
         STICK_ASSERT(_e.hasComponent<comps::Parent>());
         Item p = _e.get<comps::Parent>();
         STICK_ASSERT(p.isValid());
@@ -1044,33 +1042,19 @@ namespace paper
             set<comps::PathLength>((comps::PathLengthData) {true, 0.0f});
     }
 
-    static void cloneItemComponents(const Item & _from, Item _to)
-    {
-        // _to.cloneComponents<comps::ItemType,
-        // comps::HubPointer,
-        // comps::Doc,
-        // comps::Name,
-        // comps::Fill,
-        // comps::Stroke,
-        // comps::StrokeWidth,
-        // comps::StrokeJoin,
-        // comps::StrokeCap,
-        // comps::ScalingStrokeFlag,
-        // comps::MiterLimit,
-        // comps::DashArray,
-        // comps::DashOffset,
-        // comps::WindingRule>
-    }
+    static Item cloneImpl(const Item & _item);
 
     static Item cloneGroup(const Item & _grp)
     {
+        STICK_ASSERT(_grp.isValid());
         Group copy = brick::reinterpretEntity<Group>(_grp.cloneWithout<comps::Parent, comps::Children>());
-        for (Item child : _grp.children())
+        STICK_ASSERT(copy);
+        STICK_ASSERT(copy.isValid());
+        for (const Item & child : _grp.children())
         {
-            copy.addChild(child.clone());
+            copy.addChild(cloneImpl(child));
         }
 
-        copy.insertAbove(_grp);
         return copy;
     }
 
@@ -1099,30 +1083,37 @@ namespace paper
             copy.closePath();
         }
 
-        copy.insertAbove(_path);
-
         for (Item child : from.children())
         {
-            copy.addChild(child.clone());
+            copy.addChild(cloneImpl(child));
         }
 
         copy.markGeometryDirty(false);
 
         return copy;
     }
+    
+    static Item cloneImpl(const Item & _item)
+    {
+        //@TODO: add clone functions for symbols and documents
+        if (_item.get<comps::ItemType>() == EntityType::Group)
+        {
+            return cloneGroup(_item);
+        }
+        else if (_item.get<comps::ItemType>() == EntityType::Path)
+        {
+            return clonePath(_item);
+        }
+    }
 
     Item Item::clone() const
     {
-        //@TODO: add clone functions for symbols and documents
-        if (get<comps::ItemType>() == EntityType::Group)
+        Item ret = cloneImpl(*this);
+        if (ret)
         {
-            return cloneGroup(*this);
+            ret.insertAbove(*this);
         }
-        else if (get<comps::ItemType>() == EntityType::Path)
-        {
-            return clonePath(*this);
-        }
-        return Item();
+        return ret;
     }
 
     Document Item::document() const
