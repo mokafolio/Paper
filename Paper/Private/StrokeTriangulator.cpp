@@ -193,9 +193,10 @@ namespace paper
         void StrokeTriangulator::makeJoinRound(const Vec2f & _point, const Vec2f & _lastDir, const Vec2f & _dir,
                                                PositionArray & _outVertices)
         {
-            Float theta = std::acos(crunch::dot(_lastDir, _dir));
+            //due to floating point precision we need to clamp to avoid NaN
+            Float theta = std::acos(crunch::clamp(crunch::dot(_lastDir, _dir), -1.0f, 1.0f));
             Float crx = crunch::cross(_lastDir, _dir);
-            makeCapOrJoinRound(_point, crx < 0 ? _lastDir : -_dir, _outVertices, theta);
+            makeCapOrJoinRound(_point, crx < 0 ? _lastDir : _dir * -1, _outVertices, theta);
         }
 
         void StrokeTriangulator::makeJoin(const Vec2f & _point, const Vec2f & _lastDir, const Vec2f & _dir,

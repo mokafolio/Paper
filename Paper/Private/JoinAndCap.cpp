@@ -20,6 +20,7 @@ namespace paper
             Vec2f dir = _direction;
             dir = Vec2f(-dir.y, dir.x);
 
+            //@TODO: Make this based on the stroke width
             stick::Size circleSubdivisionCount = 12;
 
             Float currentAngle = 0;

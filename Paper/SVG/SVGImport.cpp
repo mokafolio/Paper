@@ -856,6 +856,7 @@ namespace paper
                 {
                     //TODO: take preserveAspectRatio attribute into account (argh NOOOOOOOOOO)
                     const Rect & r = m_viewStack.last();
+                    printf("VIEW STACK %f %f\n", r.width(), r.height());
                     stick::DynamicArray<Float> numbers;
                     numbers.reserve(4);
                     detail::parseNumbers(_child.valueString().begin(), _child.valueString().end(), [](char _c) { return false; }, numbers);
