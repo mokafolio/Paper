@@ -1,5 +1,6 @@
 #include <Paper/Document.hpp>
 #include <Paper/Constants.hpp>
+#include <Paper/Private/Allocator.hpp>
 #include <Paper/SVG/SVGExport.hpp>
 #include <Paper/SVG/SVGImport.hpp>
 #include <Crunch/StringConversion.hpp>
@@ -169,7 +170,8 @@ namespace paper
 
     brick::Hub & defaultHub()
     {
-        static brick::Hub s_hub;
+        static detail::DefaultPaperAllocator s_alloc;
+        static brick::Hub s_hub(s_alloc);
         return s_hub;
     }
 

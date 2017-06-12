@@ -33,6 +33,7 @@ Paper/RenderInterface.hpp
 Paper/Segment.hpp
 Paper/Symbol.hpp
 Paper/OpenGL/GLRenderer.hpp
+Paper/Private/Allocator.hpp
 Paper/Private/BooleanOperations.hpp
 Paper/Private/ContainerView.hpp
 Paper/Private/JoinAndCap.hpp
