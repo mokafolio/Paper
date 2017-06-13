@@ -168,10 +168,14 @@ namespace paper
         // create the new segment
         stick::Size sindex = segmentOne().m_index + 1;
         auto it = m_segmentB != 0 ? m_path.segmentArray().begin() + m_segmentB : m_path.segmentArray().end();
-        m_path.segmentArray().insert(it,
-                                     stick::UniquePtr<Segment>(m_path.document().allocator().create<Segment>(m_path, splitResult.first.positionTwo(),
+        // m_path.segmentArray().insert(it,
+        //                              stick::UniquePtr<Segment>(m_path.document().allocator().create<Segment>(m_path, splitResult.first.positionTwo(),
+        //                                      splitResult.first.handleTwo() - splitResult.first.positionTwo(),
+        //                                      splitResult.second.handleOne() - splitResult.second.positionOne(), sindex)));
+
+        m_path.segmentArray().insert(it, stick::makeUnique<Segment>(m_path.document().allocator(), m_path, splitResult.first.positionTwo(),
                                              splitResult.first.handleTwo() - splitResult.first.positionTwo(),
-                                             splitResult.second.handleOne() - splitResult.second.positionOne(), sindex)));
+                                             splitResult.second.handleOne() - splitResult.second.positionOne(), sindex));
 
 
         // adjust the segment indices
@@ -185,7 +189,7 @@ namespace paper
         auto cit = sindex < m_path.curveArray().count() ? m_path.curveArray().begin() + sindex : m_path.curveArray().end();
         stick::Size sindex2 = cit == m_path.curveArray().end() ? 0 : sindex + 1;
         Curve * c = m_path.document().allocator().create<Curve>(m_path, sindex, sindex2);
-        auto rit = m_path.curveArray().insert(cit, stick::UniquePtr<Curve>(c));
+        auto rit = m_path.curveArray().insert(cit, stick::UniquePtr<Curve>(c, m_path.document().allocator()));
 
         // update curve segment indices
         auto & curves = m_path.curveArray();

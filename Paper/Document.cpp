@@ -187,14 +187,18 @@ namespace paper
 
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
+        printf("CREATE DOCUMENT\n");
         Document doc = brick::createEntity<Document>(_hub);
+        printf("CREATE DOCUMENT 2\n");
         Item::addDefaultComponents(doc, nullptr);
+        printf("CREATE DOCUMENT 3\n");
         doc.set<comps::Name>(_name);
         doc.set<comps::ItemType>(EntityType::Document);
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
         doc.set<comps::NoPaintHolder>(doc.createNoPaint());
         //doc.set<comps::NoPaintHolder>(doc.createNoPaint());
+        printf("CREATE DOCUMENT END\n");
         return doc;
     }
 }

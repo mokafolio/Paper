@@ -318,7 +318,7 @@ namespace paper
             }
             else
             {
-                curveArray().append(document().allocator().create<Curve>(*this, last.m_index, first.m_index));
+                curveArray().append(stick::makeUnique<Curve>(document().allocator(), *this, last.m_index, first.m_index));
             }
 
             set<comps::ClosedFlag>(true);
@@ -509,7 +509,7 @@ namespace paper
         //append case
         if (_index >= segs.count())
         {
-            segs.append(std::move(seg));
+            segs.append(stick::UniquePtr<Segment>(seg, document().allocator()));
             if (segs.count() > 1)
             {
                 auto & curves = curveArray();
@@ -519,22 +519,22 @@ namespace paper
                     curves.removeLast();
 
                 // add the new curve
-                curves.append(document().allocator().create<Curve>(*this, segs.count() - 2, segs.count() - 1));
+                curves.append(stick::makeUnique<Curve>(document().allocator(), *this, segs.count() - 2, segs.count() - 1));
 
                 // possibly add the new closing curve
                 if (isClosed())
-                    curves.append(document().allocator().create<Curve>(*this, segs.count() - 1, 0));
+                    curves.append(stick::makeUnique<Curve>(document().allocator(), *this, segs.count() - 1, 0));
             }
         }
         //insert case
         else
         {
-            auto sit = segs.insert(segs.begin() + _index, std::move(seg));
+            auto sit = segs.insert(segs.begin() + _index, stick::UniquePtr<Segment>(seg, document().allocator()));
 
             //insert the new curve created by due to the segment insertion
             auto & curves = curveArray();
             auto cit = curves.begin() + _index;
-            cit = curves.insert(cit, document().allocator().create<Curve>(*this, seg->m_index , seg->m_index + 1));
+            cit = curves.insert(cit, stick::makeUnique<Curve>(document().allocator(), *this, seg->m_index , seg->m_index + 1));
 
             //iterate over all the segments after the new one and update their indices
             ++sit;
@@ -641,7 +641,7 @@ namespace paper
 
         for (const auto & pos : newSegmentPositions)
         {
-            segs.append(document().allocator().create<Segment>(*this, pos, Vec2f(0.0f), Vec2f(0.0f), segs.count()));
+            segs.append(stick::makeUnique<Segment>(document().allocator(), *this, pos, Vec2f(0.0f), Vec2f(0.0f), segs.count()));
         }
 
         //make sure to possibly remove duplicate closing segments again
@@ -688,7 +688,7 @@ namespace paper
         segs.clear();
         for (const Vec2f & p : tmp)
         {
-            segs.append(document().allocator().create<Segment>(*this, p, Vec2f(0), Vec2f(0), segs.count()));
+            segs.append(stick::makeUnique<Segment>(document().allocator(), *this, p, Vec2f(0), Vec2f(0), segs.count()));
         }
 
         //printf("NUM NEW SEGS %lu\n", segs.count());
@@ -1056,11 +1056,11 @@ namespace paper
         auto & segs = segmentArray();
         for (Size i = 0; i < segs.count() - 1; ++i)
         {
-            curves.append(document().allocator().create<Curve>(*this, i, i + 1));
+            curves.append(stick::makeUnique<Curve>(document().allocator(), *this, i, i + 1));
         }
 
         if (isClosed() && segs.count() > 1)
-            curves.append(document().allocator().create<Curve>(*this, segs.count() - 1, 0));
+            curves.append(stick::makeUnique<Curve>(document().allocator(), *this, segs.count() - 1, 0));
     }
 
     void Path::updateSegmentIndices(Size _from, Size _to)

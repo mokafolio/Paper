@@ -1,5 +1,6 @@
 //#include <Paper/Components.hpp>
 #include <Paper/Document.hpp>
+#include <Paper/Private/Allocator.hpp>
 #include <Paper/Path.hpp>
 #include <Stick/Test.hpp>
 #include <Crunch/StringConversion.hpp>
@@ -375,6 +376,10 @@ const Suite spec[] =
             EXPECT(p2.strokeCap() == StrokeCap::Round);
             EXPECT(p2.strokeJoin() == StrokeJoin::Miter);
         }
+    },
+    SUITE("Default hub Tests")
+    {
+        Document doc = createDocument();
     }
 };
 
