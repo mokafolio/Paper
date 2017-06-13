@@ -15,8 +15,7 @@ const Suite spec[] =
 {
     SUITE("DOM Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
 
         Group grp = doc.createGroup("Group");
         EXPECT(doc.children().count() == 1);
@@ -69,8 +68,7 @@ const Suite spec[] =
     },
     SUITE("Basic Path Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
 
         Path p = doc.createPath("test");
         p.addPoint(Vec2f(100.0f, 30.0f));
@@ -144,8 +142,7 @@ const Suite spec[] =
     },
     SUITE("Attribute Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Path child = doc.createPath();
         EXPECT(!child.hasFill());
         EXPECT(!child.hasStroke());
@@ -169,8 +166,7 @@ const Suite spec[] =
     },
     SUITE("Path Length Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Path p = doc.createPath();
         p.addPoint(Vec2f(0.0f, 0.0f));
         p.addPoint(Vec2f(200.0f, 0.0f));
@@ -185,8 +181,7 @@ const Suite spec[] =
     },
     SUITE("Path Orientation Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Path p = doc.createPath();
         p.addPoint(Vec2f(0.0f, 0.0f));
         p.addPoint(Vec2f(200.0f, 0.0f));
@@ -198,8 +193,7 @@ const Suite spec[] =
     },
     SUITE("Path Bounds Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Path p = doc.createPath();
         p.addPoint(Vec2f(0.0f, 0.0f));
         p.addPoint(Vec2f(200.0f, 0.0f));
@@ -227,8 +221,7 @@ const Suite spec[] =
     },
     SUITE("Transformed Path Bounds Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Path p = doc.createPath();
         p.addPoint(Vec2f(0.0f, 0.0f));
         p.addPoint(Vec2f(100.0f, 0.0f));
@@ -266,8 +259,7 @@ const Suite spec[] =
     },
     SUITE("Clone Tests")
     {
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         Group grp = doc.createGroup("grp");
         Path p = doc.createPath("yessaa");
         p.addPoint(Vec2f(100.0f, 30.0f));
@@ -304,8 +296,7 @@ const Suite spec[] =
     SUITE("SVG Export Tests")
     {
         //TODO: Turn this into an actual test
-        Hub hub;
-        Document doc = createDocument(hub);
+        Document doc = createDocument();
         doc.translateTransform(Vec2f(100, 200));
         doc.scaleTransform(3.0);
         Path c = doc.createCircle(Vec2f(100, 100), 10);
@@ -316,8 +307,7 @@ const Suite spec[] =
     SUITE("SVG Import Tests")
     {
         {
-            Hub hub;
-            Document doc = createDocument(hub);
+            Document doc = createDocument();
             String svg = "<svg width='100px' height='50px'><path d='M10 20 L100 20 100 120 Z'/></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
@@ -335,8 +325,7 @@ const Suite spec[] =
         }
         {
             //TODO: test transforms on the group element
-            Hub hub;
-            Document doc = createDocument(hub);
+            Document doc = createDocument();
             String svg = "<svg><g transform='translate(10, 10) rotate(30)'><path d='M10 20 L100 20'/><path d='M-30 30.0e4 L100 20'/></g></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
@@ -348,8 +337,7 @@ const Suite spec[] =
         }
         {
             //test basic colors and attribute import
-            Hub hub;
-            Document doc = createDocument(hub);
+            Document doc = createDocument();
             String svg = "<svg><path d='M10 20 L100 20' fill='red' style='stroke: #333; stroke-width: 2px'/><circle cx='100' cy='200' r='20' fill='#4286f4' fill-rule='nonzero' stroke='black' stroke-miterlimit='33.5' stroke-dasharray='1, 2,3 4 5' stroke-dashoffset='20.33' vector-effect='non-scaling-stroke' stroke-linejoin='miter' stroke-linecap='round'/></svg>";
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
@@ -376,10 +364,6 @@ const Suite spec[] =
             EXPECT(p2.strokeCap() == StrokeCap::Round);
             EXPECT(p2.strokeJoin() == StrokeJoin::Miter);
         }
-    },
-    SUITE("Default hub Tests")
-    {
-        Document doc = createDocument();
     }
 };
 
