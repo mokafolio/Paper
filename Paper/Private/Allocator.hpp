@@ -14,9 +14,13 @@ namespace paper
 {
     namespace detail
     {
+        // using MainAllocator = stick::mem::GlobalAllocator <
+        //                       stick::mem::FallbackAllocator<stick::mem::FreeListAllocator<stick::mem::Mallocator, 12582912>,
+        //                       stick::mem::Mallocator>
+        //                       >;
+
         using MainAllocator = stick::mem::GlobalAllocator <
-                              stick::mem::FallbackAllocator<stick::mem::FreeListAllocator<stick::mem::Mallocator, 12582912>,
-                              stick::mem::Mallocator>
+                              stick::mem::Mallocator
                               >;
 
         template<stick::Size BucketCount>
@@ -31,7 +35,7 @@ namespace paper
                                stick::mem::T<1024>, stick::mem::Bucketizer<PoolAllocator<1024>, 513, 1024, 128>,
                                stick::mem::T<2048>, stick::mem::Bucketizer<PoolAllocator<1024>, 1025, 2048, 256>,
                                stick::mem::T<4096>, stick::mem::Bucketizer<PoolAllocator<1024>, 2049, 4096, 512>,
-                               MainAllocator >;
+                               MainAllocator>;
 
         class STICK_API DefaultPaperAllocator : public stick::Allocator
         {

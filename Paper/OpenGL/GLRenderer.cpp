@@ -217,7 +217,8 @@ namespace paper
             m_clippingMaskStack(_doc.allocator()),
             m_bIsInitialized(false),
             m_bCanSwapStencilPlanesWhenEnding(true),
-            m_bIsClipping(false)
+            m_bIsClipping(false),
+            m_bHasCustomProjection(false)
         {
 
         }
@@ -267,7 +268,7 @@ namespace paper
         {
             Path p(_path);
             if (!p.hasComponent<RenderCache>())
-            {   
+            {
                 p.set<RenderCache>(RenderCacheData());
             }
 
@@ -383,6 +384,9 @@ namespace paper
                 ttp = m_transformProjection * to3DTransform(*_transform);
                 tp = &ttp;
             }
+            printf("WOOOO\n");
+            if(tp)
+                printf("TRANSFORM %s\n", crunch::toString(*tp).cString());
             auto planes = prepareStencilPlanes(_bIsClippingPath);
             if (style.bHasFill || _bIsClippingPath)
             {
@@ -630,6 +634,7 @@ namespace paper
         {
             if (!m_bIsInitialized)
             {
+                printf("INITIALIZE GL RENDERER\n");
                 Error err = createProgram(vertexShaderCode, fragmentShaderCode, m_program);
                 if (err) return err;
                 ASSERT_NO_GL_ERROR(glGenVertexArrays(1, &m_vao));
@@ -664,6 +669,7 @@ namespace paper
                 m_projection = Mat4f::ortho(0, m_document.width(), m_document.height(), 0, -1, 1);
 
             m_transformProjection = m_projection * m_transform;
+            printf("DONE SETTING UP %s\n", crunch::toString(m_transformProjection).cString());
             return Error();
         }
 

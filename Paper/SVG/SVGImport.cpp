@@ -74,8 +74,11 @@ namespace paper
             {
                 Mat3f ret = Mat3f::identity();
                 TransformAction action = TransformAction::None;
+
+                //@TODO: Use document allocator
                 DynamicArray<Float> numbers;
                 numbers.reserve(64);
+
                 while (_it != _end)
                 {
                     Mat3f tmp;
@@ -323,7 +326,7 @@ namespace paper
 
             //TODO: It might be worthwhile to use pugixml directly to parse the svg
             //as that should be a lot faster as it would skip allocating the shrub tree etc.
-            auto shrubRes = parseXML(_svg);
+            auto shrubRes = parseXML(_svg, m_document->allocator());
             if (!shrubRes)
                 return shrubRes.error();
             Shrub & svg = shrubRes.get();
@@ -856,9 +859,10 @@ namespace paper
                 {
                     //TODO: take preserveAspectRatio attribute into account (argh NOOOOOOOOOO)
                     const Rect & r = m_viewStack.last();
-                    printf("VIEW STACK %f %f\n", r.width(), r.height());
-                    stick::DynamicArray<Float> numbers;
+
+                    stick::DynamicArray<Float> numbers(m_document->allocator());
                     numbers.reserve(4);
+
                     detail::parseNumbers(_child.valueString().begin(), _child.valueString().end(), [](char _c) { return false; }, numbers);
                     Mat3f viewTransform = Mat3f::identity();
                     if (m_viewStack.count() > 1)
@@ -971,7 +975,7 @@ namespace paper
             if (maybe)
             {
                 const String & val = (*maybe).valueString();
-                DynamicArray<Float> numbers;
+                DynamicArray<Float> numbers(m_document->allocator());
                 auto end = val.end();
                 auto it = detail::skipWhitespaceAndCommas(val.begin(), end);
                 Path p = m_document->createPath();
@@ -1143,7 +1147,7 @@ namespace paper
                     }
                     else
                     {
-
+                        //@TODO?
                     }
                 }
                 while (it != end);
@@ -1165,7 +1169,7 @@ namespace paper
             auto mpoints = _node.child("points");
             if (mpoints)
             {
-                DynamicArray<Float> numbers;
+                DynamicArray<Float> numbers(m_document->allocator());
                 numbers.reserve(64);
                 detail::parseNumbers((*mpoints).valueString().begin(), (*mpoints).valueString().end(), [](char) { return false; }, numbers);
                 Path ret = m_document->createPath();

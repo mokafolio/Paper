@@ -3,6 +3,8 @@
 #include <Paper/Path.hpp>
 #include <Paper/PlacedSymbol.hpp>
 
+#include <Crunch/StringConversion.hpp>
+
 namespace paper
 {
     RenderInterface::RenderInterface()
