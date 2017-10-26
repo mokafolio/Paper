@@ -44,7 +44,7 @@ namespace paper
         Float m_offset;
     };
 
-    struct Intersection
+    struct STICK_API Intersection
     {
         CurveLocation location;
         Vec2f position;

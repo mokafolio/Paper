@@ -2,6 +2,7 @@
 #include <Paper/Document.hpp>
 #include <Paper/Private/Allocator.hpp>
 #include <Paper/Path.hpp>
+#include <Paper/CurveLocation.hpp>
 #include <Stick/Test.hpp>
 #include <Crunch/StringConversion.hpp>
 // #include <Paper/Private/ContainerView.hpp>
@@ -364,6 +365,21 @@ const Suite spec[] =
             EXPECT(p2.strokeCap() == StrokeCap::Round);
             EXPECT(p2.strokeJoin() == StrokeJoin::Miter);
         }
+    },
+    SUITE("Intersection Tests")
+    {
+        Document doc = createDocument();
+        Path circle = doc.createCircle(Vec2f(100, 100), 100);
+        auto isecs = circle.intersections();
+        EXPECT(isecs.count() == 0);
+        printf("DA COUNT %lu\n", isecs.count());
+
+        Path line = doc.createPath();
+        line.addPoint(Vec2f(-100, 100));
+        line.addPoint(Vec2f(300, 100));
+        auto isecs2 = line.intersections(circle);
+        printf("DA COUNT %lu\n", isecs2.count());
+        EXPECT(isecs2.count() == 2);
     }
 };
 

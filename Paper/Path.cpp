@@ -1494,19 +1494,44 @@ namespace paper
 
     IntersectionArray Path::intersections() const
     {
-        //@TODO: Self intersections are slightly more involved as we need to make sure
-        //to remove the false intersections between adjacent curves (where start and end touch).
+        return intersections(*this);
     }
 
     IntersectionArray Path::intersections(const Path & _other) const
     {
-        IntersectionArray ret;
+        if(!bounds().overlaps(_other.bounds()))
+            return IntersectionArray();
+        
+        //@TODO: In terms of memory allocation and stuff this code is fucking gross :(
+        IntersectionArray isecs;
         auto & myCurves = curveArray();
-        detail::recursivelyIntersect(myCurves, _other, ret);
+        detail::recursivelyIntersect(myCurves, _other, isecs);
+
         for (auto & c : children())
         {
-            brick::reinterpretEntity<Path>(c).intersections(_other);
+            auto tmp = brick::reinterpretEntity<Path>(c).intersections(_other);
+            isecs.insert(isecs.end(), tmp.begin(), tmp.end());
         }
+
+        //remove double intersections
+        IntersectionArray ret;
+        ret.reserve(isecs.count());
+        for (const auto & isec : isecs)
+        {
+            bool bAdd = true;
+            for (const auto & isec2 : ret)
+            {
+                if (crunch::isClose(isec.position, isec2.position, detail::PaperConstants::geometricEpsilon()))
+                {
+                    bAdd = false;
+                    break;
+                }
+            }
+
+            if (bAdd)
+                ret.append(isec);
+        }
+
         return ret;
     }
 }
