@@ -190,6 +190,9 @@ namespace paper
 
         Segment & createSegment(const Vec2f & _pos, const Vec2f & _handleIn, const Vec2f & _handleOut);
 
+        IntersectionArray intersectionsImpl(const Path * _other) const;
+        
+
         //called from Segment
         void segmentChanged(const Segment & _seg);
 

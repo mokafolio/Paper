@@ -1469,69 +1469,101 @@ namespace paper
     namespace detail
     {
         // helper to recursively intersect paths and its children (compound path)
-        inline void recursivelyIntersect(const CurveArray & _curves, const Path & _other, IntersectionArray & _intersections)
+        inline void recursivelyIntersect(const CurveArray & _curves, const Path * _other, IntersectionArray & _intersections)
         {
-            auto & otherCurves = _other.curveArray();
+            auto * otherCurves = _other ? &_other->curveArray() : &_curves;
             for (auto & a : _curves)
             {
-                for (auto & b : otherCurves)
+                for (auto & b : *otherCurves)
                 {
+                    //don't intersect the same curves when checking for self intersections
+                    if (!_other && a.get() == b.get())
+                        continue;
+
                     auto intersections = a->bezier().intersections(b->bezier());
                     for (stick::Int32 i = 0; i < intersections.count; ++i)
                     {
-                        _intersections.append({a->curveLocationAtParameter(intersections.values[i].parameterOne),
-                                               intersections.values[i].position
-                                              });
+                        bool bAdd = true;
+                        //for self intersection we only add the intersection if its not where
+                        //adjacent curves connect.
+                        if (!_other)
+                        {
+                            if ((crunch::isClose(intersections.values[i].parameterOne, 1.0f, detail::PaperConstants::curveTimeEpsilon()) &&
+                                    crunch::isClose(intersections.values[i].parameterTwo, 0.0f, detail::PaperConstants::curveTimeEpsilon())) ||
+                                    (crunch::isClose(intersections.values[i].parameterOne, 0.0f, detail::PaperConstants::curveTimeEpsilon()) &&
+                                     crunch::isClose(intersections.values[i].parameterTwo, 1.0f, detail::PaperConstants::curveTimeEpsilon())))
+                            {
+                                bAdd = false;
+                            }
+                        }
+                        if (bAdd)
+                        {
+                            _intersections.append({a->curveLocationAtParameter(intersections.values[i].parameterOne),
+                                                   intersections.values[i].position
+                                                  });
+                        }
                     }
                 }
             }
-            for (auto & c : _other.children())
+            // if (_other)
+            // {
+            //     for (auto & c : _other->children())
+            //     {
+            //         recursivelyIntersect(_curves, &brick::reinterpretEntity<Path>(c), _intersections);
+            //     }
+            // }
+        }
+
+        IntersectionArray removeDoubleIntersections(const IntersectionArray & _input)
+        {
+            //remove double intersections
+            IntersectionArray ret;
+            ret.reserve(_input.count());
+            for (const auto & isec : _input)
             {
-                recursivelyIntersect(_curves, brick::reinterpretEntity<Path>(c), _intersections);
+                bool bAdd = true;
+                for (const auto & isec2 : ret)
+                {
+                    if (crunch::isClose(isec.position, isec2.position, detail::PaperConstants::tolerance()))
+                    {
+                        bAdd = false;
+                        break;
+                    }
+                }
+
+                if (bAdd)
+                    ret.append(isec);
             }
+            return ret;
         }
     }
 
     IntersectionArray Path::intersections() const
     {
-        return intersections(*this);
+        return intersectionsImpl(nullptr);
     }
 
     IntersectionArray Path::intersections(const Path & _other) const
     {
-        if(!bounds().overlaps(_other.bounds()))
+        if (!bounds().overlaps(_other.bounds()))
             return IntersectionArray();
-        
+        return intersectionsImpl(&_other == this ? nullptr : &_other);
+    }
+
+    IntersectionArray Path::intersectionsImpl(const Path * _other) const
+    {
+        //@TODO: Take transformation matrix into account!!
         //@TODO: In terms of memory allocation and stuff this code is fucking gross :(
         IntersectionArray isecs;
         auto & myCurves = curveArray();
         detail::recursivelyIntersect(myCurves, _other, isecs);
 
-        for (auto & c : children())
-        {
-            auto tmp = brick::reinterpretEntity<Path>(c).intersections(_other);
-            isecs.insert(isecs.end(), tmp.begin(), tmp.end());
-        }
+        // for (auto & c : children())
+        // {
+        //     auto tmp = brick::reinterpretEntity<Path>(c).intersections(_other);
+        //     isecs.insert(isecs.end(), tmp.begin(), tmp.end());
+        // }
 
-        //remove double intersections
-        IntersectionArray ret;
-        ret.reserve(isecs.count());
-        for (const auto & isec : isecs)
-        {
-            bool bAdd = true;
-            for (const auto & isec2 : ret)
-            {
-                if (crunch::isClose(isec.position, isec2.position, detail::PaperConstants::geometricEpsilon()))
-                {
-                    bAdd = false;
-                    break;
-                }
-            }
-
-            if (bAdd)
-                ret.append(isec);
-        }
-
-        return ret;
+        return detail::removeDoubleIntersections(isecs);
     }
 }
