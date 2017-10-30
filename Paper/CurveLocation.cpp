@@ -4,7 +4,7 @@
 namespace paper
 {
     CurveLocation::CurveLocation() :
-    m_curve(nullptr)
+        m_curve(nullptr)
     {
 
     }
@@ -20,6 +20,31 @@ namespace paper
     CurveLocation::operator bool() const
     {
         return m_curve;
+    }
+
+    bool CurveLocation::operator == (const CurveLocation & _other) const
+    {
+        return m_curve == _other.m_curve && m_parameter == _other.m_parameter;
+    }
+
+    bool CurveLocation::operator != (const CurveLocation & _other) const
+    {
+        return !(*this == _other);
+    }
+
+    bool CurveLocation::isSynonymous(const CurveLocation & _other)
+    {
+        if (isValid() && _other.isValid())
+        {
+            if (_other.curve().path() == curve().path())
+            {
+                Float diff = std::abs(m_offset - _other.m_offset);
+                if (diff < detail::PaperConstants::geometricEpsilon() ||
+                        std::abs(curve().path().length() - diff) < detail::PaperConstants::geometricEpsilon())
+                    return true;
+            }
+        }
+        return false;
     }
 
     Vec2f CurveLocation::position() const

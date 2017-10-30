@@ -17,6 +17,12 @@ namespace paper
 
         explicit operator bool() const;
 
+        bool operator == (const CurveLocation & _other) const;
+
+        bool operator != (const CurveLocation & _other) const;
+
+        bool isSynonymous(const CurveLocation & _other);
+
         Vec2f position() const;
 
         Vec2f normal() const;
