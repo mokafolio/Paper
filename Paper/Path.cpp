@@ -1468,6 +1468,13 @@ namespace paper
 
     namespace detail
     {
+        inline bool isAdjacentCurve(Size _a, Size _b, Size _curveCount, bool _bIsClosed)
+        {
+            if (_b == _a + 1 || (_bIsClosed && _a == 0 && _b == _curveCount - 1))
+                return true;
+            return false;
+        }
+
         // helper to recursively intersect paths and its children (compound path)
         inline void recursivelyIntersect(const Path & _self, const Path & _other, IntersectionArray & _intersections)
         {
@@ -1489,11 +1496,13 @@ namespace paper
                         if (bSelf)
                         {
                             printf("DAA I %lu J %lu\n", i, j);
-                            if (j == i + 1 || j == i - 1)
+                            if (isAdjacentCurve(i, j, curves.count(), _self.isClosed()))
                             {
-                                if ((j == i + 1 && crunch::isClose(intersections.values[z].parameterOne, 1.0f, detail::PaperConstants::curveTimeEpsilon()) &&
+                                printf("ITS ADJACENT\n");
+                                if ((crunch::isClose(intersections.values[z].parameterOne, 1.0f, detail::PaperConstants::curveTimeEpsilon()) &&
                                         crunch::isClose(intersections.values[z].parameterTwo, 0.0f, detail::PaperConstants::curveTimeEpsilon())) ||
-                                        (j == i - 1 && crunch::isClose(intersections.values[z].parameterOne, 0.0f, detail::PaperConstants::curveTimeEpsilon()) &&
+                                        //this case can only happen for closed paths where the first curve meets the last one
+                                        (_self.isClosed() && crunch::isClose(intersections.values[z].parameterOne, 0.0f, detail::PaperConstants::curveTimeEpsilon()) &&
                                          crunch::isClose(intersections.values[z].parameterTwo, 1.0f, detail::PaperConstants::curveTimeEpsilon())))
                                 {
                                     printf("DONT FUCKING ADD\n");
@@ -1508,7 +1517,7 @@ namespace paper
                             // is located between two adjacent curves of the path.
                             // @TODO: do some sorted insertion similar to what paper.js does to avoid having
                             // to iterate over the whole array of found intersections. I am pretty sure that
-                            // just keeping it simple and iterating over a block of memory will perform better in 
+                            // just keeping it simple and iterating over a block of memory will perform better in
                             // native code in most scenarios.
                             auto cl = a->curveLocationAtParameter(intersections.values[z].parameterOne);
                             for (auto & isec : _intersections)

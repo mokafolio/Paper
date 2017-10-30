@@ -369,10 +369,12 @@ const Suite spec[] =
     SUITE("Basic Intersection Tests")
     {
         Document doc = createDocument();
-        // Path circle = doc.createCircle(Vec2f(100, 100), 100);
-        // auto isecs = circle.intersections();
-        // EXPECT(isecs.count() == 0);
+        Path circle = doc.createCircle(Vec2f(100, 100), 100);
+        auto isecs = circle.intersections();
+        EXPECT(isecs.count() == 0);
         // printf("DA COUNT %lu\n", isecs.count());
+        // for (auto & isec : isecs)
+        //     printf("ISEC %f %f\n", isec.position.x, isec.position.y);
 
         // Path line = doc.createPath();
         // line.addPoint(Vec2f(-100, 100));
@@ -413,9 +415,6 @@ const Suite spec[] =
         EXPECT(crunch::isClose(isecs5[1].position, Vec2f(200, 100)));
 
         auto isecs6 = b.intersections(a);
-        printf("DA COUNT %lu\n", isecs6.count());
-        for(auto & isec : isecs6)
-            printf("ISEC %f %f\n", isec.position.x, isec.position.y);
         EXPECT(isecs6.count() == 2);
         EXPECT(crunch::isClose(isecs6[0].position, Vec2f(200, 100)));
         EXPECT(crunch::isClose(isecs6[1].position, Vec2f(150, 50)));
