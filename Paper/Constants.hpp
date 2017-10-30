@@ -55,6 +55,7 @@ namespace paper
     namespace detail
     {
         //@TODO: Adjust these for Float32 / Float64
+        //@TODO: These need a lot more work, checking and tests :(
         class PaperConstants
         {
         public:
@@ -78,17 +79,17 @@ namespace paper
 
             static Float curveTimeEpsilon()
             {
-                return static_cast<Float>(4e-5);
+                return static_cast<Float>(4e-4);
             }
 
             static Float geometricEpsilon()
             {
-                return static_cast<Float>(2e-5);
+                return static_cast<Float>(2e-4);
             }
 
             static Float windingEpsilon()
             {
-                return static_cast<Float>(2e-5);
+                return static_cast<Float>(2e-4);
             }
 
             static Float trigonometricEpsilon()

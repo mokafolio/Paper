@@ -38,10 +38,14 @@ namespace paper
         {
             if (_other.curve().path() == curve().path())
             {
+                printf("SAME PATH\n");
                 Float diff = std::abs(m_offset - _other.m_offset);
                 if (diff < detail::PaperConstants::geometricEpsilon() ||
                         std::abs(curve().path().length() - diff) < detail::PaperConstants::geometricEpsilon())
+                {
+                    printf("SYNOONONASIOGHAKSH\n");
                     return true;
+                }
             }
         }
         return false;

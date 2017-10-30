@@ -1513,6 +1513,7 @@ namespace paper
                             auto cl = a->curveLocationAtParameter(intersections.values[z].parameterOne);
                             for (auto & isec : _intersections)
                             {
+                                printf("COMPARING WITH OLD ONE %f %f\n", cl.offset(), isec.location.offset());
                                 if (cl.isSynonymous(isec.location))
                                 {
                                     printf("ITS SYNNONYMOUS BIITCH\n");

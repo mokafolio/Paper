@@ -397,13 +397,28 @@ const Suite spec[] =
 
         auto isecs4 = selfIntersecting.intersections();
         EXPECT(isecs4.count() == 1);
+        EXPECT(crunch::isClose(isecs4[0].position, Vec2f(150, 50)));
 
-        for(auto & curve : selfIntersecting.curves())
-            printf("D Paskglk %lu\n", (Size)&curve);
-        for(auto & isec : isecs4)
-            printf("D POS %f %f %lu %f\n", isec.position.x, isec.position.y, (Size)&isec.location.curve(), isec.location.offset());
-        // printf("D POS %lu, %f %f\n", isecs4.count(), isecs4[1].position.x, isecs4[1].position.y);
-        // EXPECT(crunch::isClose(isecs4[0].position, Vec2f(50, -50)));
+        Path a = doc.createPath();
+        a.addPoint(Vec2f(100, 100));
+        a.arcTo(Vec2f(200, 100));
+
+        Path b = doc.createPath();
+        b.addPoint(Vec2f(200, 100));
+        b.arcTo(Vec2f(200, 0));
+
+        auto isecs5 = a.intersections(b);
+        EXPECT(isecs5.count() == 2);
+        EXPECT(crunch::isClose(isecs5[0].position, Vec2f(150, 50)));
+        EXPECT(crunch::isClose(isecs5[1].position, Vec2f(200, 100)));
+
+        auto isecs6 = b.intersections(a);
+        printf("DA COUNT %lu\n", isecs6.count());
+        for(auto & isec : isecs6)
+            printf("ISEC %f %f\n", isec.position.x, isec.position.y);
+        EXPECT(isecs6.count() == 2);
+        EXPECT(crunch::isClose(isecs6[0].position, Vec2f(200, 100)));
+        EXPECT(crunch::isClose(isecs6[1].position, Vec2f(150, 50)));
     }
 };
 
