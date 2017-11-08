@@ -376,21 +376,21 @@ const Suite spec[] =
         // for (auto & isec : isecs)
         //     printf("ISEC %f %f\n", isec.position.x, isec.position.y);
 
-        // Path line = doc.createPath();
-        // line.addPoint(Vec2f(-100, 100));
-        // line.addPoint(Vec2f(300, 100));
-        // auto isecs2 = line.intersections(circle);
-        // printf("DA COUNT %lu\n", isecs2.count());
-        // EXPECT(isecs2.count() == 2);
+        Path line = doc.createPath();
+        line.addPoint(Vec2f(-100, 100));
+        line.addPoint(Vec2f(300, 100));
+        auto isecs2 = line.intersections(circle);
+        printf("DA COUNT %lu\n", isecs2.count());
+        EXPECT(isecs2.count() == 2);
 
-        // Path selfIntersectingLinear = doc.createPath();
-        // selfIntersectingLinear.addPoint(Vec2f(0, 0));
-        // selfIntersectingLinear.addPoint(Vec2f(100, 0));
-        // selfIntersectingLinear.addPoint(Vec2f(50, 100));
-        // selfIntersectingLinear.addPoint(Vec2f(50, -100));
-        // auto isecs3 = selfIntersectingLinear.intersections();
-        // EXPECT(isecs3.count() == 1);
-        // EXPECT(crunch::isClose(isecs3[0].position, Vec2f(50, 0)));
+        Path selfIntersectingLinear = doc.createPath();
+        selfIntersectingLinear.addPoint(Vec2f(0, 0));
+        selfIntersectingLinear.addPoint(Vec2f(100, 0));
+        selfIntersectingLinear.addPoint(Vec2f(50, 100));
+        selfIntersectingLinear.addPoint(Vec2f(50, -100));
+        auto isecs3 = selfIntersectingLinear.intersections();
+        EXPECT(isecs3.count() == 1);
+        EXPECT(crunch::isClose(isecs3[0].position, Vec2f(50, 0)));
 
         Path selfIntersecting = doc.createPath();
         selfIntersecting.addPoint(Vec2f(100, 100));
