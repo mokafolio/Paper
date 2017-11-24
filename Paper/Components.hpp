@@ -1,6 +1,7 @@
 #ifndef PAPER_COMPONENTS_HPP
 #define PAPER_COMPONENTS_HPP
 
+#include <Stick/TypeList.hpp>
 #include <Brick/Component.hpp>
 #include <Brick/Hub.hpp>
 #include <Paper/Constants.hpp>
@@ -14,6 +15,9 @@ namespace paper
 
     namespace comps
     {
+        //@TODO: I think we can group a lot of these together in the future to simplify
+        //default components and possibly get a speed boost by adding the ones together
+        //that are usually accessed together.
         using ItemType = brick::Component<ComponentName("ItemType"), EntityType>;
         using HubPointer = brick::Component<ComponentName("HubPointer"), brick::Hub *>;
         using Doc = brick::Component<ComponentName("Doc"), Document>;
@@ -38,12 +42,13 @@ namespace paper
         using BoundsGeometryDirtyFlag = brick::Component<ComponentName("BoundsGeometryDirtyFlag"), bool>;
         using VisibilityFlag = brick::Component<ComponentName("VisibilityFlag"), bool>;
         using RemeshOnTransformChange = brick::Component<ComponentName("RemeshOnTransformChange"), bool>;
-        
+
         struct BoundsData
         {
             bool bDirty;
             Rect bounds;
         };
+
         using HandleBounds = brick::Component<ComponentName("HandleBounds"), BoundsData>;
         using StrokeBounds = brick::Component<ComponentName("StrokeBounds"), BoundsData>;
         using Bounds = brick::Component<ComponentName("Bounds"), BoundsData>;
@@ -56,6 +61,7 @@ namespace paper
             Float rotation;
             Vec2f scaling;
         };
+
         using DecomposedTransform = brick::Component<ComponentName("DecomposedTransform"), DecomposedData>;
         using AbsoluteDecomposedTransform = brick::Component<ComponentName("AbsoluteDecomposedTransform"), DecomposedData>;
 
@@ -75,6 +81,48 @@ namespace paper
             Float length;
         };
         using PathLength = brick::Component<ComponentName("PathLength"), PathLengthData>;
+
+        //type list of all components. Because C++ is shit, we need to manually maintain it
+        //as there is no decent way to my knowledge to automatically generate this at compile time.
+        using ComponentTypeList = typename stick::MakeTypeList <
+                                  ItemType,
+                                  HubPointer,
+                                  Doc,
+                                  Parent,
+                                  Name,
+                                  Children,
+                                  Transform,
+                                  AbsoluteTransform,
+                                  AbsoluteTransformDirtyFlag,
+                                  Fill,
+                                  Stroke,
+                                  StrokeWidth,
+                                  StrokeJoin,
+                                  StrokeCap,
+                                  ScalingStrokeFlag,
+                                  MiterLimit,
+                                  DashArray,
+                                  DashOffset,
+                                  WindingRule,
+                                  StrokeGeometryDirtyFlag,
+                                  FillGeometryDirtyFlag,
+                                  BoundsGeometryDirtyFlag,
+                                  VisibilityFlag,
+                                  RemeshOnTransformChange,
+                                  HandleBounds,
+                                  StrokeBounds,
+                                  Bounds,
+                                  LocalBounds,
+                                  Pivot,
+                                  DecomposedTransform,
+                                  AbsoluteDecomposedTransform,
+                                  DocumentSize,
+                                  ClippedFlag,
+                                  Segments,
+                                  Curves,
+                                  ClosedFlag,
+                                  PathLength
+                                  >::List;
     }
 }
 

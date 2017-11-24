@@ -4,6 +4,7 @@
 #include <Paper/SVG/SVGExport.hpp>
 #include <Paper/SVG/SVGImport.hpp>
 #include <Crunch/StringConversion.hpp>
+#include <Stick/Private/IndexSequence.hpp>
 #include <Stick/FileUtilities.hpp>
 
 namespace paper
@@ -13,6 +14,28 @@ namespace paper
     Document::Document()
     {
 
+    }
+
+    namespace detail
+    {
+        template<class TL, Size...S>
+        static void reserveHelperImpl(brick::Hub * _hub, Size _count, stick::detail::IndexSequence<S...>)
+        {
+            _hub->reserve<typename stick::TypeAt<TL, S>::Type...>(_count);
+        }
+
+        template<class TL>
+        static void reserveHelper(brick::Hub * _hub, Size _count)
+        {
+            detail::reserveHelperImpl<TL>(_hub,
+                                          _count,
+                                          stick::detail::MakeIndexSequence<TL::count>());
+        }
+    }
+
+    void Document::reserveItems(Size _count)
+    {
+        detail::reserveHelper<comps::ComponentTypeList>(get<comps::HubPointer>(), _count);
     }
 
     NoPaint Document::createNoPaint()
@@ -149,7 +172,7 @@ namespace paper
     svg::SVGImportResult Document::loadSVG(const URI & _uri, Size _dpi)
     {
         auto result = loadTextFile(_uri);
-        if(!result) return result.error();
+        if (!result) return result.error();
         return parseSVG(result.get(), _dpi);
     }
 

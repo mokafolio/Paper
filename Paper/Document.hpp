@@ -27,6 +27,8 @@ namespace paper
 
         Document();
 
+        void reserveItems(stick::Size _count);
+
         NoPaint createNoPaint();
 
         ColorPaint createColorPaint(const ColorRGBA & _color);
