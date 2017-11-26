@@ -233,6 +233,14 @@ namespace paper
             }
         }
 
+        void GLRenderer::reserveItems(Size _count)
+        {
+            if(m_document)
+            {
+                m_document.reserveItems<RenderCache>(_count);
+            }
+        }
+
         GLRenderer::StencilPlanes GLRenderer::prepareStencilPlanes(bool _bIsClippingPath)
         {
             UInt32 targetStencilBufferMask = _bIsClippingPath ? m_currentClipStencilPlane : detail::FillRasterStencilPlane;

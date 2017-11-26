@@ -5,6 +5,7 @@
 #include <Stick/DynamicArray.hpp>
 #include <Stick/Result.hpp>
 #include <Stick/URI.hpp>
+#include <Stick/Private/IndexSequence.hpp>
 #include <Brick/Hub.hpp>
 
 #include <Paper/Components.hpp>
@@ -27,6 +28,7 @@ namespace paper
 
         Document();
 
+        template<class...C>
         void reserveItems(stick::Size _count);
 
         NoPaint createNoPaint();
@@ -71,6 +73,30 @@ namespace paper
     STICK_API brick::Hub & defaultHub();
 
     STICK_API Document createDocument(brick::Hub & _hub = defaultHub(), const stick::String & _name = "");
+
+    namespace detail
+    {
+        template<class TL, stick::Size...S>
+        static void reserveHelperImpl(brick::Hub * _hub, stick::Size _count, stick::detail::IndexSequence<S...>)
+        {
+            _hub->reserve<typename stick::TypeAt<TL, S>::Type...>(_count);
+        }
+
+        template<class TL>
+        static void reserveHelper(brick::Hub * _hub, stick::Size _count)
+        {
+            detail::reserveHelperImpl<TL>(_hub,
+                                          _count,
+                                          stick::detail::MakeIndexSequence<TL::count>());
+        }
+    }
+
+    template<class...C>
+    void Document::reserveItems(stick::Size _count)
+    {
+        using MergedList = typename stick::AppendTypeList<comps::ComponentTypeList, typename stick::MakeTypeList<C...>::List>::List;
+        detail::reserveHelper<MergedList>(get<comps::HubPointer>(), _count);
+    }
 }
 
 #endif //PAPER_DOCUMENT_HPP

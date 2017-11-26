@@ -29,6 +29,8 @@ namespace paper
 
         virtual void setProjection(const Mat4f & _projection) = 0;
 
+        virtual void reserveItems(stick::Size _count) = 0;
+
 
     protected:
 

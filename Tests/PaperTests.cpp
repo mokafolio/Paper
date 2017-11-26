@@ -17,7 +17,8 @@ const Suite spec[] =
     SUITE("DOM Tests")
     {
         Document doc = createDocument();
-
+        doc.reserveItems<>(1000);
+        
         Group grp = doc.createGroup("Group");
         EXPECT(doc.children().count() == 1);
         EXPECT(grp.name() == "Group");

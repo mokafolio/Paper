@@ -25,6 +25,8 @@ namespace paper
 
             void setProjection(const Mat4f & _projection) override;
 
+            void reserveItems(stick::Size _count) override;
+
         protected:
 
             using PathArray = stick::DynamicArray<Path>;
