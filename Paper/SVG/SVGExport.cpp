@@ -354,8 +354,8 @@ namespace paper
             {
                 crunch::ColorRGBA fillColor(0.0, 0.0, 0.0, 1.0);
                 Paint p = _item.fill();
-                if (p.paintType() == PaintType::Color)
-                    fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                if (auto mb = p.maybe<ColorRGBA>())
+                    fillColor = *mb;
 
                 _node.set("fill", colorToHexCSSString(crunch::toRGB(fillColor)), ValueHint::XMLAttribute);
                 if (fillColor.a < 1.0)
@@ -382,8 +382,8 @@ namespace paper
             {
                 crunch::ColorRGBA strokeColor(1.0, 1.0, 1.0, 1.0);
                 Paint p = _item.stroke();
-                if (p.paintType() == PaintType::Color)
-                    strokeColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                if (auto mb = p.maybe<ColorRGBA>())
+                    strokeColor = *mb;
 
                 _node.set("stroke", colorToHexCSSString(crunch::toRGB(strokeColor)), ValueHint::XMLAttribute);
                 if (strokeColor.a < 1.0)

@@ -385,8 +385,10 @@ namespace paper
             else if (_name == "fill-opacity")
             {
                 _attr.fillColor.a = toFloat32(_value);
-                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.fill());
-                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.fillColor.a));
+                if(auto mf = _item.fill().maybe<ColorRGBA>())
+                {
+                    (*mf).a = _attr.fillColor.a;
+                }
             }
             else if (_name == "fill-rule")
             {
@@ -418,8 +420,10 @@ namespace paper
             else if (_name == "stroke-opacity")
             {
                 _attr.strokeColor.a = toFloat32(_value);
-                ColorPaint col = brick::reinterpretEntity<ColorPaint>(_item.stroke());
-                col.setColor(ColorRGBA(col.color().r, col.color().g, col.color().b, _attr.strokeColor.a));
+                if(auto mf = _item.stroke().maybe<ColorRGBA>())
+                {
+                    (*mf).a = _attr.strokeColor.a;
+                }
             }
             else if (_name == "stroke-width")
             {

@@ -689,7 +689,7 @@ namespace paper
         markStrokeGeometryDirty();
     }
 
-    Paint Item::setStroke(const ColorRGBA & _color)
+    void Item::setStroke(const ColorRGBA & _color)
     {
         if (!hasStroke())
         {
@@ -697,20 +697,18 @@ namespace paper
             markStrokeBoundsDirty(true);
         }
 
-        Paint ret = document().createColorPaint(_color);
-        set<comps::Stroke>(ret);
+        set<comps::Stroke>(_color);
         removeComponentFromChildren<comps::Stroke>(*this);
-        return ret;
     }
 
-    Paint Item::setStroke(const stick::String & _name)
+    void Item::setStroke(const stick::String & _name)
     {
         return setStroke(crunch::svgColor<ColorRGBA>(_name));
     }
 
     void Item::setNoStroke()
     {
-        set<comps::Stroke>(document().noPaint());
+        set<comps::Stroke>(NoPaint());
         removeComponentFromChildren<comps::Stroke>(*this);
     }
 
@@ -722,19 +720,17 @@ namespace paper
 
     void Item::setNoFill()
     {
-        set<comps::Fill>(document().noPaint());
+        set<comps::Fill>(NoPaint());
         removeComponentFromChildren<comps::Fill>(*this);
     }
 
-    Paint Item::setFill(const ColorRGBA & _color)
+    void Item::setFill(const ColorRGBA & _color)
     {
-        Paint ret = document().createColorPaint(_color);
-        set<comps::Fill>(ret);
+        set<comps::Fill>(_color);
         removeComponentFromChildren<comps::Fill>(*this);
-        return ret;
     }
 
-    Paint Item::setFill(const stick::String & _name)
+    void Item::setFill(const stick::String & _name)
     {
         return setFill(crunch::svgColor<ColorRGBA>(_name));
     }
@@ -768,16 +764,16 @@ namespace paper
     Float Item::fillOpacity() const
     {
         Paint s = fill();
-        if (s && s.paintType() == PaintType::Color)
-            return brick::reinterpretEntity<ColorPaint>(s).color().a;
+        if (auto mb = s.maybe<ColorRGBA>())
+            return (*mb).a;
         return 1.0; //should this be zero?
     }
 
     Float Item::strokeOpacity() const
     {
         Paint s = stroke();
-        if (s && s.paintType() == PaintType::Color)
-            return brick::reinterpretEntity<ColorPaint>(s).color().a;
+        if (auto mb = s.maybe<ColorRGBA>())
+            return (*mb).a;
         return 1.0; //should this be zero?
     }
 
@@ -830,7 +826,7 @@ namespace paper
         auto maybe = findComponent<comps::Stroke>();
         if (maybe)
         {
-            return (*maybe).paintType() != PaintType::None;
+            return !(*maybe).is<NoPaint>();
         }
         return false;
     }
@@ -840,8 +836,7 @@ namespace paper
         auto maybe = findComponent<comps::Fill>();
         if (maybe)
         {
-            STICK_ASSERT((*maybe).isValid());
-            return (*maybe).paintType() != PaintType::None;
+            return !(*maybe).is<NoPaint>();
         }
         return false;
     }

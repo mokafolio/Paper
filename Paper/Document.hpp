@@ -31,9 +31,9 @@ namespace paper
         template<class...C>
         void reserveItems(stick::Size _count);
 
-        NoPaint createNoPaint();
+        // NoPaint createNoPaint();
 
-        ColorPaint createColorPaint(const ColorRGBA & _color);
+        // ColorPaint createColorPaint(const ColorRGBA & _color);
 
         Symbol createSymbol(const Item & _item);
 
@@ -55,7 +55,7 @@ namespace paper
 
         const Vec2f size() const;
 
-        NoPaint noPaint() const;
+        // NoPaint noPaint() const;
 
         brick::Hub & hub();
 

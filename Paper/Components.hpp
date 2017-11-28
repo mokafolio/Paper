@@ -5,12 +5,12 @@
 #include <Brick/Component.hpp>
 #include <Brick/Hub.hpp>
 #include <Paper/Constants.hpp>
+#include <Paper/Paint.hpp>
 
 namespace paper
 {
     class Document;
     class Item;
-    class Paint;
     using ItemArray = stick::DynamicArray<Item>;
 
     namespace comps

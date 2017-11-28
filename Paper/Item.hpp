@@ -2,6 +2,7 @@
 #define PAPER_ITEM_HPP
 
 #include <Paper/Constants.hpp>
+#include <Paper/Paint.hpp>
 
 namespace paper
 {
@@ -9,8 +10,6 @@ namespace paper
 
     class Item;
     using ItemArray = stick::DynamicArray<Item>;
-
-    class Paint;
 
     class STICK_API Item : public brick::TypedEntity
     {
@@ -151,9 +150,9 @@ namespace paper
 
         void setStrokeWidth(Float _width);
 
-        Paint setStroke(const ColorRGBA & _color);
+        void setStroke(const ColorRGBA & _color);
 
-        Paint setStroke(const stick::String & _svgName);
+        void setStroke(const stick::String & _svgName);
 
         void setDashArray(const DashArray & _arr);
 
@@ -167,9 +166,9 @@ namespace paper
 
         void setNoFill();
 
-        Paint setFill(const ColorRGBA & _color);
+        void setFill(const ColorRGBA & _color);
 
-        Paint setFill(const stick::String & _svgName);
+        void setFill(const stick::String & _svgName);
 
         void setRemeshOnTransformChange(bool _b);
 

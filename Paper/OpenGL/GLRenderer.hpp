@@ -47,16 +47,16 @@ namespace paper
                     if (bHasFill)
                     {
                         Paint p = _item.fill();
-                        if (p.paintType() == PaintType::Color)
+                        if (auto mb = p.maybe<ColorRGBA>())
                         {
-                            fillColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                            fillColor = *mb;
                         }
                     }
                     if (_item.hasStroke())
                     {
                         Paint p = _item.stroke();
-                        if (p.paintType() == PaintType::Color)
-                            strokeColor = brick::reinterpretEntity<ColorPaint>(p).color();
+                        if (auto mb = p.maybe<ColorRGBA>())
+                            strokeColor = *mb;
 
                         strokeWidth = _item.strokeWidth();
                         miterLimit = _item.miterLimit();

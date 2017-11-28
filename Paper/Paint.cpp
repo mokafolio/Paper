@@ -2,46 +2,76 @@
 
 namespace paper
 {
-    Paint Paint::clone() const
+    // Paint Paint::clone() const
+    // {
+    //     return cloneImpl();
+    // }
+
+    // PaintType Paint::paintType() const
+    // {
+    //     STICK_ASSERT(isValid());
+    //     return get<comps::PaintType>();
+    // }
+
+    // Paint Paint::cloneImpl() const
+    // {
+    //     return brick::reinterpretEntity<Paint>(Entity::clone());
+    // }
+
+    // void Paint::remove()
+    // {
+    //     Entity::destroy();
+    // }
+
+    // NoPaint NoPaint::clone() const
+    // {
+    //     return brick::reinterpretEntity<NoPaint>(Paint::clone());
+    // }
+
+    // void ColorPaint::setColor(const ColorRGBA & _color)
+    // {
+    //     STICK_ASSERT(isValid());
+    //     set<comps::PaintColor>(_color);
+    // }
+
+    // const ColorRGBA & ColorPaint::color() const
+    // {
+    //     STICK_ASSERT(isValid());
+    //     return get<comps::PaintColor>();
+    // }
+
+    // ColorPaint ColorPaint::clone() const
+    // {
+    //     return brick::reinterpretEntity<ColorPaint>(Paint::clone());
+    // }
+
+    void LinearGradient::setOrigin(const Vec2f & _position)
     {
-        return cloneImpl();
+        m_origin = _position;
     }
 
-    PaintType Paint::paintType() const
+    void LinearGradient::setDestination(const Vec2f & _position)
     {
-        STICK_ASSERT(isValid());
-        return get<comps::PaintType>();
+        m_destination = _position;
     }
 
-    Paint Paint::cloneImpl() const
+    void LinearGradient::addStop(const ColorRGBA & _color, Float _offset)
     {
-        return brick::reinterpretEntity<Paint>(Entity::clone());
+        m_stops.append({_color, _offset});
     }
 
-    void Paint::remove()
+    const Vec2f & LinearGradient::origin() const
     {
-        Entity::destroy();
+        return m_origin;
     }
 
-    NoPaint NoPaint::clone() const
+    const Vec2f & LinearGradient::destination() const
     {
-        return brick::reinterpretEntity<NoPaint>(Paint::clone());
+        return m_destination;
     }
 
-    void ColorPaint::setColor(const ColorRGBA & _color)
+    const ColorStopArray & LinearGradient::stops() const
     {
-        STICK_ASSERT(isValid());
-        set<comps::PaintColor>(_color);
-    }
-
-    const ColorRGBA & ColorPaint::color() const
-    {
-        STICK_ASSERT(isValid());
-        return get<comps::PaintColor>();
-    }
-
-    ColorPaint ColorPaint::clone() const
-    {
-        return brick::reinterpretEntity<ColorPaint>(Paint::clone());
+        return m_stops;
     }
 }

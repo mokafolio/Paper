@@ -15,22 +15,22 @@ namespace paper
 
     }
 
-    NoPaint Document::createNoPaint()
-    {
-        brick::Hub * hub = get<comps::HubPointer>();
-        NoPaint ret = brick::createEntity<NoPaint>(*hub);
-        ret.set<comps::PaintType>(PaintType::None);
-        return ret;
-    }
+    // NoPaint Document::createNoPaint()
+    // {
+    //     brick::Hub * hub = get<comps::HubPointer>();
+    //     NoPaint ret = brick::createEntity<NoPaint>(*hub);
+    //     ret.set<comps::PaintType>(PaintType::None);
+    //     return ret;
+    // }
 
-    ColorPaint Document::createColorPaint(const ColorRGBA & _color)
-    {
-        brick::Hub * hub = get<comps::HubPointer>();
-        ColorPaint ret = brick::createEntity<ColorPaint>(*hub);
-        ret.setColor(_color);
-        ret.set<comps::PaintType>(PaintType::Color);
-        return ret;
-    }
+    // ColorPaint Document::createColorPaint(const ColorRGBA & _color)
+    // {
+    //     brick::Hub * hub = get<comps::HubPointer>();
+    //     ColorPaint ret = brick::createEntity<ColorPaint>(*hub);
+    //     ret.setColor(_color);
+    //     ret.set<comps::PaintType>(PaintType::Color);
+    //     return ret;
+    // }
 
     Symbol Document::createSymbol(const Item & _item)
     {
@@ -180,10 +180,10 @@ namespace paper
         using NoPaintHolder = brick::Component<ComponentName("NoPaintHolder"), NoPaint>;
     }
 
-    NoPaint Document::noPaint() const
-    {
-        return get<comps::NoPaintHolder>();
-    }
+    // NoPaint Document::noPaint() const
+    // {
+    //     return get<comps::NoPaintHolder>();
+    // }
 
     Document createDocument(brick::Hub & _hub, const String & _name)
     {
@@ -193,7 +193,7 @@ namespace paper
         doc.set<comps::ItemType>(EntityType::Document);
         doc.set<comps::HubPointer>(&_hub);
         doc.set<comps::DocumentSize>(Vec2f(800, 600));
-        doc.set<comps::NoPaintHolder>(doc.createNoPaint());
+        // doc.set<comps::NoPaintHolder>(doc.createNoPaint());
         //doc.set<comps::NoPaintHolder>(doc.createNoPaint());
         return doc;
     }

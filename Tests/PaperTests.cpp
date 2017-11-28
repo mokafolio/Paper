@@ -17,8 +17,10 @@ const Suite spec[] =
     SUITE("DOM Tests")
     {
         Document doc = createDocument();
+
+        //we just throw in some reserve calls...
         doc.reserveItems<>(1000);
-        
+
         Group grp = doc.createGroup("Group");
         EXPECT(doc.children().count() == 1);
         EXPECT(grp.name() == "Group");
@@ -46,6 +48,9 @@ const Suite spec[] =
         EXPECT(grp.children()[1] == grp4);
         EXPECT(grp.children()[2] == grp3);
         EXPECT(grp3.parent() == grp);
+
+        //...to see if that fucks anything up
+        doc.reserveItems<>(2000);
 
         grp2.insertAbove(grp4);
         EXPECT(grp.children()[0] == grp4);
@@ -150,18 +155,18 @@ const Suite spec[] =
         EXPECT(!child.hasStroke());
         child.setFill(ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
         child.setStroke(ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
-        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
-        EXPECT(reinterpretEntity<ColorPaint>(child.stroke()).color() == ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
+        EXPECT(child.fill().get<ColorRGBA>() == ColorRGBA(1.0f, 0.5f, 0.3f, 1.0f));
+        EXPECT(child.stroke().get<ColorRGBA>() == ColorRGBA(1.0f, 0.0f, 0.75f, 1.0f));
         EXPECT(child.hasFill());
         EXPECT(child.hasStroke());
         Group grp = doc.createGroup();
         grp.addChild(child);
         grp.setFill(ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
-        EXPECT(reinterpretEntity<ColorPaint>(grp.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
-        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(grp.fill().get<ColorRGBA>() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(child.fill().get<ColorRGBA>() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
         child.removeFill();
         EXPECT(child.hasFill());
-        EXPECT(reinterpretEntity<ColorPaint>(child.fill()).color() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
+        EXPECT(child.fill().get<ColorRGBA>() == ColorRGBA(0.34f, 0.25f, 1.0f, 0.5f));
         grp.removeFill();
         EXPECT(!child.hasFill());
         EXPECT(!grp.hasFill());
@@ -276,7 +281,7 @@ const Suite spec[] =
         printf("WOOOP\n");
         Path p2 = p.clone();
         EXPECT(p2.name() == "yessaa");
-        EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
+        EXPECT(p2.stroke().get<ColorRGBA>() == ColorRGBA(1.0f, 0.5f, 0.75f, 0.75f));
         EXPECT(p2.parent() == grp);
         EXPECT(p2.segmentArray().count() == 2);
         EXPECT(p2.curveArray().count() == 1);
@@ -344,14 +349,14 @@ const Suite spec[] =
             printf("SVG:\n%s\n", svg.cString());
             auto svgdata = doc.parseSVG(svg);
             Path p = reinterpretEntity<Path>(svgdata.group().children()[0]);
-            EXPECT(reinterpretEntity<ColorPaint>(p.fill()).color() == ColorRGBA(1, 0, 0, 1));
-            auto s = reinterpretEntity<ColorPaint>(p.stroke()).color();
+            EXPECT(p.fill().get<ColorRGBA>() == ColorRGBA(1, 0, 0, 1));
+            auto s = p.stroke().get<ColorRGBA>();
             EXPECT(isClose(s.r, 51.0f / 255.0f) && isClose(s.g, 51.0f / 255.0f) && isClose(s.b, 51.0f / 255.0f));
             EXPECT(p.strokeWidth() == 2.0f);
             Path p2 = reinterpretEntity<Path>(svgdata.group().children()[1]);
-            auto & c2 = reinterpretEntity<ColorPaint>(p2.fill()).color();
+            auto & c2 = p2.fill().get<ColorRGBA>();
             EXPECT(isClose(c2.r, 66.0f / 255.0f) && isClose(c2.g, 134.0f / 255.0f) && isClose(c2.b, 244.0f / 255.0f));
-            EXPECT(reinterpretEntity<ColorPaint>(p2.stroke()).color() == ColorRGBA(0, 0, 0, 1));
+            EXPECT(p2.stroke().get<ColorRGBA>() == ColorRGBA(0, 0, 0, 1));
             EXPECT(p2.isScalingStroke() == false);
             EXPECT(isClose(p2.miterLimit(), 33.5f));
             EXPECT(isClose(p2.dashOffset(), 20.33f));
