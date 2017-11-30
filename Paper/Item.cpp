@@ -735,6 +735,12 @@ namespace paper
         return setFill(crunch::svgColor<ColorRGBA>(_name));
     }
 
+    void Item::setFill(const LinearGradient & _gradient)
+    {
+        set<comps::Fill>(_gradient);
+        removeComponentFromChildren<comps::Fill>(*this);
+    }
+
     void Item::removeFill()
     {
         removeComponent<comps::Fill>();
@@ -1087,7 +1093,7 @@ namespace paper
 
         return copy;
     }
-    
+
     static Item cloneImpl(const Item & _item)
     {
         //@TODO: add clone functions for symbols and documents

@@ -46,18 +46,11 @@ namespace paper
                     bHasFill = _item.hasFill();
                     if (bHasFill)
                     {
-                        Paint p = _item.fill();
-                        if (auto mb = p.maybe<ColorRGBA>())
-                        {
-                            fillColor = *mb;
-                        }
+                        fill = _item.fill();
                     }
                     if (_item.hasStroke())
                     {
-                        Paint p = _item.stroke();
-                        if (auto mb = p.maybe<ColorRGBA>())
-                            strokeColor = *mb;
-
+                        stroke = _item.stroke();
                         strokeWidth = _item.strokeWidth();
                         miterLimit = _item.miterLimit();
                         cap = _item.strokeCap();
@@ -68,14 +61,22 @@ namespace paper
                 }
 
                 bool bHasFill;
-                ColorRGBA fillColor;
-                ColorRGBA strokeColor;
+                Paint fill;
+                Paint stroke;
                 Float strokeWidth;
                 Float miterLimit;
                 StrokeCap cap;
                 StrokeJoin join;
                 DashArray dashArray;
                 Float dashOffset;
+            };
+
+            struct Texture
+            {
+                Texture();
+                ~Texture();
+
+                stick::UInt32 glTexture;
             };
 
             struct RenderCacheData
@@ -87,6 +88,7 @@ namespace paper
                 PathGeometryArray strokeBoundsVertices;
                 crunch::Mat4f transformProjection;
                 stick::UInt32 strokeVertexDrawMode;
+                Texture texture;
             };
 
             using RenderCache = brick::Component<ComponentName("RenderCache"), RenderCacheData>;
@@ -105,10 +107,10 @@ namespace paper
 
             RenderCacheData & updateRenderCache(const Path & _path, const PathStyle & _style, bool _bIsClipping);
 
-            const RenderCacheData & recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp,
+            RenderCacheData & recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp,
                     const PathStyle & _style, bool _bIsClipping);
 
-            const RenderCacheData & recursivelyDrawNonZeroPath(const Path & _path, const Mat4f * _tp,
+            RenderCacheData & recursivelyDrawNonZeroPath(const Path & _path, const Mat4f * _tp,
                     const PathStyle & _style, bool _bIsClipping);
 
             stick::Error recursivelyDrawStroke(const Path & _path, const Mat4f * _tp,
@@ -128,7 +130,16 @@ namespace paper
                                          const PathStyle & _style,
                                          bool _bIsClippingPath);
 
+
             stick::Error drawStroke(const Path & _path, const Mat4f * _tp, const PathStyle & _style, stick::UInt32 _clippingPlaneToTestAgainst);
+
+
+            stick::Error drawFilling(const Path & _path,
+                                     RenderCacheData & _cache,
+                                     const crunch::Mat4f * _tp,
+                                     const PathStyle & _style,
+                                     bool _bStroke);
+
 
             struct StencilPlanes
             {
@@ -138,8 +149,11 @@ namespace paper
             StencilPlanes prepareStencilPlanes(bool _bIsClippingPath);
 
             stick::UInt32 m_program;
+            stick::UInt32 m_programTexture;
             stick::UInt32 m_vao;
+            stick::UInt32 m_vaoTexture;
             stick::UInt32 m_vbo;
+            stick::UInt32 m_vboTexture;
             stick::UInt32 m_currentClipStencilPlane;
             stick::DynamicArray<Path> m_clippingMaskStack;
             bool m_bIsInitialized;

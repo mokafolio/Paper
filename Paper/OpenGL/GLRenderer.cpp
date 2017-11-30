@@ -59,6 +59,9 @@ exit(EXIT_FAILURE); \
 #define ASSERT_NO_GL_ERROR(_func) _func
 #endif
 
+//some settings
+#define PAPER_GL_RAMP_TEXTURE_SIZE 1024
+
 namespace paper
 {
     namespace opengl
@@ -87,6 +90,28 @@ namespace paper
             "void main() \n"
             "{ \n"
             "pixelColor = icol; \n"
+            "} \n";
+
+        static String vertexShaderCodeTexture =
+            "#version 150 \n"
+            "uniform mat4 transformProjection; \n"
+            "in vec2 vertex; \n"
+            "in float tc; \n"
+            "out float itc;\n"
+            "void main() \n"
+            "{ \n"
+            "gl_Position = transformProjection * vec4(vertex, 0.0, 1.0); \n"
+            "itc = tc; \n"
+            "} \n";
+
+        static String fragmentShaderCodeTexture =
+            "#version 150 \n"
+            "uniform sampler1D tex;\n"
+            "in float itc; \n"
+            "out vec4 pixelColor; \n"
+            "void main() \n"
+            "{ \n"
+            "pixelColor = texture(tex, itc); \n"
             "} \n";
 
         namespace detail
@@ -135,7 +160,7 @@ namespace paper
             return ret;
         }
 
-        static Error createProgram(const String & _vertexShader, const String & _fragmentShader, GLuint & _outHandle)
+        static Error createProgram(const String & _vertexShader, const String & _fragmentShader, bool _bTexProgram, GLuint & _outHandle)
         {
             GLuint vertexShader, fragmentShader;
             Error err = compileShader(_vertexShader, GL_VERTEX_SHADER, vertexShader);
@@ -146,7 +171,6 @@ namespace paper
             if (err) return err;
 
             GLuint program = glCreateProgram();
-
             ASSERT_NO_GL_ERROR(glAttachShader(program, vertexShader));
             ASSERT_NO_GL_ERROR(glAttachShader(program, fragmentShader));
 
@@ -160,6 +184,8 @@ namespace paper
             }*/
 
             ASSERT_NO_GL_ERROR(glBindAttribLocation(program, 0, "vertex"));
+            if (_bTexProgram)
+                ASSERT_NO_GL_ERROR(glBindAttribLocation(program, 1, "tc"));
 
             ASSERT_NO_GL_ERROR(glLinkProgram(program));
 
@@ -192,6 +218,101 @@ namespace paper
             }
 
             return err;
+        }
+
+        static ColorStopArray finalizeColorStops(const ColorStopArray & _stops)
+        {
+            ColorStopArray ret;
+            ret.reserve(_stops.count());
+
+            for (auto & stop : _stops)
+            {
+                bool bAdd = true;
+                for (auto & estop : ret)
+                {
+                    if (estop.offset == stop.offset)
+                    {
+                        bAdd = false;
+                        break;
+                    }
+                }
+                if (bAdd && stop.offset >= 0 && stop.offset <= 1)
+                {
+                    ret.append(stop);
+                }
+            }
+
+            std::sort(ret.begin(), ret.end(),
+            [](const ColorStop & _a, const ColorStop & _b) { return _a.offset < _b.offset; });
+
+            if (ret[0].offset != 0)
+                ret.insert(ret.begin(), {ret[0].color, 0});
+            if (ret.last().offset != 1)
+                ret.append({ret.last().color, 1});
+
+            return ret;
+        }
+
+        //assumes that the texture is already bound.
+        static void updateColorRampTexture(GLuint _texture, const ColorStopArray & _stops)
+        {
+            STICK_ASSERT(_stops.count());
+            ColorRGBA pixels[PAPER_GL_RAMP_TEXTURE_SIZE];
+            Int32 xStart = 0, xEnd = 0;
+            Int32 diff;
+            Float32 mixFact;
+            ColorRGBA mixColor;
+
+            const ColorStop * stop1 = &_stops[0];
+            pixels[0] = stop1->color;
+
+            for (Size i = 1; i < _stops.count(); ++i)
+            {
+                const ColorStop * stop2 = &_stops[i];
+                xEnd = (Int32)(stop2->offset * (PAPER_GL_RAMP_TEXTURE_SIZE - 1));
+
+                STICK_ASSERT(xStart >= 0 && xStart < PAPER_GL_RAMP_TEXTURE_SIZE &&
+                             xEnd >= 0 && xEnd < PAPER_GL_RAMP_TEXTURE_SIZE &&
+                             xStart <= xEnd);
+
+                diff = xEnd - xStart;
+                mixColor = stop2->color - stop1->color;
+                for (Size x = xStart + 1; x <= xEnd; ++x)
+                {
+                    Float fct = (Float)(x - xStart) / (Float)(diff);
+                    printf("FACT %f\n", fct);
+                    pixels[x] = stop1->color + mixColor * fct;
+                }
+                stop1 = stop2;
+                xStart = xEnd;
+            }
+
+            // for(Size i = 0; i < PAPER_GL_RAMP_TEXTURE_SIZE; ++i)
+            // {
+            //     // pixels[i] = ColorRGBA(i / (Float)PAPER_GL_RAMP_TEXTURE_SIZE, 0.0, 1.0, 1.0);
+            //     pixels[i] = _stops[0].color;
+            // }
+
+            ASSERT_NO_GL_ERROR(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+            ASSERT_NO_GL_ERROR(glTexSubImage1D(GL_TEXTURE_1D, 0, 0, PAPER_GL_RAMP_TEXTURE_SIZE,
+                                               GL_RGBA, GL_FLOAT, &pixels[0].r));
+        }
+
+        GLRenderer::Texture::Texture() :
+            glTexture(0)
+        {
+
+        }
+
+        GLRenderer::Texture::~Texture()
+        {
+            //@TODO: It's a little ugly to clean this up in the destructor
+            //as there is no way to guarantee that a gl context will be in place
+            //at that point. Maybe have an array of textures to be freed in the
+            //renderer that gets freed at the beginning of every render or in the
+            //destructor of GLRenderer
+            if (glTexture)
+                glDeleteTextures(1, &glTexture);
         }
 
         GLRenderer::GLRenderer() :
@@ -230,12 +351,15 @@ namespace paper
                 glDeleteProgram(m_program);
                 glDeleteBuffers(1, &m_vbo);
                 glDeleteVertexArrays(1, &m_vao);
+                glDeleteProgram(m_programTexture);
+                glDeleteBuffers(1, &m_vboTexture);
+                glDeleteVertexArrays(1, &m_vaoTexture);
             }
         }
 
         void GLRenderer::reserveItems(Size _count)
         {
-            if(m_document)
+            if (m_document)
             {
                 m_document.reserveItems<RenderCache>(_count);
             }
@@ -471,7 +595,7 @@ namespace paper
             return Error();
         }
 
-        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
+        GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawEvenOddPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
         {
             auto & cache = updateRenderCache(_path, _style, _bIsClipping);
             //@TODO: Cache the uniform loc
@@ -486,7 +610,7 @@ namespace paper
             return cache;
         }
 
-        const GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawNonZeroPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
+        GLRenderer::RenderCacheData & GLRenderer::recursivelyDrawNonZeroPath(const Path & _path, const Mat4f * _tp, const PathStyle & _style, bool _bIsClipping)
         {
             auto & cache = updateRenderCache(_path, _style, _bIsClipping);
             //NonZero winding rule needs to use Increment and Decrement stencil operations.
@@ -518,7 +642,7 @@ namespace paper
         Error GLRenderer::recursivelyDrawStroke(const Path & _path, const Mat4f * _tp,
                                                 const PathStyle & _style, UInt32 _clippingPlaneToTestAgainst)
         {
-            auto & cache = _style.bHasFill ? _path.get<RenderCache>() : updateRenderCache(_path, _style, false);
+            auto & cache = _style.bHasFill ? const_cast<RenderCacheData &>(_path.get<RenderCache>()) : updateRenderCache(_path, _style, false);
             ASSERT_NO_GL_ERROR(glColorMask(false, false, false, false));
             ASSERT_NO_GL_ERROR(glStencilFunc(m_bIsClipping ? GL_NOTEQUAL : GL_ALWAYS, 0, _clippingPlaneToTestAgainst));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
@@ -529,10 +653,9 @@ namespace paper
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
             ASSERT_NO_GL_ERROR(glStencilFunc(GL_EQUAL, 0, detail::StrokeRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT));
-            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.strokeBoundsVertices.count(), &cache.strokeBoundsVertices[0].x, GL_DYNAMIC_DRAW));
-            //@TODO: Cache the uniform loc
-            ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.strokeColor.ptr()));
-            ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+            drawFilling(_path, cache, _tp, _style, true);
+
             Error ret;
             for (auto & child : _path.children())
             {
@@ -565,13 +688,8 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilMask(detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
-            //@TODO: Cache the uniform loc
-            if (_path.children().count())
-                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, !_tp ? cache.transformProjection.ptr() : _tp->ptr()));
-            //@TODO: Cache the uniform loc
-            ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
-            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
-            ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+            drawFilling(_path, cache, _tp, _style, false);
 
             return Error();
         }
@@ -617,13 +735,89 @@ namespace paper
             ASSERT_NO_GL_ERROR(glStencilMask(detail::FillRasterStencilPlane));
             ASSERT_NO_GL_ERROR(glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO));
             ASSERT_NO_GL_ERROR(glColorMask(true, true, true, true));
-            //@TODO: Cache the uniform loc
-            ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, _style.fillColor.ptr()));
+
+            drawFilling(_path, cache, _tp, _style, false);
+
+            return Error();
+        }
+
+        struct TexVertex
+        {
+            Vec2f vertex;
+            Float32 tc;
+        };
+
+        Error GLRenderer::drawFilling(const Path & _path,
+                                      RenderCacheData & _cache,
+                                      const crunch::Mat4f * _tp,
+                                      const PathStyle & _style,
+                                      bool _bStroke)
+        {
             //@TODO: Cache the uniform loc
             if (_path.children().count())
-                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, _tp ? _tp->ptr() : cache.transformProjection.ptr()));
-            ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * cache.boundsVertices.count(), &cache.boundsVertices[0].x, GL_DYNAMIC_DRAW));
-            ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_program, "transformProjection"), 1, false, !_tp ? _cache.transformProjection.ptr() : _tp->ptr()));
+
+            const Paint * p = _bStroke ? &_style.stroke : &_style.fill;
+            const PathGeometryArray * boundsGeom = _bStroke ? &_cache.strokeBoundsVertices : &_cache.boundsVertices;
+
+            //Solid Fill
+            if (p->is<ColorRGBA>())
+            {
+                //@TODO: Cache the uniform loc
+                ASSERT_NO_GL_ERROR(glUniform4fv(glGetUniformLocation(m_program, "meshColor"), 1, p->get<ColorRGBA>().ptr()));
+                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2f) * boundsGeom->count(), &(*boundsGeom)[0].x, GL_DYNAMIC_DRAW));
+                ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+            }
+            //Linear Gradient
+            else if (p->is<LinearGradient>())
+            {
+                // const LinearGradient & g = p->get<LinearGradient>();
+                // Vec2f dir = normalize(g.destination() - g.origin());
+                // Vec2f perp(-dir.y, dir.x);
+                // PathGeometryArray geom;
+
+                const LinearGradient & grad = p->get<LinearGradient>();
+                if (!_cache.texture.glTexture)
+                {
+                    ASSERT_NO_GL_ERROR(glGenTextures(1, &_cache.texture.glTexture));
+                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, _cache.texture.glTexture));
+                    ASSERT_NO_GL_ERROR(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, PAPER_GL_RAMP_TEXTURE_SIZE, 0,
+                                                    GL_RGBA, GL_FLOAT, NULL));
+                    ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+                    ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+                }
+                else
+                {
+                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, _cache.texture.glTexture));
+                }
+
+                auto stops = finalizeColorStops(grad.stops());
+                printf("STOPS COUNT %lu\n", stops.count());
+                for (auto & stop : stops)
+                    printf("STOP %f, %f %f %f %f\n", stop.offset, stop.color.r, stop.color.g, stop.color.b, stop.color.a);
+                updateColorRampTexture(_cache.texture.glTexture, stops);
+
+                ASSERT_NO_GL_ERROR(glUseProgram(m_programTexture));
+                ASSERT_NO_GL_ERROR(glBindVertexArray(m_vaoTexture));
+                ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vboTexture));
+                ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_programTexture, "transformProjection"), 1, false, !_tp ? _cache.transformProjection.ptr() : _tp->ptr()));
+
+                auto & b = _path.bounds();
+                DynamicArray<TexVertex> tmp = 
+                {
+                    {b.topLeft(), 0},
+                    {b.bottomLeft(), 0},
+                    {b.topRight(), 1},
+                    {b.bottomRight(), 1},
+                };
+
+                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TexVertex) * 4, &tmp[0].vertex.x, GL_DYNAMIC_DRAW));
+                ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+                ASSERT_NO_GL_ERROR(glUseProgram(m_program));
+                ASSERT_NO_GL_ERROR(glBindVertexArray(m_vao));
+                ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
+            }
 
             return Error();
         }
@@ -639,7 +833,9 @@ namespace paper
         {
             if (!m_bIsInitialized)
             {
-                Error err = createProgram(vertexShaderCode, fragmentShaderCode, m_program);
+                Error err = createProgram(vertexShaderCode, fragmentShaderCode, false, m_program);
+                if (err) return err;
+                err = createProgram(vertexShaderCodeTexture, fragmentShaderCodeTexture, true, m_programTexture);
                 if (err) return err;
                 ASSERT_NO_GL_ERROR(glGenVertexArrays(1, &m_vao));
                 ASSERT_NO_GL_ERROR(glGenBuffers(1, &m_vbo));
@@ -647,10 +843,19 @@ namespace paper
                 ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
                 ASSERT_NO_GL_ERROR(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), ((char *)0)));
                 ASSERT_NO_GL_ERROR(glEnableVertexAttribArray(0));
+
+                ASSERT_NO_GL_ERROR(glGenVertexArrays(1, &m_vaoTexture));
+                ASSERT_NO_GL_ERROR(glGenBuffers(1, &m_vboTexture));
+                ASSERT_NO_GL_ERROR(glBindVertexArray(m_vaoTexture));
+                ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vboTexture));
+                ASSERT_NO_GL_ERROR(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), ((char *)0)));
+                ASSERT_NO_GL_ERROR(glEnableVertexAttribArray(0));
+                ASSERT_NO_GL_ERROR(glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), ((char *)(2 * sizeof(float)))));
+                ASSERT_NO_GL_ERROR(glEnableVertexAttribArray(1));
                 m_bIsInitialized = true;
             }
 
-            //TODO Record existing gl state, so we can return to it in finish drawing
+            //@TODO: Record existing gl state, so we can return to it in finish drawing
 
             ASSERT_NO_GL_ERROR(glDisable(GL_DEPTH_TEST));
             ASSERT_NO_GL_ERROR(glDepthMask(false));

@@ -170,6 +170,8 @@ namespace paper
 
         void setFill(const stick::String & _svgName);
 
+        void setFill(const LinearGradient & _gradient);
+
         void setRemeshOnTransformChange(bool _b);
 
         void removeFill();
