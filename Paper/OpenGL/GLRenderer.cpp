@@ -279,9 +279,7 @@ namespace paper
                 mixColor = stop2->color - stop1->color;
                 for (Size x = xStart + 1; x <= xEnd; ++x)
                 {
-                    Float fct = (Float)(x - xStart) / (Float)(diff);
-                    printf("FACT %f\n", fct);
-                    pixels[x] = stop1->color + mixColor * fct;
+                    pixels[x] = stop1->color + mixColor * (Float)(x - xStart) / (Float)(diff);
                 }
                 stop1 = stop2;
                 xStart = xEnd;
@@ -785,6 +783,7 @@ namespace paper
                                                     GL_RGBA, GL_FLOAT, NULL));
                     ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
                     ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+                    ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
                 }
                 else
                 {
@@ -792,9 +791,9 @@ namespace paper
                 }
 
                 auto stops = finalizeColorStops(grad.stops());
-                printf("STOPS COUNT %lu\n", stops.count());
-                for (auto & stop : stops)
-                    printf("STOP %f, %f %f %f %f\n", stop.offset, stop.color.r, stop.color.g, stop.color.b, stop.color.a);
+                // printf("STOPS COUNT %lu\n", stops.count());
+                // for (auto & stop : stops)
+                //     printf("STOP %f, %f %f %f %f\n", stop.offset, stop.color.r, stop.color.g, stop.color.b, stop.color.a);
                 updateColorRampTexture(_cache.texture.glTexture, stops);
 
                 ASSERT_NO_GL_ERROR(glUseProgram(m_programTexture));
@@ -802,13 +801,53 @@ namespace paper
                 ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vboTexture));
                 ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_programTexture, "transformProjection"), 1, false, !_tp ? _cache.transformProjection.ptr() : _tp->ptr()));
 
-                auto & b = _path.bounds();
-                DynamicArray<TexVertex> tmp = 
+                auto & bounds = _path.bounds();
+                // DynamicArray<TexVertex> tmp =
+                // {
+                //     {b.topLeft(), 0},
+                //     {b.bottomLeft(), 0},
+                //     {b.topRight(), 1},
+                //     {b.bottomRight(), 1},
+                // };
+
+                Vec2f dir = grad.destination() - grad.origin();
+                auto len = length(dir);
+                Vec2f ndir = dir / len;
+                Vec2f perp(-dir.y, dir.x);
+                Vec2f nperp = normalize(Vec2f(-ndir.y, ndir.x));
+
+                Vec2f center = grad.origin();
+                Vec2f corners[4] =
                 {
-                    {b.topLeft(), 0},
-                    {b.bottomLeft(), 0},
-                    {b.topRight(), 1},
-                    {b.bottomRight(), 1},
+                    bounds.topLeft() - center, bounds.topRight() - center,
+                    bounds.bottomLeft() - center, bounds.bottomRight() - center
+                };
+                Float o, s;
+                Float left, right;
+                Float minOffset, maxOffset;
+                for (int i = 0; i < 4; ++i)
+                {
+                    o = dot(corners[i], ndir) / len;
+                    s = dot(corners[i], nperp);
+
+                    if (o < minOffset || i == 0) minOffset = o;
+                    if (o > maxOffset || i == 0) maxOffset = o;
+
+                    if (i == 0 || s < left) left = s;
+                    if (i == 0 || s > right) right = s;
+                }
+
+                Vec2f ac = center + nperp * left; ac += ndir * minOffset * len;
+                Vec2f bc = center + nperp * right; bc += ndir * minOffset * len;
+                Vec2f cc = center + nperp * left; cc += ndir * maxOffset * len;
+                Vec2f dc = center + nperp * right; dc += ndir * maxOffset * len;
+
+                DynamicArray<TexVertex> tmp =
+                {
+                    {ac, minOffset},
+                    {cc, maxOffset},
+                    {bc, minOffset},
+                    {dc, maxOffset},
                 };
 
                 ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TexVertex) * 4, &tmp[0].vertex.x, GL_DYNAMIC_DRAW));

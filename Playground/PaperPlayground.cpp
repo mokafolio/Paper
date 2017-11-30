@@ -12,6 +12,7 @@
 #include <Paper/OpenGL/GLRenderer.hpp>
 
 #include <Crunch/Randomizer.hpp>
+#include <Crunch/MatrixFunc.hpp>
 
 #include <Stick/Thread.hpp>
 #include <Stick/FileUtilities.hpp>
@@ -50,30 +51,92 @@ int main(int _argc, const char * _args[])
         // create the opengl renderer for the document
         opengl::GLRenderer renderer(doc);
 
-        LinearGradient grad;
-        grad.setOrigin(Vec2f(200, 0));
-        grad.setDestination(Vec2f(100, 200));
-        grad.addStop(ColorRGBA(1.0, 0.0, 0.0, 1.0), 0.25);
-        grad.addStop(ColorRGBA(1.0, 1.0, 0.0, 1.0), 0.75);
 
-        Path circle = doc.createCircle(Vec2f(100, 100), 50);
-        circle.setFill(grad);
-        circle.setStroke(ColorRGBA(0.0, 0.0, 1.0, 1.0));
-        circle.setStrokeWidth(10.0);
+        Randomizer r;
+
+        LinearGradient grad;
+        grad.setOrigin(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
+        grad.setDestination(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
+        grad.addStop(ColorRGBA(1.0, 0.0, 0.0, 1.0), 0.25);
+
+        for(int i = 0; i < r.randomi(2, 10); ++i)
+        {
+            grad.addStop(ColorRGBA(r.randomf(0, 1), r.randomf(0, 1), r.randomf(0, 1), 1.0), r.randomf(0, 1));
+        }
+
+        // Path circle = doc.createCircle(Vec2f(400, 300), 50);
+        // circle.setFill(grad);
+        // circle.setStroke(ColorRGBA(0.0, 0.0, 1.0, 1.0));
+        // circle.setStrokeWidth(10.0);
         // circle.setFill("red");
 
+        Path circle = doc.createPath();
+        circle.setFill(grad);
 
-        // Vec2f dir = normalize(grad.destination() - grad.origin());
-        // Vec2f perp(-dir.y, dir.x);
-        // Line2f line(grad.origin(), dir);
-        // LineSegment2f segment(grad.origin(), grad.destination());
+        for(int i=0; i < 10; i++)
+        {
+            circle.addPoint(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
+        }
 
-        // auto angle = toDegrees(std::atan2(dir.y, dir.x));
-        // auto side = line.side(circle.position());
-        // printf("ANGLE %f SIDE %i\n", angle, side);
-        // Rect bounds = circle.bounds();
+        circle.smooth();
 
-        // LineSegment2f shifted = segment;
+
+        Vec2f dir = grad.destination() - grad.origin();
+        Vec2f ndir = normalize(dir);
+        Vec2f perp(-dir.y, dir.x);
+        Vec2f nperp(-ndir.y, ndir.x);
+        Float len = length(dir);
+        Line2f line(grad.origin(), dir);
+        LineSegment2f segment(grad.origin(), grad.destination());
+
+        auto angle = toDegrees(std::atan2(dir.y, dir.x));
+        auto side = line.side(circle.position());
+        printf("ANGLE %f SIDE %i\n", angle, side);
+        Rect bounds = circle.bounds();
+
+        // auto center = grad.origin();
+        // // auto d = dot(bounds.topLeft() - center, ndir) / len;
+        // // auto d2 = dot(bounds.topLeft() - center, nperp);
+        // // printf("DOT %f %f\n", d, d2);
+
+        // // auto d3 = dot(bounds.bottomLeft() - center, ndir) / len;
+        // // auto d4 = dot(bounds.bottomLeft() - center, nperp);
+
+        // // printf("DOT2 %f %f\n", d3, d4);
+        // Vec2f corners[4] =
+        // {
+        //     bounds.topLeft() - center, bounds.topRight() - center,
+        //     bounds.bottomLeft() - center, bounds.bottomRight() - center
+        // };
+        // Float o, s;
+        // Float left, right;
+        // Float minOffset, maxOffset;
+        // for (int i = 0; i < 4; ++i)
+        // {
+        //     o = dot(corners[i], ndir) / len;
+        //     s = dot(corners[i], nperp);
+
+        //     if (o < minOffset || i == 0) minOffset = o;
+        //     if (o > maxOffset || i == 0) maxOffset = o;
+
+        //     if (i == 0 || s < left) left = s;
+        //     if (i == 0 || s > right) right = s;
+        // }
+
+        // Vec2f ac = center + nperp * left; ac += ndir * minOffset * len;
+        // Vec2f bc = center + nperp * right; bc += ndir * minOffset * len;
+        // Vec2f cc = center + nperp * left; cc += ndir * maxOffset * len;
+        // Vec2f dc = center + nperp * right; dc += ndir * maxOffset * len;
+
+        // Path cp = doc.createPath();
+        // cp.setFill(ColorRGBA(1.0, 0.5, 0.1, 0.25));
+        // cp.addPoint(ac);
+        // cp.addPoint(bc);
+        // cp.addPoint(dc);
+        // cp.addPoint(cc);
+
+
+        LineSegment2f shifted = segment;
         // if (bounds.contains(grad.origin()) || bounds.contains(grad.destination()) ||
         //         intersect(bounds.leftSegment(), segment) ||
         //         intersect(bounds.topSegment(), segment) ||
@@ -85,8 +148,12 @@ int main(int _argc, const char * _args[])
         //     shifted = LineSegment2f(shifted.positionOne() + ddir * dig, shifted.positionTwo() + ddir * dig);
         // }
 
+        // Vec2f dir = grad.destination() - grad.origin();
+        // Vec2f perp2(-dir.y, dir.x);
+        // Vec2f center = grad.origin() + dir * len * 0.5;
+
+
         // Path rct = doc.createPath();
-        // Float len = length(grad.destination() - grad.origin());
         // Float dig = std::max(bounds.diagonal(), len)  * 0.5;
         // Vec2f a = bounds.center() - dir * dig + perp * dig;
         // Vec2f b = bounds.center() + dir * dig + perp * dig;
@@ -104,19 +171,31 @@ int main(int _argc, const char * _args[])
         // Path dest = doc.createCircle(grad.destination(), 3);
         // dest.setFill("blue");
 
-        // for (auto & stop : grad.stops())
-        // {
-        //     Path c = doc.createCircle(grad.origin() + dir * len * stop.offset , 3);
-        //     c.setFill(stop.color);
-        // }
+        for (auto & stop : grad.stops())
+        {
+            printf("OFF %f\n", stop.offset);
+            Path c = doc.createCircle(grad.origin() + dir * stop.offset , 3);
+            c.setFill(stop.color);
+            c.setStroke("black");
+        }
 
         // Path brect = doc.createRectangle(bounds.min(), bounds.max());
         // brect.setFill(ColorRGBA(0, 0, 0, 0.1));
+        // brect.rotate(toRadians(angle));
 
-        // Path shiftedPath = doc.createPath();
-        // shiftedPath.setStroke("black");
-        // shiftedPath.addPoint(shifted.positionOne());
-        // shiftedPath.addPoint(shifted.positionTwo());
+        Path shiftedPath = doc.createPath();
+        shiftedPath.setStroke("gray");
+        shiftedPath.addPoint(shifted.positionOne());
+        shiftedPath.addPoint(shifted.positionTwo());
+
+        // for (auto & stop : grad.stops())
+        // {
+        //     Path c = doc.createCircle(shifted.positionOne() + dir * len * stop.offset , 3);
+        //     c.setFill(stop.color);
+        // }
+
+        printf("INVERSE %s\n", crunch::toString(inverse(Mat3f::identity())).cString());
+
 
         // the main loop
         while (!glfwWindowShouldClose(window))
