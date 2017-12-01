@@ -32,6 +32,18 @@ namespace paper
     //     return ret;
     // }
 
+    LinearGradient Document::createLinearGradient(const Vec2f & _origin, const Vec2f & _destination,
+            const ColorStopArray & _stops)
+    {
+        STICK_ASSERT(Entity::hub());
+        LinearGradient ret = brick::createEntity<LinearGradient>(hub());
+        ret.set<comps::Origin>(_origin);
+        ret.set<comps::Destination>(_destination);
+        ret.set<comps::ColorStops>(_stops);
+        ret.set<comps::GradientDirtyFlags>(true, true);
+        return ret;
+    }
+
     Symbol Document::createSymbol(const Item & _item)
     {
         if (_item.parent().isValid())

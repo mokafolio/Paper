@@ -44,14 +44,6 @@ namespace paper
         Geometric
     };
 
-    STICK_API_ENUM_CLASS(PaintType)
-    {
-        None,
-        Color,
-        LinearGradient,
-        CircularGradient
-    };
-
     namespace detail
     {
         //@TODO: Adjust these for Float32 / Float64

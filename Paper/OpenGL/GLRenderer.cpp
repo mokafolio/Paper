@@ -739,12 +739,6 @@ namespace paper
             return Error();
         }
 
-        struct TexVertex
-        {
-            Vec2f vertex;
-            Float32 tc;
-        };
-
         Error GLRenderer::drawFilling(const Path & _path,
                                       RenderCacheData & _cache,
                                       const crunch::Mat4f * _tp,
@@ -774,11 +768,23 @@ namespace paper
                 // Vec2f perp(-dir.y, dir.x);
                 // PathGeometryArray geom;
 
+                Path path(_path);
                 const LinearGradient & grad = p->get<LinearGradient>();
-                if (!_cache.texture.glTexture)
+                GradientCacheData * gradientCache;
+                if (!_path.hasComponent<GradientCache>())
                 {
-                    ASSERT_NO_GL_ERROR(glGenTextures(1, &_cache.texture.glTexture));
-                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, _cache.texture.glTexture));
+                    path.set<GradientCache>(GradientCacheData());
+                    gradientCache = &path.get<GradientCache>();
+                    gradientCache->vertices.resize(4);
+                }
+                else
+                {
+                     gradientCache = &path.get<GradientCache>();
+                }
+                if (!gradientCache->texture.glTexture)
+                {
+                    ASSERT_NO_GL_ERROR(glGenTextures(1, &gradientCache->texture.glTexture));
+                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, gradientCache->texture.glTexture));
                     ASSERT_NO_GL_ERROR(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, PAPER_GL_RAMP_TEXTURE_SIZE, 0,
                                                     GL_RGBA, GL_FLOAT, NULL));
                     ASSERT_NO_GL_ERROR(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
@@ -787,70 +793,66 @@ namespace paper
                 }
                 else
                 {
-                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, _cache.texture.glTexture));
+                    ASSERT_NO_GL_ERROR(glBindTexture(GL_TEXTURE_1D, gradientCache->texture.glTexture));
                 }
 
-                auto stops = finalizeColorStops(grad.stops());
-                // printf("STOPS COUNT %lu\n", stops.count());
-                // for (auto & stop : stops)
-                //     printf("STOP %f, %f %f %f %f\n", stop.offset, stop.color.r, stop.color.g, stop.color.b, stop.color.a);
-                updateColorRampTexture(_cache.texture.glTexture, stops);
+                auto dirtyFlags = grad.get<comps::GradientDirtyFlags>();
+                if (dirtyFlags.bStopsDirty)
+                {
+                    dirtyFlags.bStopsDirty = false;
+                    auto stops = finalizeColorStops(grad.stops());
+                    updateColorRampTexture(gradientCache->texture.glTexture, stops);
+                }
+
+                if (dirtyFlags.bGeometryDirty)
+                {
+                    dirtyFlags.bGeometryDirty = false;
+
+                    auto & bounds = path.bounds();
+                    Vec2f dir = grad.destination() - grad.origin();
+                    auto len = length(dir);
+                    Vec2f ndir = dir / len;
+                    Vec2f perp(-dir.y, dir.x);
+                    Vec2f nperp = normalize(Vec2f(-ndir.y, ndir.x));
+
+                    Vec2f center = grad.origin();
+                    Vec2f corners[4] =
+                    {
+                        bounds.topLeft() - center, bounds.topRight() - center,
+                        bounds.bottomLeft() - center, bounds.bottomRight() - center
+                    };
+                    Float o, s;
+                    Float left, right;
+                    Float minOffset, maxOffset;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        o = dot(corners[i], ndir) / len;
+                        s = dot(corners[i], nperp);
+
+                        if (o < minOffset || i == 0) minOffset = o;
+                        if (o > maxOffset || i == 0) maxOffset = o;
+
+                        if (i == 0 || s < left) left = s;
+                        if (i == 0 || s > right) right = s;
+                    }
+
+                    Vec2f ac = center + nperp * left; ac += ndir * minOffset * len;
+                    Vec2f bc = center + nperp * right; bc += ndir * minOffset * len;
+                    Vec2f cc = center + nperp * left; cc += ndir * maxOffset * len;
+                    Vec2f dc = center + nperp * right; dc += ndir * maxOffset * len;
+
+                    gradientCache->vertices[0] = {ac, minOffset};
+                    gradientCache->vertices[1] = {cc, maxOffset};
+                    gradientCache->vertices[2] = {bc, minOffset};
+                    gradientCache->vertices[3] = {dc, maxOffset};
+                }
 
                 ASSERT_NO_GL_ERROR(glUseProgram(m_programTexture));
                 ASSERT_NO_GL_ERROR(glBindVertexArray(m_vaoTexture));
                 ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vboTexture));
                 ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_programTexture, "transformProjection"), 1, false, !_tp ? _cache.transformProjection.ptr() : _tp->ptr()));
 
-                auto & bounds = _path.bounds();
-                // DynamicArray<TexVertex> tmp =
-                // {
-                //     {b.topLeft(), 0},
-                //     {b.bottomLeft(), 0},
-                //     {b.topRight(), 1},
-                //     {b.bottomRight(), 1},
-                // };
-
-                Vec2f dir = grad.destination() - grad.origin();
-                auto len = length(dir);
-                Vec2f ndir = dir / len;
-                Vec2f perp(-dir.y, dir.x);
-                Vec2f nperp = normalize(Vec2f(-ndir.y, ndir.x));
-
-                Vec2f center = grad.origin();
-                Vec2f corners[4] =
-                {
-                    bounds.topLeft() - center, bounds.topRight() - center,
-                    bounds.bottomLeft() - center, bounds.bottomRight() - center
-                };
-                Float o, s;
-                Float left, right;
-                Float minOffset, maxOffset;
-                for (int i = 0; i < 4; ++i)
-                {
-                    o = dot(corners[i], ndir) / len;
-                    s = dot(corners[i], nperp);
-
-                    if (o < minOffset || i == 0) minOffset = o;
-                    if (o > maxOffset || i == 0) maxOffset = o;
-
-                    if (i == 0 || s < left) left = s;
-                    if (i == 0 || s > right) right = s;
-                }
-
-                Vec2f ac = center + nperp * left; ac += ndir * minOffset * len;
-                Vec2f bc = center + nperp * right; bc += ndir * minOffset * len;
-                Vec2f cc = center + nperp * left; cc += ndir * maxOffset * len;
-                Vec2f dc = center + nperp * right; dc += ndir * maxOffset * len;
-
-                DynamicArray<TexVertex> tmp =
-                {
-                    {ac, minOffset},
-                    {cc, maxOffset},
-                    {bc, minOffset},
-                    {dc, maxOffset},
-                };
-
-                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TexVertex) * 4, &tmp[0].vertex.x, GL_DYNAMIC_DRAW));
+                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TextureVertex) * 4, &gradientCache->vertices[0].vertex.x, GL_DYNAMIC_DRAW));
                 ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
                 ASSERT_NO_GL_ERROR(glUseProgram(m_program));

@@ -118,6 +118,7 @@ namespace paper
 
     void Segment::transform(const Mat3f & _transform)
     {
+        //@TODO remove all of these isnan asserts eventually? :D
         STICK_ASSERT(!std::isnan(m_handleIn.x));
         STICK_ASSERT(!std::isnan(m_handleIn.y));
         STICK_ASSERT(!std::isnan(m_handleOut.x));

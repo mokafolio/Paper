@@ -54,12 +54,10 @@ int main(int _argc, const char * _args[])
 
         Randomizer r;
 
-        LinearGradient grad;
-        grad.setOrigin(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
-        grad.setDestination(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
-        grad.addStop(ColorRGBA(1.0, 0.0, 0.0, 1.0), 0.25);
-
-        for(int i = 0; i < r.randomi(2, 10); ++i)
+        LinearGradient grad = doc.createLinearGradient(Vec2f(r.randomf(100, 700), r.randomf(100, 500)),
+                              Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
+        
+        for (int i = 0; i < r.randomi(2, 10); ++i)
         {
             grad.addStop(ColorRGBA(r.randomf(0, 1), r.randomf(0, 1), r.randomf(0, 1), 1.0), r.randomf(0, 1));
         }
@@ -73,12 +71,14 @@ int main(int _argc, const char * _args[])
         Path circle = doc.createPath();
         circle.setFill(grad);
 
-        for(int i=0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
             circle.addPoint(Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
         }
 
         circle.smooth();
+
+        // circle.rotate(Constants<Float32>::pi() * 0.25);
 
 
         Vec2f dir = grad.destination() - grad.origin();

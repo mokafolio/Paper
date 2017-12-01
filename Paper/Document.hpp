@@ -35,6 +35,9 @@ namespace paper
 
         // ColorPaint createColorPaint(const ColorRGBA & _color);
 
+        LinearGradient createLinearGradient(const Vec2f & _origin, const Vec2f & _destination,
+                                            const ColorStopArray & _stops = ColorStopArray());
+
         Symbol createSymbol(const Item & _item);
 
         Group createGroup(const stick::String & _name = "");

@@ -31,6 +31,12 @@ namespace paper
 
             using PathArray = stick::DynamicArray<Path>;
             using PathGeometryArray = stick::DynamicArray<Vec2f>;
+            struct TextureVertex
+            {
+                Vec2f vertex;
+                Float textureCoord;
+            };
+            using TextureGeometryArray = stick::DynamicArray<TextureVertex>;
 
             struct PathStyle
             {
@@ -79,6 +85,12 @@ namespace paper
                 stick::UInt32 glTexture;
             };
 
+            struct GradientCacheData
+            {
+                Texture texture;
+                TextureGeometryArray vertices;
+            };
+
             struct RenderCacheData
             {
                 PathGeometryArray fillVertices;
@@ -88,10 +100,10 @@ namespace paper
                 PathGeometryArray strokeBoundsVertices;
                 crunch::Mat4f transformProjection;
                 stick::UInt32 strokeVertexDrawMode;
-                Texture texture;
             };
 
             using RenderCache = brick::Component<ComponentName("RenderCache"), RenderCacheData>;
+            using GradientCache = brick::Component<ComponentName("GradientCache"), GradientCacheData>;
 
             //these have to be implemented
             stick::Error drawPath(const Path & _path, const Mat3f * _transform) override;

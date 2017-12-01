@@ -45,33 +45,53 @@ namespace paper
     //     return brick::reinterpretEntity<ColorPaint>(Paint::clone());
     // }
 
-    void LinearGradient::setOrigin(const Vec2f & _position)
+    void BaseGradient::setOrigin(const Vec2f & _position)
     {
-        m_origin = _position;
+        set<comps::Origin>(_position);
+        markGeometryDirty();
     }
 
-    void LinearGradient::setDestination(const Vec2f & _position)
+    void BaseGradient::setDestination(const Vec2f & _position)
     {
-        m_destination = _position;
+        set<comps::Destination>(_position);
+        markGeometryDirty();
     }
 
-    void LinearGradient::addStop(const ColorRGBA & _color, Float _offset)
+    void BaseGradient::setOriginAndDestination(const Vec2f & _orig, const Vec2f & _dest)
     {
-        m_stops.append({_color, _offset});
+        set<comps::Origin>(_orig);
+        set<comps::Destination>(_dest);
+        markGeometryDirty();
     }
 
-    const Vec2f & LinearGradient::origin() const
+    void BaseGradient::addStop(const ColorRGBA & _color, Float _offset)
     {
-        return m_origin;
+        get<comps::ColorStops>().append({_color, _offset});
+        markStopsDirty();
     }
 
-    const Vec2f & LinearGradient::destination() const
+    const Vec2f & BaseGradient::origin() const
     {
-        return m_destination;
+        return get<comps::Origin>();
     }
 
-    const ColorStopArray & LinearGradient::stops() const
+    const Vec2f & BaseGradient::destination() const
     {
-        return m_stops;
+        return get<comps::Destination>();
+    }
+
+    const ColorStopArray & BaseGradient::stops() const
+    {
+        return get<comps::ColorStops>();
+    }
+
+    void BaseGradient::markStopsDirty()
+    {
+        get<comps::GradientDirtyFlags>().bStopsDirty = true;
+    }
+
+    void BaseGradient::markGeometryDirty()
+    {
+        get<comps::GradientDirtyFlags>().bGeometryDirty = true;
     }
 }

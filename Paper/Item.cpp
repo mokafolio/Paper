@@ -370,6 +370,32 @@ namespace paper
         applyTransform(mat);
     }
 
+    namespace detail
+    {
+        void transformGradient(BaseGradient & _grad, const Mat3f & _transform)
+        {
+            Vec2f origin = _transform * _grad.origin();
+            Vec2f dest = _transform * _grad.destination();
+            _grad.setOriginAndDestination(origin, dest);
+        }
+
+        template<class PT>
+        void transformPaint(Item & _item, const Mat3f & _transform)
+        {
+            if (auto mpaint = _item.maybe<PT>())
+            {
+                if ((*mpaint).template is<LinearGradient>())
+                {
+                    detail::transformGradient((*mpaint).template get<LinearGradient>(), _transform);
+                }
+                else if ((*mpaint).template is<RadialGradient>())
+                {
+                    detail::transformGradient((*mpaint).template get<RadialGradient>(), _transform);
+                }
+            }
+        }
+    }
+
     void Item::applyTransform(const Mat3f & _transform, bool _bNotifyParent)
     {
         auto itemType = get<comps::ItemType>();
@@ -378,6 +404,9 @@ namespace paper
             Path p = brick::reinterpretEntity<Path>(*this);
             p.applyTransform(_transform);
         }
+
+        detail::transformPaint<comps::Fill>(*this, _transform);
+        detail::transformPaint<comps::Stroke>(*this, _transform);
 
         markGeometryDirty(true);
         markBoundsDirty(_bNotifyParent);
@@ -757,14 +786,15 @@ namespace paper
         set<comps::WindingRule>(_rule);
     }
 
-    Paint Item::fill() const
+    const Paint & Item::fill() const
     {
         auto ret = findComponent<comps::Fill>();
         if (ret)
         {
             return *ret;
         }
-        return Paint();
+        static NoPaint s_noPaint;
+        return s_noPaint;
     }
 
     Float Item::fillOpacity() const
@@ -783,16 +813,15 @@ namespace paper
         return 1.0; //should this be zero?
     }
 
-    Paint Item::stroke() const
+    const Paint & Item::stroke() const
     {
         auto ret = findComponent<comps::Stroke>();
         if (ret)
         {
             return *ret;
         }
-        // static ColorRGBA s_colorProxy(0.0, 0.0, 0.0, 1.0);
-        // return s_colorProxy;
-        return Paint();
+        static NoPaint s_noPaint;
+        return s_noPaint;
     }
 
     const DashArray & Item::dashArray() const

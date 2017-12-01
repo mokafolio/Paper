@@ -9,12 +9,6 @@
 
 namespace paper
 {
-    namespace comps
-    {
-        using PaintColor = brick::Component<ComponentName("PaintColor"), ColorRGBA>;
-        using PaintType = brick::Component<ComponentName("PaintType"), PaintType>;
-    }
-
     // @TODO: Reconsider if paints should be entities or simple self contained types:
     // The advantage of having them as entities is that it fits quite nicely into the
     // workflow/api of the rest of the codebase.
@@ -76,16 +70,29 @@ namespace paper
 
     using ColorStopArray = stick::DynamicArray<ColorStop>;
 
-    class STICK_API LinearGradient
+
+    namespace comps
+    {
+        using Origin = brick::Component<ComponentName("Origin"), Vec2f>;
+        using Destination = brick::Component<ComponentName("Destination"), Vec2f>;
+        using ColorStops = brick::Component<ComponentName("ColorStops"), ColorStopArray>;
+        struct STICK_LOCAL GradientDirtyFlagsData
+        {
+            bool bStopsDirty;
+            bool bGeometryDirty;
+        };
+        using  GradientDirtyFlags = brick::Component<ComponentName("GradientDirtyFlags"), GradientDirtyFlagsData>;
+    }
+
+    class STICK_API BaseGradient : public brick::SharedTypedEntity
     {
     public:
-
-        static constexpr PaintType paintType = PaintType::LinearGradient;
-
 
         void setOrigin(const Vec2f & _position);
 
         void setDestination(const Vec2f & _position);
+
+        void setOriginAndDestination(const Vec2f & _orig, const Vec2f & _dest);
 
         void addStop(const ColorRGBA & _color, Float _offset);
 
@@ -96,15 +103,23 @@ namespace paper
 
         const ColorStopArray & stops() const;
 
-    private:
+    protected:
 
-        Vec2f m_origin;
-        Vec2f m_destination;
-        ColorStopArray m_stops;
+        void markStopsDirty();
+
+        void markGeometryDirty();
     };
 
-    struct STICK_API NoPaint{};
-    using Paint = stick::Variant<NoPaint, ColorRGBA, LinearGradient>;
+    class STICK_API LinearGradient : public BaseGradient
+    {
+    };
+
+    class STICK_API RadialGradient : public BaseGradient
+    {
+    };
+
+    struct STICK_API NoPaint {};
+    using Paint = stick::Variant<NoPaint, ColorRGBA, LinearGradient, RadialGradient>;
 }
 
 #endif //PAPER_PAINT_HPP

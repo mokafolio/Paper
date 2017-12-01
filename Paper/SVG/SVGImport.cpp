@@ -387,7 +387,7 @@ namespace paper
                 _attr.fillColor.a = toFloat32(_value);
                 if(auto mf = _item.fill().maybe<ColorRGBA>())
                 {
-                    (*mf).a = _attr.fillColor.a;
+                    _item.setFill(ColorRGBA((*mf).r, (*mf).g, (*mf).b, (*mf).a));
                 }
             }
             else if (_name == "fill-rule")
@@ -422,7 +422,7 @@ namespace paper
                 _attr.strokeColor.a = toFloat32(_value);
                 if(auto mf = _item.stroke().maybe<ColorRGBA>())
                 {
-                    (*mf).a = _attr.strokeColor.a;
+                    _item.setStroke(ColorRGBA((*mf).r, (*mf).g, (*mf).b, _attr.strokeColor.a));
                 }
             }
             else if (_name == "stroke-width")
