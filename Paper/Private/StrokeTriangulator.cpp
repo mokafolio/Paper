@@ -1,7 +1,5 @@
 #include <Paper/Private/StrokeTriangulator.hpp>
 
-#include <Crunch/StringConversion.hpp>
-
 namespace paper
 {
     namespace detail

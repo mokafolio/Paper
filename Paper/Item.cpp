@@ -786,15 +786,14 @@ namespace paper
         set<comps::WindingRule>(_rule);
     }
 
-    const Paint & Item::fill() const
+    Paint Item::fill() const
     {
         auto ret = findComponent<comps::Fill>();
         if (ret)
         {
             return *ret;
         }
-        static NoPaint s_noPaint;
-        return s_noPaint;
+        return NoPaint();
     }
 
     Float Item::fillOpacity() const
@@ -813,15 +812,14 @@ namespace paper
         return 1.0; //should this be zero?
     }
 
-    const Paint & Item::stroke() const
+    Paint Item::stroke() const
     {
         auto ret = findComponent<comps::Stroke>();
         if (ret)
         {
             return *ret;
         }
-        static NoPaint s_noPaint;
-        return s_noPaint;
+        return NoPaint();
     }
 
     const DashArray & Item::dashArray() const

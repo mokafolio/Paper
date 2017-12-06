@@ -775,12 +775,12 @@ namespace paper
                 {
                     path.set<GradientCache>(GradientCacheData());
                     gradientCache = &path.get<GradientCache>();
-                    gradientCache->vertices.resize(4);
                 }
                 else
                 {
-                     gradientCache = &path.get<GradientCache>();
+                    gradientCache = &path.get<GradientCache>();
                 }
+
                 if (!gradientCache->texture.glTexture)
                 {
                     ASSERT_NO_GL_ERROR(glGenTextures(1, &gradientCache->texture.glTexture));
@@ -841,10 +841,11 @@ namespace paper
                     Vec2f cc = center + nperp * left; cc += ndir * maxOffset * len;
                     Vec2f dc = center + nperp * right; dc += ndir * maxOffset * len;
 
-                    gradientCache->vertices[0] = {ac, minOffset};
-                    gradientCache->vertices[1] = {cc, maxOffset};
-                    gradientCache->vertices[2] = {bc, minOffset};
-                    gradientCache->vertices[3] = {dc, maxOffset};
+                    _cache.textureVertices.resize(4);
+                    _cache.textureVertices[0] = {ac, minOffset};
+                    _cache.textureVertices[1] = {cc, maxOffset};
+                    _cache.textureVertices[2] = {bc, minOffset};
+                    _cache.textureVertices[3] = {dc, maxOffset};
                 }
 
                 ASSERT_NO_GL_ERROR(glUseProgram(m_programTexture));
@@ -852,7 +853,7 @@ namespace paper
                 ASSERT_NO_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, m_vboTexture));
                 ASSERT_NO_GL_ERROR(glUniformMatrix4fv(glGetUniformLocation(m_programTexture, "transformProjection"), 1, false, !_tp ? _cache.transformProjection.ptr() : _tp->ptr()));
 
-                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TextureVertex) * 4, &gradientCache->vertices[0].vertex.x, GL_DYNAMIC_DRAW));
+                ASSERT_NO_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(TextureVertex) * 4, &_cache.textureVertices[0].vertex.x, GL_DYNAMIC_DRAW));
                 ASSERT_NO_GL_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
                 ASSERT_NO_GL_ERROR(glUseProgram(m_program));

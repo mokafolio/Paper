@@ -78,6 +78,10 @@ int main(int _argc, const char * _args[])
 
         circle.smooth();
 
+
+        Path c2 = doc.createCircle(Vec2f(100, 100), 100);
+        c2.setFill(grad);
+
         // circle.rotate(Constants<Float32>::pi() * 0.25);
 
 

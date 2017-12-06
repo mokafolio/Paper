@@ -200,9 +200,9 @@ namespace paper
 
         bool isScalingStroke() const;
 
-        const Paint & fill() const;
+        Paint fill() const;
 
-        const Paint & stroke() const;
+        Paint stroke() const;
 
         bool hasStroke() const;
 

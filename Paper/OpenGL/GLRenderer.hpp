@@ -88,7 +88,6 @@ namespace paper
             struct GradientCacheData
             {
                 Texture texture;
-                TextureGeometryArray vertices;
             };
 
             struct RenderCacheData
@@ -100,6 +99,7 @@ namespace paper
                 PathGeometryArray strokeBoundsVertices;
                 crunch::Mat4f transformProjection;
                 stick::UInt32 strokeVertexDrawMode;
+                TextureGeometryArray textureVertices;
             };
 
             using RenderCache = brick::Component<ComponentName("RenderCache"), RenderCacheData>;
