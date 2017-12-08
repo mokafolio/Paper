@@ -82,13 +82,27 @@ namespace paper
         return ret;
     }
 
+    Path Document::createPathFromSVGData(const String & _svgData, const String _name)
+    {
+        Path ret = createPath(_name);
+        svg::SVGImport::parsePathData(*this, ret, _svgData);
+        return ret;
+    }
+
     Path Document::createEllipse(Vec2f _center, Vec2f _size, const String & _name)
     {
         static Float s_kappa = detail::PaperConstants::kappa();
-        static Vec2f s_unitSegments[12] = { Vec2f(1, 0), Vec2f(0, -s_kappa), Vec2f(0, s_kappa),
-                                            Vec2f(0, 1), Vec2f(s_kappa, 0), Vec2f(-s_kappa, 0),
-                                            Vec2f(-1, 0), Vec2f(0, s_kappa), Vec2f(0, -s_kappa),
-                                            Vec2f(0, -1), Vec2f(-s_kappa, 0), Vec2f(s_kappa, 0)
+        // static Vec2f s_unitSegments[12] = { Vec2f(1, 0), Vec2f(0, -s_kappa), Vec2f(0, s_kappa),
+        //                                     Vec2f(0, 1), Vec2f(s_kappa, 0), Vec2f(-s_kappa, 0),
+        //                                     Vec2f(-1, 0), Vec2f(0, s_kappa), Vec2f(0, -s_kappa),
+        //                                     Vec2f(0, -1), Vec2f(-s_kappa, 0), Vec2f(s_kappa, 0)
+        //                                   };
+
+        //Original paper values, don't conform with SVG though :(
+        static Vec2f s_unitSegments[12] = { Vec2f(-1, 0), Vec2f(0, s_kappa), Vec2f(0, -s_kappa),
+                                            Vec2f(0, -1), Vec2f(-s_kappa, 0), Vec2f(s_kappa, 0),
+                                            Vec2f(1, 0), Vec2f(0, -s_kappa), Vec2f(0, s_kappa),
+                                            Vec2f(0, 1), Vec2f(s_kappa, 0), Vec2f(-s_kappa, 0)
                                           };
         Path ret = createPath(_name);
         Vec2f rad = _size * 0.5;

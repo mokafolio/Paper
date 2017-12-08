@@ -385,7 +385,7 @@ namespace paper
             else if (_name == "fill-opacity")
             {
                 _attr.fillColor.a = toFloat32(_value);
-                if(auto mf = _item.fill().maybe<ColorRGBA>())
+                if (auto mf = _item.fill().maybe<ColorRGBA>())
                 {
                     _item.setFill(ColorRGBA((*mf).r, (*mf).g, (*mf).b, (*mf).a));
                 }
@@ -420,7 +420,7 @@ namespace paper
             else if (_name == "stroke-opacity")
             {
                 _attr.strokeColor.a = toFloat32(_value);
-                if(auto mf = _item.stroke().maybe<ColorRGBA>())
+                if (auto mf = _item.stroke().maybe<ColorRGBA>())
                 {
                     _item.setStroke(ColorRGBA((*mf).r, (*mf).g, (*mf).b, _attr.strokeColor.a));
                 }
@@ -973,189 +973,371 @@ namespace paper
             return toPixels(coord.value, coord.units, _start, _length);
         }
 
+        void SVGImport::parsePathData(Document & _doc, Path _path, const String & _data)
+        {
+            DynamicArray<Float> numbers(_doc.allocator());
+            auto end = _data.end();
+            auto it = detail::skipWhitespaceAndCommas(_data.begin(), end);
+            Path currentPath = _path;
+            Vec2f last;
+            Vec2f lastHandle;
+            do
+            {
+                char cmd = *it;
+                //auto tend = advanceToNextCommand(it + 1, end);
+                ++it;
+                it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
+
+                // STICK_ASSERT(it == tend);
+                if (cmd == 'M' || cmd == 'm')
+                {
+                    if (currentPath.segmentArray().count())
+                    {
+                        Path tmp = _doc.createPath();
+                        currentPath.addChild(tmp);
+                        currentPath = tmp;
+                    }
+
+                    bool bRelative = cmd == 'm';
+                    for (int i = 0; i < numbers.count(); i += 2)
+                    {
+                        if (bRelative)
+                            last = last + Vec2f(numbers[i], numbers[i + 1]);
+                        else
+                            last = Vec2f(numbers[i], numbers[i + 1]);
+                        currentPath.addPoint(last);
+                    }
+                    lastHandle = last;
+                }
+                else if (cmd == 'L' || cmd == 'l')
+                {
+                    bool bRelative = cmd == 'l';
+                    for (int i = 0; i < numbers.count(); i += 2)
+                    {
+                        if (bRelative)
+                            last = last + Vec2f(numbers[i], numbers[i + 1]);
+                        else
+                            last = Vec2f(numbers[i], numbers[i + 1]);
+                        currentPath.addPoint(last);
+                    }
+                    lastHandle = last;
+                }
+                else if (cmd == 'H' || cmd == 'h' || cmd == 'V' || cmd == 'v')
+                {
+                    bool bRelative = cmd == 'h' || cmd == 'v';
+                    bool bVert = cmd == 'V' || cmd == 'v';
+                    for (int i = 0; i < numbers.count(); ++i)
+                    {
+                        if (bVert)
+                        {
+                            if (bRelative)
+                                last.y = last.y + numbers[i];
+                            else
+                                last.y = numbers[i];
+                        }
+                        else
+                        {
+                            if (bRelative)
+                                last.x = last.x + numbers[i];
+                            else
+                                last.x = numbers[i];
+                        }
+                        currentPath.addPoint(last);
+                    }
+                    lastHandle = last;
+                }
+                else if (cmd == 'C' || cmd == 'c')
+                {
+                    bool bRelative = cmd == 'c';
+                    Vec2f start = last;
+                    for (int i = 0; i < numbers.count(); i += 6)
+                    {
+                        if (!bRelative)
+                        {
+                            last = Vec2f(numbers[i + 4], numbers[i + 5]);
+                            lastHandle = Vec2f(numbers[i + 2], numbers[i + 3]);
+                            currentPath.cubicCurveTo(Vec2f(numbers[i], numbers[i + 1]),
+                                                     lastHandle,
+                                                     last);
+                        }
+                        else
+                        {
+                            last = start + Vec2f(numbers[i + 4], numbers[i + 5]);
+                            lastHandle = Vec2f(start.x + numbers[i + 2], start.y + numbers[i + 3]);
+                            currentPath.cubicCurveTo(Vec2f(start.x + numbers[i], start.y + numbers[i + 1]),
+                                                     lastHandle,
+                                                     last);
+                        }
+                    }
+                }
+                else if (cmd == 'S' || cmd == 's')
+                {
+                    bool bRelative = cmd == 's';
+                    Vec2f start = last;
+                    for (int i = 0; i < numbers.count(); i += 4)
+                    {
+
+                        Vec2f nextLast, nextHandle;
+                        if (!bRelative)
+                        {
+                            nextLast = Vec2f(numbers[i + 2], numbers[i + 3]);
+                            nextHandle = Vec2f(numbers[i], numbers[i + 1]);
+                        }
+                        else
+                        {
+                            nextLast = start + Vec2f(numbers[i + 2], numbers[i + 3]);
+                            nextHandle = start + Vec2f(numbers[i], numbers[i + 1]);
+                        }
+                        currentPath.cubicCurveTo(detail::reflect(lastHandle, last), nextHandle, nextLast);
+                        lastHandle = nextHandle;
+                        last = nextLast;
+                    }
+                }
+                else if (cmd == 'Q' || cmd == 'q')
+                {
+                    bool bRelative = cmd == 'q';
+                    Vec2f start = last;
+                    for (int i = 0; i < numbers.count(); i += 4)
+                    {
+                        if (!bRelative)
+                        {
+                            last = Vec2f(numbers[i + 2], numbers[i + 3]);
+                            lastHandle = Vec2f(numbers[i], numbers[i + 1]);
+                        }
+                        else
+                        {
+                            last = start + Vec2f(numbers[i + 2], numbers[i + 3]);
+                            lastHandle = start + Vec2f(numbers[i], numbers[i + 1]);
+                        }
+                        currentPath.quadraticCurveTo(lastHandle, last);
+                    }
+                }
+                else if (cmd == 'T' || cmd == 't')
+                {
+                    bool bRelative = cmd == 't';
+                    Vec2f start = last;
+                    for (int i = 0; i < numbers.count(); i += 2)
+                    {
+                        Vec2f nextLast = !bRelative ? Vec2f(numbers[i], numbers[i + 1]) : start + Vec2f(numbers[i], numbers[i + 1]);
+                        lastHandle = detail::reflect(lastHandle, last);
+                        currentPath.quadraticCurveTo(lastHandle, nextLast);
+                        last = nextLast;
+                    }
+                }
+                else if (cmd == 'A' || cmd == 'a')
+                {
+                    bool bRelative = cmd == 'a';
+                    for (int i = 0; i < numbers.count(); i += 7)
+                    {
+                        last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
+
+                        Float rads = crunch::toRadians(numbers[i + 2]);
+                        currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
+                                          crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
+                        lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
+                    }
+                }
+                else if (cmd == 'Z' || cmd == 'z')
+                {
+                    currentPath.closePath();
+                    last = currentPath.segmentArray().last()->position();
+                    lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
+                }
+                else
+                {
+                    //@TODO?
+                }
+            }
+            while (it != end);
+        }
+
         Path SVGImport::importPath(const Shrub & _node, const Shrub & _rootNode, Error & _error)
         {
             auto maybe = _node.child("d");
             if (maybe)
             {
+                // const String & val = (*maybe).valueString();
+                // DynamicArray<Float> numbers(m_document->allocator());
+                // auto end = val.end();
+                // auto it = detail::skipWhitespaceAndCommas(val.begin(), end);
+                // Path p = m_document->createPath();
+                // pushAttributes(_node, _rootNode, p);
+                // Path currentPath = p;
+                // Vec2f last;
+                // Vec2f lastHandle;
+                // do
+                // {
+                //     char cmd = *it;
+                //     //auto tend = advanceToNextCommand(it + 1, end);
+                //     ++it;
+                //     it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
+
+                //     // STICK_ASSERT(it == tend);
+                //     if (cmd == 'M' || cmd == 'm')
+                //     {
+                //         if (currentPath.segmentArray().count())
+                //         {
+                //             Path tmp = m_document->createPath();
+                //             currentPath.addChild(tmp);
+                //             currentPath = tmp;
+                //         }
+
+                //         bool bRelative = cmd == 'm';
+                //         for (int i = 0; i < numbers.count(); i += 2)
+                //         {
+                //             if (bRelative)
+                //                 last = last + Vec2f(numbers[i], numbers[i + 1]);
+                //             else
+                //                 last = Vec2f(numbers[i], numbers[i + 1]);
+                //             currentPath.addPoint(last);
+                //         }
+                //         lastHandle = last;
+                //     }
+                //     else if (cmd == 'L' || cmd == 'l')
+                //     {
+                //         bool bRelative = cmd == 'l';
+                //         for (int i = 0; i < numbers.count(); i += 2)
+                //         {
+                //             if (bRelative)
+                //                 last = last + Vec2f(numbers[i], numbers[i + 1]);
+                //             else
+                //                 last = Vec2f(numbers[i], numbers[i + 1]);
+                //             currentPath.addPoint(last);
+                //         }
+                //         lastHandle = last;
+                //     }
+                //     else if (cmd == 'H' || cmd == 'h' || cmd == 'V' || cmd == 'v')
+                //     {
+                //         bool bRelative = cmd == 'h' || cmd == 'v';
+                //         bool bVert = cmd == 'V' || cmd == 'v';
+                //         for (int i = 0; i < numbers.count(); ++i)
+                //         {
+                //             if (bVert)
+                //             {
+                //                 if (bRelative)
+                //                     last.y = last.y + numbers[i];
+                //                 else
+                //                     last.y = numbers[i];
+                //             }
+                //             else
+                //             {
+                //                 if (bRelative)
+                //                     last.x = last.x + numbers[i];
+                //                 else
+                //                     last.x = numbers[i];
+                //             }
+                //             currentPath.addPoint(last);
+                //         }
+                //         lastHandle = last;
+                //     }
+                //     else if (cmd == 'C' || cmd == 'c')
+                //     {
+                //         bool bRelative = cmd == 'c';
+                //         Vec2f start = last;
+                //         for (int i = 0; i < numbers.count(); i += 6)
+                //         {
+                //             if (!bRelative)
+                //             {
+                //                 last = Vec2f(numbers[i + 4], numbers[i + 5]);
+                //                 lastHandle = Vec2f(numbers[i + 2], numbers[i + 3]);
+                //                 currentPath.cubicCurveTo(Vec2f(numbers[i], numbers[i + 1]),
+                //                                          lastHandle,
+                //                                          last);
+                //             }
+                //             else
+                //             {
+                //                 last = start + Vec2f(numbers[i + 4], numbers[i + 5]);
+                //                 lastHandle = Vec2f(start.x + numbers[i + 2], start.y + numbers[i + 3]);
+                //                 currentPath.cubicCurveTo(Vec2f(start.x + numbers[i], start.y + numbers[i + 1]),
+                //                                          lastHandle,
+                //                                          last);
+                //             }
+                //         }
+                //     }
+                //     else if (cmd == 'S' || cmd == 's')
+                //     {
+                //         bool bRelative = cmd == 's';
+                //         Vec2f start = last;
+                //         for (int i = 0; i < numbers.count(); i += 4)
+                //         {
+
+                //             Vec2f nextLast, nextHandle;
+                //             if (!bRelative)
+                //             {
+                //                 nextLast = Vec2f(numbers[i + 2], numbers[i + 3]);
+                //                 nextHandle = Vec2f(numbers[i], numbers[i + 1]);
+                //             }
+                //             else
+                //             {
+                //                 nextLast = start + Vec2f(numbers[i + 2], numbers[i + 3]);
+                //                 nextHandle = start + Vec2f(numbers[i], numbers[i + 1]);
+                //             }
+                //             currentPath.cubicCurveTo(detail::reflect(lastHandle, last), nextHandle, nextLast);
+                //             lastHandle = nextHandle;
+                //             last = nextLast;
+                //         }
+                //     }
+                //     else if (cmd == 'Q' || cmd == 'q')
+                //     {
+                //         bool bRelative = cmd == 'q';
+                //         Vec2f start = last;
+                //         for (int i = 0; i < numbers.count(); i += 4)
+                //         {
+                //             if (!bRelative)
+                //             {
+                //                 last = Vec2f(numbers[i + 2], numbers[i + 3]);
+                //                 lastHandle = Vec2f(numbers[i], numbers[i + 1]);
+                //             }
+                //             else
+                //             {
+                //                 last = start + Vec2f(numbers[i + 2], numbers[i + 3]);
+                //                 lastHandle = start + Vec2f(numbers[i], numbers[i + 1]);
+                //             }
+                //             currentPath.quadraticCurveTo(lastHandle, last);
+                //         }
+                //     }
+                //     else if (cmd == 'T' || cmd == 't')
+                //     {
+                //         bool bRelative = cmd == 't';
+                //         Vec2f start = last;
+                //         for (int i = 0; i < numbers.count(); i += 2)
+                //         {
+                //             Vec2f nextLast = !bRelative ? Vec2f(numbers[i], numbers[i + 1]) : start + Vec2f(numbers[i], numbers[i + 1]);
+                //             lastHandle = detail::reflect(lastHandle, last);
+                //             currentPath.quadraticCurveTo(lastHandle, nextLast);
+                //             last = nextLast;
+                //         }
+                //     }
+                //     else if (cmd == 'A' || cmd == 'a')
+                //     {
+                //         bool bRelative = cmd == 'a';
+                //         for (int i = 0; i < numbers.count(); i += 7)
+                //         {
+                //             last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
+
+                //             Float rads = crunch::toRadians(numbers[i + 2]);
+                //             currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
+                //                               crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
+                //             lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
+                //         }
+                //     }
+                //     else if (cmd == 'Z' || cmd == 'z')
+                //     {
+                //         currentPath.closePath();
+                //         last = currentPath.segmentArray().last()->position();
+                //         lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
+                //     }
+                //     else
+                //     {
+                //         //@TODO?
+                //     }
+                // }
+                // while (it != end);
+
                 const String & val = (*maybe).valueString();
-                DynamicArray<Float> numbers(m_document->allocator());
-                auto end = val.end();
-                auto it = detail::skipWhitespaceAndCommas(val.begin(), end);
                 Path p = m_document->createPath();
                 pushAttributes(_node, _rootNode, p);
-                Path currentPath = p;
-                Vec2f last;
-                Vec2f lastHandle;
-                do
-                {
-                    char cmd = *it;
-                    //auto tend = advanceToNextCommand(it + 1, end);
-                    ++it;
-                    it = detail::parseNumbers(it, end, [](char _c) { return isCommand(_c); }, numbers);
-
-                    // STICK_ASSERT(it == tend);
-                    if (cmd == 'M' || cmd == 'm')
-                    {
-                        if (currentPath.segmentArray().count())
-                        {
-                            Path tmp = m_document->createPath();
-                            currentPath.addChild(tmp);
-                            currentPath = tmp;
-                        }
-
-                        bool bRelative = cmd == 'm';
-                        for (int i = 0; i < numbers.count(); i += 2)
-                        {
-                            if (bRelative)
-                                last = last + Vec2f(numbers[i], numbers[i + 1]);
-                            else
-                                last = Vec2f(numbers[i], numbers[i + 1]);
-                            currentPath.addPoint(last);
-                        }
-                        lastHandle = last;
-                    }
-                    else if (cmd == 'L' || cmd == 'l')
-                    {
-                        bool bRelative = cmd == 'l';
-                        for (int i = 0; i < numbers.count(); i += 2)
-                        {
-                            if (bRelative)
-                                last = last + Vec2f(numbers[i], numbers[i + 1]);
-                            else
-                                last = Vec2f(numbers[i], numbers[i + 1]);
-                            currentPath.addPoint(last);
-                        }
-                        lastHandle = last;
-                    }
-                    else if (cmd == 'H' || cmd == 'h' || cmd == 'V' || cmd == 'v')
-                    {
-                        bool bRelative = cmd == 'h' || cmd == 'v';
-                        bool bVert = cmd == 'V' || cmd == 'v';
-                        for (int i = 0; i < numbers.count(); ++i)
-                        {
-                            if (bVert)
-                            {
-                                if (bRelative)
-                                    last.y = last.y + numbers[i];
-                                else
-                                    last.y = numbers[i];
-                            }
-                            else
-                            {
-                                if (bRelative)
-                                    last.x = last.x + numbers[i];
-                                else
-                                    last.x = numbers[i];
-                            }
-                            currentPath.addPoint(last);
-                        }
-                        lastHandle = last;
-                    }
-                    else if (cmd == 'C' || cmd == 'c')
-                    {
-                        bool bRelative = cmd == 'c';
-                        Vec2f start = last;
-                        for (int i = 0; i < numbers.count(); i += 6)
-                        {
-                            if (!bRelative)
-                            {
-                                last = Vec2f(numbers[i + 4], numbers[i + 5]);
-                                lastHandle = Vec2f(numbers[i + 2], numbers[i + 3]);
-                                currentPath.cubicCurveTo(Vec2f(numbers[i], numbers[i + 1]),
-                                                         lastHandle,
-                                                         last);
-                            }
-                            else
-                            {
-                                last = start + Vec2f(numbers[i + 4], numbers[i + 5]);
-                                lastHandle = Vec2f(start.x + numbers[i + 2], start.y + numbers[i + 3]);
-                                currentPath.cubicCurveTo(Vec2f(start.x + numbers[i], start.y + numbers[i + 1]),
-                                                         lastHandle,
-                                                         last);
-                            }
-                        }
-                    }
-                    else if (cmd == 'S' || cmd == 's')
-                    {
-                        bool bRelative = cmd == 's';
-                        Vec2f start = last;
-                        for (int i = 0; i < numbers.count(); i += 4)
-                        {
-
-                            Vec2f nextLast, nextHandle;
-                            if (!bRelative)
-                            {
-                                nextLast = Vec2f(numbers[i + 2], numbers[i + 3]);
-                                nextHandle = Vec2f(numbers[i], numbers[i + 1]);
-                            }
-                            else
-                            {
-                                nextLast = start + Vec2f(numbers[i + 2], numbers[i + 3]);
-                                nextHandle = start + Vec2f(numbers[i], numbers[i + 1]);
-                            }
-                            currentPath.cubicCurveTo(detail::reflect(lastHandle, last), nextHandle, nextLast);
-                            lastHandle = nextHandle;
-                            last = nextLast;
-                        }
-                    }
-                    else if (cmd == 'Q' || cmd == 'q')
-                    {
-                        bool bRelative = cmd == 'q';
-                        Vec2f start = last;
-                        for (int i = 0; i < numbers.count(); i += 4)
-                        {
-                            if (!bRelative)
-                            {
-                                last = Vec2f(numbers[i + 2], numbers[i + 3]);
-                                lastHandle = Vec2f(numbers[i], numbers[i + 1]);
-                            }
-                            else
-                            {
-                                last = start + Vec2f(numbers[i + 2], numbers[i + 3]);
-                                lastHandle = start + Vec2f(numbers[i], numbers[i + 1]);
-                            }
-                            currentPath.quadraticCurveTo(lastHandle, last);
-                        }
-                    }
-                    else if (cmd == 'T' || cmd == 't')
-                    {
-                        bool bRelative = cmd == 't';
-                        Vec2f start = last;
-                        for (int i = 0; i < numbers.count(); i += 2)
-                        {
-                            Vec2f nextLast = !bRelative ? Vec2f(numbers[i], numbers[i + 1]) : start + Vec2f(numbers[i], numbers[i + 1]);
-                            lastHandle = detail::reflect(lastHandle, last);
-                            currentPath.quadraticCurveTo(lastHandle, nextLast);
-                            last = nextLast;
-                        }
-                    }
-                    else if (cmd == 'A' || cmd == 'a')
-                    {
-                        bool bRelative = cmd == 'a';
-                        for (int i = 0; i < numbers.count(); i += 7)
-                        {
-                            last = !bRelative ? Vec2f(numbers[i + 5], numbers[i + 6]) : last + Vec2f(numbers[i + 5], numbers[i + 6]);
-
-                            Float rads = crunch::toRadians(numbers[i + 2]);
-                            currentPath.arcTo(last, Vec2f(numbers[i], numbers[i + 1]),
-                                              crunch::toRadians(numbers[i + 2]), (bool)numbers[i + 4], (bool)numbers[i + 3]);
-                            lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
-                        }
-                    }
-                    else if (cmd == 'Z' || cmd == 'z')
-                    {
-                        currentPath.closePath();
-                        last = currentPath.segmentArray().last()->position();
-                        lastHandle = currentPath.segmentArray().last()->handleOutAbsolute();
-                    }
-                    else
-                    {
-                        //@TODO?
-                    }
-                }
-                while (it != end);
-
+                parsePathData(*m_document, p, val);
                 popAttributes();
 
                 //return the path

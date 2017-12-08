@@ -21,7 +21,7 @@ namespace paper
 
             struct MaxError
             {
-                Float value;
+                stick::Float64 value;
                 stick::Size index;
             };
 
@@ -35,7 +35,7 @@ namespace paper
             using SegmentDescArray = stick::DynamicArray<SegmentDesc>;
             using PositionArray = stick::DynamicArray<Vec2f>;
 
-            PathFitter(const Path & _p, Float _error);
+            PathFitter(const Path & _p, stick::Float64 _error, bool _bIgnoreClosed);
 
             void fit();
 
@@ -45,32 +45,33 @@ namespace paper
                           const Vec2f & _handleTwo, const Vec2f & _pointTwo);
 
             Bezier generateBezier(stick::Size _first, stick::Size _last,
-                                  const stick::DynamicArray<Float> & _uPrime,
+                                  const stick::DynamicArray<stick::Float64> & _uPrime,
                                   const Vec2f & _tan1, const Vec2f & _tan2);
 
             // Evaluate a Bezier curve at a particular parameter value
-            Vec2f evaluate(stick::Int32 _degree, const Bezier & _curve, Float _t);
+            Vec2f evaluate(stick::Int32 _degree, const Bezier & _curve, stick::Float64 _t);
 
             // Given set of points and their parameterization, try to find
             // a better parameterization.
-            void reparameterize(stick::Size _first, stick::Size _last,
-                                stick::DynamicArray<Float> & _u, const Bezier & _curve);
+            bool reparameterize(stick::Size _first, stick::Size _last,
+                                stick::DynamicArray<stick::Float64> & _u, const Bezier & _curve);
 
             // Use Newton-Raphson iteration to find better root.
-            Float findRoot(const Bezier & _curve, const Vec2f & _point, Float _u);
+            stick::Float64 findRoot(const Bezier & _curve, const Vec2f & _point, stick::Float64 _u);
 
             // Assign parameter values to digitized points
             // using relative distances between points.
             void chordLengthParameterize(stick::Size _first, stick::Size _last,
-                                         stick::DynamicArray<Float> & _outResult);
+                                         stick::DynamicArray<stick::Float64> & _outResult);
 
             MaxError findMaxError(stick::Size _first, stick::Size _last,
-                                  const Bezier & _curve, const stick::DynamicArray<Float> & _u);
+                                  const Bezier & _curve, const stick::DynamicArray<stick::Float64> & _u);
 
         private:
 
             Path m_path;
             Float m_error;
+            bool m_bIgnoreClosed;
             SegmentDescArray m_newSegments;
             PositionArray m_positions;
         };

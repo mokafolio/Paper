@@ -12,11 +12,18 @@ namespace paper
     
     using IntersectionArray = stick::DynamicArray<Intersection>;
 
+    //@TODO: Remove the friend PathFitter eventually and this forward decl
+    namespace detail
+    {
+        class PathFitter;
+    }
+
     class STICK_API Path : public Item
     {
         friend class Curve;
         friend class Segment;
         friend class Item;
+        friend class detail::PathFitter;
 
     public:
 

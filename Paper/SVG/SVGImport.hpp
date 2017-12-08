@@ -91,6 +91,8 @@ namespace paper
 
             Path importLine(const Shrub & _node, const Shrub & _rootNode, stick::Error & _error);
 
+            static void parsePathData(Document & _doc, Path _path, const stick::String & _data);
+
             // // Not supported yet
             // void importText();
             // // Not supported yet

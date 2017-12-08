@@ -44,6 +44,8 @@ namespace paper
 
         Path createPath(const stick::String & _name = "");
 
+        Path createPathFromSVGData(const stick::String & _svgData, const stick::String _name = "");
+
         Path createEllipse(Vec2f _center, Vec2f _size, const stick::String & _name = "");
 
         Path createCircle(Vec2f _center, Float _radius, const stick::String & _name = "");

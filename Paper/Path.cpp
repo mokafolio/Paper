@@ -491,7 +491,7 @@ namespace paper
 
     void Path::simplify(Float _tolerance)
     {
-        detail::PathFitter fitter(*this, _tolerance);
+        detail::PathFitter fitter(*this, _tolerance, true);
         fitter.fit();
     }
 
@@ -662,7 +662,7 @@ namespace paper
         DynamicArray<Vec2f> tmp;
         Float currentOffset = 0;
         Float len = length();
-        Size samples = 0;
+
         auto stepAndSampleCount = regularOffsetAndSampleCount(_maxDistance);
         Float step = stepAndSampleCount.offset;
         for (Int32 i = 0; i < stepAndSampleCount.sampleCount; ++i)
@@ -676,13 +676,21 @@ namespace paper
             currentOffset += step;
         }
 
-        /*//due to floating point in accuracies, the last sample might overshoot the length of the path,
-        //if that is the case, we just sample the end of the path
-        if (samples < stepAndSampleCount.sampleCount)
-        {
-            printf("ADD LAST %f, %lu\n", len, curveArray().count());
-            tmp.append(positionAt(len));
-        }*/
+        // Float maxLen = len;
+        // if(!isClosed()) maxLen -= step;
+        // while(currentOffset < len)
+        // {
+        //     tmp.append(positionAt(std::min(currentOffset, len)));
+        //     currentOffset += step;
+        // }
+
+        // //due to floating point in accuracies, the last sample might overshoot the length of the path,
+        // //if that is the case, we just sample the end of the path
+        // if (tmp.count() < stepAndSampleCount.sampleCount)
+        // {
+        //     printf("ADD LAST %f, %lu\n", len, curveArray().count());
+        //     tmp.append(positionAt(len));
+        // }
 
         auto & segs = get<comps::Segments>();
         segs.clear();
@@ -710,7 +718,7 @@ namespace paper
     {
         Float len = length();
         Size sampleCount = std::ceil(len / _maxDistance);
-        return {std::min(len, len / (Float)sampleCount), sampleCount};
+        return {std::min(len, len / (Float)sampleCount), isClosed() ? sampleCount - 1 : sampleCount};
     }
 
     Float Path::regularOffset(Float _maxDistance)
@@ -968,7 +976,6 @@ namespace paper
             curve->extrema(tmp);
             for (auto p : tmp)
             {
-                printf("EXTREMA MAN %f\n", p);
                 _extrema.append(curve->curveLocationAtParameter(p));
             }
         }
