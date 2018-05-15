@@ -172,7 +172,7 @@ namespace paper
         return importer.parse(_svg, _dpi);
     }
 
-    svg::SVGImportResult Document::loadSVG(const URI & _uri, Size _dpi)
+    svg::SVGImportResult Document::loadSVG(const String & _uri, Size _dpi)
     {
         auto result = loadTextFile(_uri);
         if (!result) return result.error();
@@ -186,7 +186,7 @@ namespace paper
         return exporter.exportDocument(*this);
     }
 
-    Error Document::saveSVG(const URI & _uri) const
+    Error Document::saveSVG(const String & _uri) const
     {
         auto res = exportSVG();
         if (res)

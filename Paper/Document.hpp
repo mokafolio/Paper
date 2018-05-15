@@ -66,13 +66,13 @@ namespace paper
 
         svg::SVGImportResult parseSVG(const stick::String & _svg, stick::Size _dpi = 72);
 
-        svg::SVGImportResult loadSVG(const stick::URI & _uri, stick::Size _dpi = 72);
+        svg::SVGImportResult loadSVG(const stick::String & _uri, stick::Size _dpi = 72);
 
         stick::Allocator & allocator() const;
 
         stick::TextResult exportSVG() const;
 
-        stick::Error saveSVG(const stick::URI & _uri) const;
+        stick::Error saveSVG(const stick::String & _uri) const;
     };
 
     STICK_API brick::Hub & defaultHub();

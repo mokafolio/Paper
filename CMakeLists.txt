@@ -8,9 +8,9 @@ option(AddTests "AddTests" ON)
 find_package(OpenGL REQUIRED)
 
 if(BuildSubmodules)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Stick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Crunch ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Brick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Scrub)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Libs ${CMAKE_CURRENT_SOURCE_DIR}/Submodules ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Stick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Crunch ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Brick ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Scrub)
 else()
-    include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include)
+    include_directories (${CMAKE_CURRENT_SOURCE_DIR} /usr/local/include ${CMAKE_CURRENT_SOURCE_DIR}/Submodules/Tarp ${CMAKE_CURRENT_SOURCE_DIR}/Paper/Libs)
 endif()
 
 link_directories(/usr/local/lib ${CMAKE_INSTALL_PREFIX}/lib)
@@ -32,7 +32,8 @@ Paper/PlacedSymbol.hpp
 Paper/RenderInterface.hpp
 Paper/Segment.hpp
 Paper/Symbol.hpp
-Paper/OpenGL/GLRenderer.hpp
+Paper/Libs/GL/gl3w.h
+#Paper/OpenGL/GLRenderer.hpp
 Paper/Private/Allocator.hpp
 Paper/Private/BooleanOperations.hpp
 Paper/Private/ContainerView.hpp
@@ -44,6 +45,7 @@ Paper/Private/StrokeTriangulator.hpp
 Paper/SVG/SVGExport.hpp
 Paper/SVG/SVGImport.hpp
 Paper/SVG/SVGImportResult.hpp
+Paper/Tarp/TarpRenderer.hpp
 )
 
 set (PAPERSRC 
@@ -58,7 +60,8 @@ Paper/PlacedSymbol.cpp
 Paper/RenderInterface.cpp
 Paper/Segment.cpp
 Paper/Symbol.cpp
-Paper/OpenGL/GLRenderer.cpp
+Paper/Libs/GL/gl3w.c
+#Paper/OpenGL/GLRenderer.cpp
 Paper/Private/BooleanOperations.cpp
 Paper/Private/JoinAndCap.cpp
 Paper/Private/PathFitter.cpp
@@ -68,6 +71,7 @@ Paper/Private/StrokeTriangulator.cpp
 Paper/SVG/SVGExport.cpp
 Paper/SVG/SVGImport.cpp
 Paper/SVG/SVGImportResult.cpp
+Paper/Tarp/TarpRenderer.cpp
 )
 
 if(BuildSubmodules)

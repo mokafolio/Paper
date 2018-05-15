@@ -1,3 +1,4 @@
+
 #include <Paper/Document.hpp>
 #include <Paper/CurveLocation.hpp>
 #include <Paper/Private/BooleanOperations.hpp>
@@ -72,7 +73,7 @@ namespace paper
         Vec2f lineTwoStart = (_through + _to) * 0.5;
         crunch::Line<Vec2f> lineTwo(lineTwoStart, crunch::rotate(_to - _through, crunch::Constants<Float>::halfPi()));
 
-        crunch::IntersectionResult<Vec2f> result = crunch::intersect(lineOne, lineTwo);
+        auto result = crunch::intersect(lineOne, lineTwo);
         crunch::Line<Vec2f> line(from, _to - from);
         Int32 throughSide = line.side(_through);
 
@@ -91,9 +92,9 @@ namespace paper
             }
             return Error(ec::InvalidArgument, String::concat("Cannot put an arc through the given points: " , crunch::toString(_through), " and ", crunch::toString(_to)), STICK_FILE, STICK_LINE);
         }
-        Vec2f vec =  from - result.intersections()[0];
-        Float extent = crunch::toDegrees(crunch::directedAngle(vec, _to - result.intersections()[0]));
-        Int32 centerSide = line.side(result.intersections()[0]);
+        Vec2f vec =  from - *result;
+        Float extent = crunch::toDegrees(crunch::directedAngle(vec, _to - *result));
+        Int32 centerSide = line.side(*result);
 
         if (centerSide == 0)
         {
@@ -138,7 +139,7 @@ namespace paper
         //     vec = crunch::rotate(vec, crunch::toRadians(inc));
         // }
         //return Error();
-        return arcHelper(extent, current, vec, _to, result.intersections()[0], nullptr);
+        return arcHelper(extent, current, vec, _to, *result, nullptr);
     }
 
     Error Path::arcTo(const Vec2f & _to, bool _bClockwise)

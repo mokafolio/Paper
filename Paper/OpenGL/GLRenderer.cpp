@@ -285,12 +285,6 @@ namespace paper
                 xStart = xEnd;
             }
 
-            // for(Size i = 0; i < PAPER_GL_RAMP_TEXTURE_SIZE; ++i)
-            // {
-            //     // pixels[i] = ColorRGBA(i / (Float)PAPER_GL_RAMP_TEXTURE_SIZE, 0.0, 1.0, 1.0);
-            //     pixels[i] = _stops[0].color;
-            // }
-
             ASSERT_NO_GL_ERROR(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
             ASSERT_NO_GL_ERROR(glTexSubImage1D(GL_TEXTURE_1D, 0, 0, PAPER_GL_RAMP_TEXTURE_SIZE,
                                                GL_RGBA, GL_FLOAT, &pixels[0].r));

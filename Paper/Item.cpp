@@ -6,8 +6,6 @@
 #include <Paper/PlacedSymbol.hpp>
 #include <Paper/Private/BooleanOperations.hpp> //for removing the mono curve component in markGeometryDirty
 
-#include <Paper/OpenGL/GLRenderer.hpp>
-
 #include <Crunch/MatrixFunc.hpp>
 
 #include <Crunch/StringConversion.hpp>

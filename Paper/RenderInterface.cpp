@@ -12,12 +12,6 @@ namespace paper
 
     }
 
-    RenderInterface::RenderInterface(const Document & _doc) :
-        m_document(_doc)
-    {
-
-    }
-
     RenderInterface::~RenderInterface()
     {
 
@@ -34,7 +28,7 @@ namespace paper
         return ret;
     }
 
-    stick::Error RenderInterface::drawChildren(const Item & _item, const Mat3f * _transform)
+    stick::Error RenderInterface::drawChildren(Item _item, const Mat3f * _transform)
     {
         const auto & children = _item.children();
         stick::Error err;
@@ -46,7 +40,7 @@ namespace paper
         return err;
     }
 
-    stick::Error RenderInterface::drawItem(const Item & _item, const Mat3f * _transform)
+    stick::Error RenderInterface::drawItem(Item _item, const Mat3f * _transform)
     {
         auto et = _item.get<comps::ItemType>();
         stick::Error ret;
@@ -69,7 +63,7 @@ namespace paper
                 Mat3f tmp2;
                 if (_transform)
                     tmp2 = mask.absoluteTransform() * tmp;
-                ret = beginClipping(mask, _transform ? &tmp2 : nullptr);
+                ret = beginClipping(mask, _transform ? tmp2 : mask.absoluteTransform());
                 if (ret) return ret;
                 auto it = c2.begin() + 1;
                 for (; it != c2.end(); ++it)
@@ -77,7 +71,7 @@ namespace paper
                     ret = drawItem(Item(*it), _transform);
                     if (ret) return ret;
                 }
-                ret = endClipping(mask, _transform ? &tmp2 : nullptr);
+                ret = endClipping();
             }
             else
                 drawChildren(_item, _transform);
@@ -87,7 +81,7 @@ namespace paper
             Path p = brick::reinterpretEntity<Path>(_item);
             if (p.isVisible() && p.segmentArray().count() > 1)
             {
-                ret = drawPath(p, _transform ? &tmp : nullptr);
+                ret = drawPath(p, _transform ? tmp : p.absoluteTransform());
             }
         }
         else if (et == EntityType::PlacedSymbol)

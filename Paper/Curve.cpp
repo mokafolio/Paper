@@ -305,10 +305,10 @@ namespace paper
             Line aLine(positionOne(), handleOneAbsolute());
             Line bLine(positionTwo(), handleTwoAbsolute());
 
-            crunch::IntersectionResult<Vec2f> result = crunch::intersect(aLine, bLine);
-            if (!result.intersections().isEmpty())
+            auto result = crunch::intersect(aLine, bLine);
+            if (result)
             {
-                Vec2f corner = result.intersections()[0];
+                Vec2f corner = *result;
                 static Float kappa = detail::PaperConstants::kappa();
                 static Float epsilon = detail::PaperConstants::epsilon();
 

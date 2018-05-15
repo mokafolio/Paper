@@ -10,3 +10,6 @@
 [submodule "Submodules/Scrub"]
 	path = Submodules/Scrub
 	url = https://github.com/mokafolio/Scrub.git
+[submodule "Submodules/Tarp"]
+	path = Submodules/Tarp
+	url = https://github.com/mokafolio/Tarp
