@@ -11,23 +11,53 @@ namespace paper
     {
         using namespace stick;
 
+        using tpSegmentArray =  stick::DynamicArray<tpSegment>;
+
         namespace detail
         {
             struct TarpStuff
             {
                 tpContext ctx;
                 tpStyle style;
+                //@TODO: allow to pass in an allocator for this
+                tpSegmentArray tmpSegmentBuffer;
             };
 
             struct TarpRenderData
             {
+                TarpRenderData()
+                {
+                    path = tpPathInvalidHandle();
+                }
+
+                ~TarpRenderData()
+                {
+                    tpPathDestroy(path);
+                }
+
                 tpPath path;
+            };
+
+            struct TarpGradientData
+            {
+                TarpGradientData()
+                {
+                    gradient = tpGradientInvalidHandle();
+                }
+
+                ~TarpGradientData()
+                {
+                    tpGradientDestroy(gradient);
+                }
+
+                tpGradient gradient;
             };
         }
 
         namespace comps
         {
             using TarpRenderData = brick::Component<ComponentName("TarpRenderData"), detail::TarpRenderData>;
+            using TarpGradientData = brick::Component<ComponentName("TarpGradientData"), detail::TarpGradientData>;
         }
 
         struct Gl3wInitializer
@@ -86,7 +116,7 @@ namespace paper
 
         void TarpRenderer::setViewport(Float _x, Float _y, Float _widthInPixels, Float _heightInPixels)
         {
-            m_viewport = Rect(_x, _y, _x + _widthInPixels, _y + _widthInPixels);
+            m_viewport = Rect(_x, _y, _x + _widthInPixels, _y + _heightInPixels);
         }
 
         void TarpRenderer::setProjection(const Mat4f & _projection)
@@ -104,15 +134,128 @@ namespace paper
 
         static detail::TarpRenderData & ensureRenderData(Path _path)
         {
-            if (!_path.hasComponent<comps::TarpRenderData>())
-                _path.set<comps::TarpRenderData>(detail::TarpRenderData{tpPathCreate()});
+            auto & ret = _path.ensureComponent<comps::TarpRenderData>();
+            if (!tpPathIsValidHandle(ret.path))
+                ret.path = tpPathCreate();
 
-            return _path.get<comps::TarpRenderData>();
+            return ret;
+        }
+
+        static void toTarpSegments(tpSegmentArray & _tmpData, Path _path, const Mat3f * _transform)
+        {
+            _tmpData.clear();
+            if (!_transform)
+            {
+                for (auto & seg : _path.segments())
+                {
+                    Vec2f hi = seg.handleInAbsolute();
+                    Vec2f ho = seg.handleOutAbsolute();
+                    _tmpData.append((tpSegment)
+                    {
+                        {hi.x, hi.y},
+                        {seg.position().x, seg.position().y},
+                        {ho.x, ho.y}
+                    });
+                }
+            }
+            else
+            {
+                //tarp does not support per contour transforms, so we need to bring child paths segments
+                //to path space before adding it as a contour!
+                for (auto & seg : _path.segments())
+                {
+                    Vec2f hi = *_transform * seg.handleInAbsolute();
+                    Vec2f pos = *_transform * seg.position();
+                    Vec2f ho = *_transform * seg.handleOutAbsolute();
+                    _tmpData.append((tpSegment)
+                    {
+                        {hi.x, hi.y},
+                        {pos.x, pos.y},
+                        {ho.x, ho.y}
+                    });
+                }
+            }
+        }
+
+        static void recursivelyUpdateTarpPath(tpSegmentArray & _tmpData, Path _path, tpPath _tarpPath, const Mat3f * _transform, UInt32 & _contourIndex)
+        {
+            if (_path.hasComponent<paper::comps::FillGeometryDirtyFlag>())
+            {
+                _path.removeComponent<paper::comps::FillGeometryDirtyFlag>();
+
+                toTarpSegments(_tmpData, _path, _transform);
+                tpPathSetContour(_tarpPath, _contourIndex, &_tmpData[0], _tmpData.count(), (tpBool)_path.isClosed());
+            }
+
+            _contourIndex += 1;
+
+            for (auto & c : _path.children())
+            {
+                STICK_ASSERT(c.itemType() == EntityType::Path);
+                Path p = brick::reinterpretEntity<Path>(c);
+
+                const Mat3f * t = _transform;
+                Mat3f tmp;
+                if (p.hasTransform())
+                {
+                    if (_transform)
+                    {
+                        tmp = *_transform * p.transform();
+                        t = &tmp;
+                    }
+                    else
+                    {
+                        t = &p.transform();
+                    }
+                }
+
+                recursivelyUpdateTarpPath(_tmpData, p, _tarpPath, t, _contourIndex);
+            }
+        }
+
+        static void updateTarpPath(tpSegmentArray & _tmpData, Path _path, tpPath _tarpPath, const Mat3f * _transform)
+        {
+            UInt32 contourIndex = 0;
+            recursivelyUpdateTarpPath(_tmpData, _path, _tarpPath, _transform, contourIndex);
+
+            // remove contours that are not used anymore
+            if (contourIndex < tpPathContourCount(_tarpPath))
+            {
+                for (Size i = tpPathContourCount(_tarpPath) - 1; i >= contourIndex; --i)
+                {
+                    tpPathRemoveContour(_tarpPath, i);
+                }
+            }
+        }
+
+        static detail::TarpGradientData & updateTarpGradient(BaseGradient _grad)
+        {
+            detail::TarpGradientData & gd = _grad.ensureComponent<comps::TarpGradientData>();
+            if (!tpGradientIsValidHandle(gd.gradient))
+            {
+                gd.gradient = tpGradientCreateLinear(0, 0, 0, 0);
+            }
+
+            auto & dfs = _grad.get<paper::comps::GradientDirtyFlags>();
+            if (dfs.bPositionsDirty)
+            {
+                dfs.bPositionsDirty = false;
+                tpGradientSetPositions(gd.gradient, _grad.origin().x, _grad.origin().y, _grad.destination().x, _grad.destination().y);
+            }
+            if (dfs.bStopsDirty)
+            {
+                dfs.bStopsDirty = false;
+                tpGradientClearColorStops(gd.gradient);
+                for (auto & stop : _grad.stops())
+                {
+                    tpGradientAddColorStop(gd.gradient, stop.color.r, stop.color.g, stop.color.b, stop.color.a, stop.offset);
+                }
+            }
+            return gd;
         }
 
         Error TarpRenderer::drawPath(Path _path, const Mat3f & _transform)
         {
-            tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform);
             detail::TarpRenderData & rd = ensureRenderData(_path);
 
             if (_path.fill().is<ColorRGBA>())
@@ -120,6 +263,11 @@ namespace paper
                 ColorRGBA & col = _path.fill().get<ColorRGBA>();
                 tpStyleSetFillColor(m_tarp->style, col.r, col.g, col.b, col.a);
                 tpStyleSetFillRule(m_tarp->style, _path.windingRule() == WindingRule::NonZero ? kTpFillRuleNonZero : kTpFillRuleEvenOdd);
+            }
+            else if (_path.fill().is<LinearGradient>())
+            {
+                detail::TarpGradientData & gd = updateTarpGradient(_path.fill().get<LinearGradient>());
+                tpStyleSetFillGradient(m_tarp->style, gd.gradient);
             }
             else
             {
@@ -133,6 +281,11 @@ namespace paper
                 {
                     ColorRGBA & col = _path.stroke().get<ColorRGBA>();
                     tpStyleSetStrokeColor(m_tarp->style, col.r, col.g, col.b, col.a);
+                }
+                else if (_path.stroke().is<LinearGradient>())
+                {
+                    detail::TarpGradientData & gd = updateTarpGradient(_path.stroke().get<LinearGradient>());
+                    tpStyleSetStrokeGradient(m_tarp->style, gd.gradient);
                 }
 
                 tpStyleSetMiterLimit(m_tarp->style, _path.miterLimit());
@@ -181,25 +334,24 @@ namespace paper
                 tpStyleRemoveStroke(m_tarp->style);
             }
 
-            tpPathClear(rd.path);
-            for(auto & seg : _path.segments())
-            {
-                Vec2f hi = seg.handleInAbsolute();
-                Vec2f ho = seg.handleOutAbsolute();
-                tpPathAddSegment(rd.path, hi.x, hi.y, seg.position().x, seg.position().y, ho.x, ho.y);
-            }
-            if(_path.isClosed())
-                tpPathClose(rd.path);
+            // tpPathClear(rd.path);
+            // recursivelyAddContours(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
+            updateTarpPath(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
 
+            tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform);
             tpBool err = tpDrawPath(&m_tarp->ctx, rd.path, m_tarp->style);
+
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp path", STICK_FILE, STICK_LINE);
             return Error();
         }
 
         Error TarpRenderer::beginClipping(Path _clippingPath, const Mat3f & _transform)
         {
-            STICK_ASSERT(tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform));
             detail::TarpRenderData & rd = ensureRenderData(_clippingPath);
+
+            updateTarpPath(m_tarp->tmpSegmentBuffer, _clippingPath, rd.path, nullptr);
+
+            tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform);
             tpBool err = tpBeginClipping(&m_tarp->ctx, rd.path);
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp clip path", STICK_FILE, STICK_LINE);
             return Error();

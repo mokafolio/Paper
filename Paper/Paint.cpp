@@ -48,20 +48,20 @@ namespace paper
     void BaseGradient::setOrigin(const Vec2f & _position)
     {
         set<comps::Origin>(_position);
-        markGeometryDirty();
+        markPositionsDirty();
     }
 
     void BaseGradient::setDestination(const Vec2f & _position)
     {
         set<comps::Destination>(_position);
-        markGeometryDirty();
+        markPositionsDirty();
     }
 
     void BaseGradient::setOriginAndDestination(const Vec2f & _orig, const Vec2f & _dest)
     {
         set<comps::Origin>(_orig);
         set<comps::Destination>(_dest);
-        markGeometryDirty();
+        markPositionsDirty();
     }
 
     void BaseGradient::addStop(const ColorRGBA & _color, Float _offset)
@@ -90,8 +90,8 @@ namespace paper
         get<comps::GradientDirtyFlags>().bStopsDirty = true;
     }
 
-    void BaseGradient::markGeometryDirty()
+    void BaseGradient::markPositionsDirty()
     {
-        get<comps::GradientDirtyFlags>().bGeometryDirty = true;
+        get<comps::GradientDirtyFlags>().bPositionsDirty = true;
     }
 }

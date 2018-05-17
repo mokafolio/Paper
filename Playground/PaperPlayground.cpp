@@ -50,29 +50,49 @@ int main(int _argc, const char * _args[])
         // create the opengl renderer for the document
         tarp::TarpRenderer renderer;
         auto err = renderer.init(doc);
-        if(err)
+        if (err)
         {
             printf("Error %s\n", err.message().cString());
             return EXIT_FAILURE;
         }
 
 
-        // Randomizer r;
+        Randomizer r;
 
-        // LinearGradient grad = doc.createLinearGradient(Vec2f(r.randomf(100, 700), r.randomf(100, 500)),
-        //                       Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
+        LinearGradient grad = doc.createLinearGradient(Vec2f(r.randomf(100, 700), r.randomf(100, 500)),
+                              Vec2f(r.randomf(100, 700), r.randomf(100, 500)));
 
-        // for (int i = 0; i < r.randomi(2, 10); ++i)
-        // {
-        //     grad.addStop(ColorRGBA(r.randomf(0, 1), r.randomf(0, 1), r.randomf(0, 1), 1.0), r.randomf(0, 1));
-        // }
+        for (int i = 0; i < r.randomi(2, 10); ++i)
+        {
+            grad.addStop(ColorRGBA(r.randomf(0, 1), r.randomf(0, 1), r.randomf(0, 1), 1.0), r.randomf(0, 1));
+        }
 
-        Path circle = doc.createCircle(Vec2f(400, 300), 50);
+        Path circle = doc.createCircle(Vec2f(400, 300), 200);
+        circle.setName("A");
         circle.setFill(ColorRGBA(1, 0, 0, 1));
         circle.setStroke(ColorRGBA(0.0, 1.0, 1.0, 1.0));
         circle.setStrokeWidth(10.0);
-        circle.setFill("red");
+        circle.setStroke(grad);
 
+        // Path circle2 = doc.createCircle(Vec2f(400, 300), 20);
+        // circle2.setName("B");
+        // circle2.translateTransform(10, 10);
+        // circle.addChild(circle2);
+
+        // Path circle3 = doc.createCircle(Vec2f(400, 300), 10);
+        // circle3.setName("C");
+        // // circle3.translateTransform(-30, -30);
+        // circle2.addChild(circle3);
+
+        /*Path rct = doc.createRectangle(Vec2f(350, 250), Vec2f(450, 350));
+        rct.setFill(ColorRGBA(1.0, 1.0, 1.0, 1.0));
+
+        Group grp = doc.createGroup();
+        grp.addChild(rct);
+        grp.addChild(circle);
+        grp.setClipped(true);*/
+
+        int counter = 0;
 
         // the main loop
         while (!glfwWindowShouldClose(window))
@@ -97,6 +117,14 @@ int main(int _argc, const char * _args[])
                 printf("ERROR: %s\n", err.message().cString());
                 return EXIT_FAILURE;
             }
+
+            // counter++;
+            // if(counter > 200)
+            // {
+            //     // printf("CC %lu\n", circle2.children().count());
+            //     circle.removeChild(circle2);
+            //     // circle3.remove();
+            // }
 
             glfwSwapBuffers(window);
             glfwPollEvents();

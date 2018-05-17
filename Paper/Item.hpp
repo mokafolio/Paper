@@ -141,6 +141,8 @@ namespace paper
 
         bool isVisible() const;
 
+        bool hasTransform() const;
+
 
         void setStrokeJoin(StrokeJoin _join);
 
@@ -153,6 +155,8 @@ namespace paper
         void setStroke(const ColorRGBA & _color);
 
         void setStroke(const stick::String & _svgName);
+
+        void setStroke(LinearGradient _gradient);
 
         void setDashArray(const DashArray & _arr);
 
@@ -170,7 +174,7 @@ namespace paper
 
         void setFill(const stick::String & _svgName);
 
-        void setFill(const LinearGradient & _gradient);
+        void setFill(LinearGradient _gradient);
 
         void setRemeshOnTransformChange(bool _b);
 

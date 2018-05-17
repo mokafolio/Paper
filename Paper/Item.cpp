@@ -733,6 +733,12 @@ namespace paper
         return setStroke(crunch::svgColor<ColorRGBA>(_name));
     }
 
+    void Item::setStroke(LinearGradient _gradient)
+    {
+        set<comps::Stroke>(_gradient);
+        removeComponentFromChildren<comps::Stroke>(*this);
+    }
+
     void Item::setNoStroke()
     {
         set<comps::Stroke>(NoPaint());
@@ -762,7 +768,7 @@ namespace paper
         return setFill(crunch::svgColor<ColorRGBA>(_name));
     }
 
-    void Item::setFill(const LinearGradient & _gradient)
+    void Item::setFill(LinearGradient _gradient)
     {
         set<comps::Fill>(_gradient);
         removeComponentFromChildren<comps::Fill>(*this);
@@ -994,6 +1000,11 @@ namespace paper
         if (hasComponent<comps::VisibilityFlag>())
             return get<comps::VisibilityFlag>();
         return true;
+    }
+
+    bool Item::hasTransform() const
+    {
+        return hasComponent<comps::Transform>();
     }
 
     void Item::markBoundsDirty(bool _bNotifyParent)

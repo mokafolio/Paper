@@ -79,7 +79,7 @@ namespace paper
         struct STICK_LOCAL GradientDirtyFlagsData
         {
             bool bStopsDirty;
-            bool bGeometryDirty;
+            bool bPositionsDirty;
         };
         using  GradientDirtyFlags = brick::Component<ComponentName("GradientDirtyFlags"), GradientDirtyFlagsData>;
     }
@@ -107,7 +107,7 @@ namespace paper
 
         void markStopsDirty();
 
-        void markGeometryDirty();
+        void markPositionsDirty();
     };
 
     class STICK_API LinearGradient : public BaseGradient
