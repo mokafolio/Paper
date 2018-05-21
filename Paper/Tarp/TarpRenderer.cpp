@@ -85,7 +85,11 @@ namespace paper
 
         TarpRenderer::~TarpRenderer()
         {
-
+            if(m_tarp)
+            {
+                tpStyleDestroy(m_tarp->style);
+                tpContextDestroy(m_tarp->ctx);
+            }
         }
 
         Error TarpRenderer::init(Document _doc)
@@ -98,12 +102,12 @@ namespace paper
 
             m_tarp = makeUnique<detail::TarpStuff>();
 
-            tpBool error = tpContextInit(&m_tarp->ctx);
-            if (error)
+            m_tarp->ctx = tpContextCreate();
+            if (!tpContextIsValidHandle(m_tarp->ctx))
             {
                 return Error(ec::InvalidOperation,
                              String::formatted("Could not init Tarp context: %s\n",
-                                               tpContextErrorMessage(&m_tarp->ctx)),
+                                               tpContextErrorMessage(m_tarp->ctx)),
                              STICK_FILE, STICK_LINE);
             }
 
@@ -121,7 +125,7 @@ namespace paper
 
         void TarpRenderer::setProjection(const Mat4f & _projection)
         {
-            tpSetProjection(&m_tarp->ctx, (const tpMat4 *)&_projection);
+            tpSetProjection(m_tarp->ctx, (const tpMat4 *)&_projection);
         }
 
         void TarpRenderer::reserveItems(Size _count)
@@ -338,8 +342,8 @@ namespace paper
             // recursivelyAddContours(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
             updateTarpPath(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
 
-            tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform);
-            tpBool err = tpDrawPath(&m_tarp->ctx, rd.path, m_tarp->style);
+            tpSetTransform(m_tarp->ctx, (tpMat3 *)&_transform);
+            tpBool err = tpDrawPath(m_tarp->ctx, rd.path, m_tarp->style);
 
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp path", STICK_FILE, STICK_LINE);
             return Error();
@@ -351,15 +355,15 @@ namespace paper
 
             updateTarpPath(m_tarp->tmpSegmentBuffer, _clippingPath, rd.path, nullptr);
 
-            tpSetTransform(&m_tarp->ctx, (tpMat3 *)&_transform);
-            tpBool err = tpBeginClipping(&m_tarp->ctx, rd.path);
+            tpSetTransform(m_tarp->ctx, (tpMat3 *)&_transform);
+            tpBool err = tpBeginClipping(m_tarp->ctx, rd.path);
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp clip path", STICK_FILE, STICK_LINE);
             return Error();
         }
 
         Error TarpRenderer::endClipping()
         {
-            tpBool err = tpEndClipping(&m_tarp->ctx);
+            tpBool err = tpEndClipping(m_tarp->ctx);
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp clip path", STICK_FILE, STICK_LINE);
             return Error();
         }
@@ -367,14 +371,14 @@ namespace paper
         Error TarpRenderer::prepareDrawing()
         {
             glViewport(m_viewport.min().x, m_viewport.min().y, m_viewport.width(), m_viewport.height());
-            tpPrepareDrawing(&m_tarp->ctx);
+            tpPrepareDrawing(m_tarp->ctx);
 
             return Error();
         }
 
         Error TarpRenderer::finishDrawing()
         {
-            tpFinishDrawing(&m_tarp->ctx);
+            tpFinishDrawing(m_tarp->ctx);
             return Error();
         }
     }
