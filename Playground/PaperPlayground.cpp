@@ -74,15 +74,15 @@ int main(int _argc, const char * _args[])
         circle.setStrokeWidth(10.0);
         circle.setStroke(grad);
 
-        // Path circle2 = doc.createCircle(Vec2f(400, 300), 20);
-        // circle2.setName("B");
-        // circle2.translateTransform(10, 10);
-        // circle.addChild(circle2);
+        Path circle2 = doc.createCircle(Vec2f(400, 300), 20);
+        circle2.setName("B");
+        circle2.translateTransform(10, 10);
+        circle.addChild(circle2);
 
-        // Path circle3 = doc.createCircle(Vec2f(400, 300), 10);
-        // circle3.setName("C");
-        // // circle3.translateTransform(-30, -30);
-        // circle2.addChild(circle3);
+        Path circle3 = doc.createCircle(Vec2f(400, 300), 10);
+        circle3.setName("C");
+        circle3.translateTransform(-100, -100);
+        circle2.addChild(circle3);
 
         /*Path rct = doc.createRectangle(Vec2f(350, 250), Vec2f(450, 350));
         rct.setFill(ColorRGBA(1.0, 1.0, 1.0, 1.0));

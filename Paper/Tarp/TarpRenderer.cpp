@@ -85,7 +85,7 @@ namespace paper
 
         TarpRenderer::~TarpRenderer()
         {
-            if(m_tarp)
+            if (m_tarp)
             {
                 tpStyleDestroy(m_tarp->style);
                 tpContextDestroy(m_tarp->ctx);
@@ -342,7 +342,12 @@ namespace paper
             // recursivelyAddContours(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
             updateTarpPath(m_tarp->tmpSegmentBuffer, _path, rd.path, nullptr);
 
-            tpSetTransform(m_tarp->ctx, (tpMat3 *)&_transform);
+            // printf("%f", _transform[0][0]);
+
+            tpTransform trans = tpTransformMake(_transform[0][0], _transform[1][0], _transform[2][0],
+                                                _transform[0][1], _transform[1][1], _transform[2][1]);
+
+            tpSetTransform(m_tarp->ctx, &trans);
             tpBool err = tpDrawPath(m_tarp->ctx, rd.path, m_tarp->style);
 
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp path", STICK_FILE, STICK_LINE);
@@ -355,7 +360,10 @@ namespace paper
 
             updateTarpPath(m_tarp->tmpSegmentBuffer, _clippingPath, rd.path, nullptr);
 
-            tpSetTransform(m_tarp->ctx, (tpMat3 *)&_transform);
+            tpTransform trans = tpTransformMake(_transform[0][0], _transform[1][0], _transform[2][0],
+                                                _transform[0][1], _transform[1][1], _transform[2][1]);
+
+            tpSetTransform(m_tarp->ctx, &trans);
             tpBool err = tpBeginClipping(m_tarp->ctx, rd.path);
             if (err) return Error(ec::InvalidOperation, "Failed to draw tarp clip path", STICK_FILE, STICK_LINE);
             return Error();
